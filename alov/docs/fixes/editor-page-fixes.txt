@@ -1,0 +1,98 @@
+# Editor Page Fixes
+
+## Fix 1: TabButton Tooltip Styling
+
+FIND THIS (around line 2454-2463):
+```
+      <TooltipContent
+        side="bottom"
+        style={{
+          position: 'fixed',
+          left: `${(xCoord / 10000) * 100}vw`,
+          transform: 'translateX(-50%)'
+        }}
+        sideOffset={12}
+        className="bg-popover border border-border text-popover-foreground px-3 py-1.5 rounded-xl text-[11px] font-bold shadow-xl animate-in fade-in zoom-in-95 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-top-1"
+      >
+```
+
+REPLACE WITH:
+```
+      <TooltipContent
+        side="bottom"
+        sideOffset={12}
+        className="bg-slate-900 dark:bg-slate-800 text-white border border-slate-700 px-3 py-1.5 rounded-lg text-[11px] font-medium shadow-xl"
+      >
+```
+
+## Fix 2: Share Dropdown Styling
+
+FIND THIS (around line 1671):
+```
+            <DropdownMenuContent align="end" className="w-48">
+```
+
+REPLACE WITH:
+```
+            <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 bg-popover border border-border shadow-xl z-[9999]">
+```
+
+## Fix 3: HandlePublish Function
+
+FIND THIS (around line 1140-1158):
+```
+  const handlePublish = async () => {
+    setIsPublishing(true)
+    const tid = toast.loading("Deploying project...")
+
+    try {
+      // In a real app, this would call a Vercel/Netlify API
+      // For now, we simulate a successful deployment
+      await new Promise(r => setTimeout(r, 3000))
+
+      toast.success("Your app is now live!", {
+        id: tid,
+        description: "Deployment successful"
+      })
+    } catch (err) {
+      toast.error("Deployment failed", { id: tid })
+    } finally {
+      setIsPublishing(false)
+    }
+  }
+```
+
+REPLACE WITH:
+```
+  const handlePublish = async () => {
+    if (!project) return
+
+    setIsPublishing(true)
+
+    try {
+      // Check if authenticated with Vercel
+      if (!deploymentManager.isAuthenticated('vercel')) {
+        showError("Vercel is not configured. Please set up OAuth credentials or download your project and deploy manually.")
+        return
+      }
+
+      // Deploy to Vercel
+      const result = await deploymentManager.deploy({
+        platform: 'vercel',
+        projectName: project.name.replace(/\s+/g, '-').toLowerCase(),
+        envVars: project.settings?.envVars || {}
+      })
+
+      if (result.success && result.url) {
+        showSuccess(`Deployed successfully! Your app is live at: ${result.url}`)
+      } else {
+        showError(`Deployment failed: ${result.error || 'Unknown error'}`)
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      showError(`Deployment failed: ${errorMessage}`)
+    } finally {
+      setIsPublishing(false)
+    }
+  }
+```

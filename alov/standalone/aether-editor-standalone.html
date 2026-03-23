@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aether Editor - Pixel Perfect UI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: 'hsl(0 0% 20%)',
+            input: 'hsl(0 0% 20%)',
+            ring: 'hsl(0 0% 80%)',
+            background: 'hsl(0 0% 10%)',
+            foreground: 'hsl(210 40% 98%)',
+            primary: {
+              DEFAULT: 'hsl(0 0% 98%)',
+              foreground: 'hsl(240 10% 3.9%)',
+            },
+            secondary: {
+              DEFAULT: 'hsl(0 0% 20%)',
+              foreground: 'hsl(210 40% 98%)',
+            },
+            muted: {
+              DEFAULT: 'hsl(0 0% 20%)',
+              foreground: 'hsl(0 0% 65%)',
+            },
+            accent: {
+              DEFAULT: 'hsl(0 0% 20%)',
+              foreground: 'hsl(210 40% 98%)',
+            },
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    html {
+      zoom: 0.9;
+      background-color: hsl(0 0% 10%);
+    }
+    
+    body {
+      background-color: hsl(0 0% 10%);
+      color: hsl(210 40% 98%);
+    }
+    
+    .liquid-glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    
+    @keyframes bounce-intense {
+      0%, 100% {
+        transform: translateY(-50%);
+        animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+      }
+      50% {
+        transform: translateY(0);
+        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+      }
+    }
+    
+    .animate-bounce-intense {
+      animation: bounce-intense 0.6s infinite;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    .hidden { display: none !important; }
+  </style>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="overflow-hidden">
+  <!-- Header -->
+  <header class="h-14 border-b flex items-center justify-between px-6 z-50" style="border-color: hsl(0 0% 20%); background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(60px);">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-2 cursor-pointer group" onclick="window.location.href='/'">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform" style="background-color: hsl(0 0% 98%);">
+          <div class="w-4 h-4 rounded-full border-2" style="border-color: hsl(0 0% 10%);"></div>
+        </div>
+        <span class="font-bold text-lg tracking-tight" style="color: hsl(0 0% 98%);">Aether</span>
+      </div>
+      
+      <div class="h-6 w-px" style="background-color: hsl(0 0% 20%); margin: 0 0.5rem;"></div>
+      
+      <div class="flex items-center gap-1 p-1 rounded-xl liquid-glass" style="background-color: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.05);">
+        <button onclick="switchTab('preview')" id="tab-preview" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all" style="background-color: hsl(0 0% 20%); color: hsl(210 40% 98%); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+          <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+          <span>Preview</span>
+        </button>
+        <button onclick="switchTab('code')" id="tab-code" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all" style="color: hsl(0 0% 65%);">
+          <i data-lucide="code-2" class="w-3.5 h-3.5"></i>
+          <span>Code</span>
+        </button>
+        <button onclick="switchTab('settings')" id="tab-settings" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all" style="color: hsl(0 0% 65%);">
+          <i data-lucide="settings-2" class="w-3.5 h-3.5"></i>
+          <span>Settings</span>
+        </button>
+        <button onclick="switchTab('knowledge')" id="tab-knowledge" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all" style="color: hsl(0 0% 65%);">
+          <i data-lucide="brain" class="w-3.5 h-3.5"></i>
+          <span>Knowledge</span>
+        </button>
+        <button onclick="switchTab('history')" id="tab-history" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all" style="color: hsl(0 0% 65%);">
+          <i data-lucide="history" class="w-3.5 h-3.5"></i>
+          <span>History</span>
+        </button>
+        <button onclick="switchTab('components')" id="tab-components" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all" style="color: hsl(0 0% 65%);">
+          <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+          <span>Components</span>
+        </button>
+        <button onclick="switchTab('deploy')" id="tab-deploy" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all" style="color: hsl(0 0% 65%);">
+          <i data-lucide="rocket" class="w-3.5 h-3.5"></i>
+          <span>Deploy</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button class="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-bold transition-all hover:bg-opacity-80" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'; this.style.backgroundColor='hsl(0 0% 20%)'" onmouseout="this.style.color='hsl(0 0% 65%)'; this.style.backgroundColor='transparent'">
+        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+        <span>Share</span>
+      </button>
+      <button class="flex items-center gap-2 h-9 px-5 rounded-xl text-xs font-bold shadow-xl hover:scale-105 active:scale-95 transition-all" style="background-color: hsl(0 0% 98%); color: hsl(240 10% 3.9%);">
+        <i data-lucide="rocket" class="w-3.5 h-3.5"></i>
+        <span>Publish</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex overflow-hidden" style="height: calc(100vh - 3.5rem);">
+    <!-- Sidebar Chat -->
+    <div class="w-80 border-r flex flex-col z-40" style="border-color: hsl(0 0% 20%); background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(60px);">
+      <div class="p-4 border-b flex items-center justify-between" style="border-color: hsl(0 0% 20%); background-color: rgba(255, 255, 255, 0.02);">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4" style="color: hsl(0 0% 98%);"></i>
+          <span class="font-bold text-sm tracking-tight" style="color: hsl(0 0% 98%);">Aether AI</span>
+        </div>
+        <div class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style="background-color: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94);">
+          Online
+        </div>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="p-4 rounded-2xl text-sm leading-relaxed ml-4" style="background-color: rgb(59, 130, 246); color: white;">
+          Build a modern landing page for a SaaS product
+        </div>
+        <div class="p-4 rounded-2xl text-sm leading-relaxed mr-4 border" style="background-color: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.05);">
+          I'll create a beautiful landing page with hero section, features, and CTA. Let me start building...
+        </div>
+        <div class="flex items-center gap-2 animate-pulse" style="color: hsl(0 0% 65%);">
+          <div class="w-2 h-2 rounded-full" style="background-color: rgb(59, 130, 246);"></div>
+          <span class="text-[10px] font-bold uppercase tracking-widest">Thinking...</span>
+        </div>
+      </div>
+
+      <div class="p-4 border-t" style="border-color: hsl(0 0% 20%); background-color: rgba(255, 255, 255, 0.01);">
+        <div class="relative group">
+          <textarea 
+            placeholder="Ask Aether to build something..."
+            class="w-full rounded-[1.5rem] px-4 py-3 pr-12 text-sm outline-none transition-all resize-none shadow-sm border"
+            style="background-color: hsl(0 0% 10%); border-color: hsl(0 0% 20%); color: hsl(210 40% 98%);"
+            rows="3"
+            onfocus="this.style.borderColor='rgba(59, 130, 246, 0.5)'"
+            onblur="this.style.borderColor='hsl(0 0% 20%)'"
+          ></textarea>
+          <button class="absolute right-2 bottom-2 w-8 h-8 rounded-xl p-0 shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center" style="background-color: rgb(59, 130, 246); color: white;">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <p class="text-[10px] mt-3 text-center px-2" style="color: hsl(0 0% 65%);">
+          Shift + Enter for new line. AI can edit multiple files.
+        </p>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Preview Tab -->
+      <div id="content-preview" class="flex-1 flex flex-col items-center p-0">
+        <div class="w-full h-full border-x border-b shadow-2xl overflow-hidden flex flex-col relative transition-all duration-500 ease-in-out liquid-glass" style="background-color: rgba(255, 255, 255, 0.04); backdrop-filter: blur(60px); border-color: hsl(0 0% 20%);">
+          <!-- Device Toggle -->
+          <div class="absolute top-4 right-4 flex items-center gap-1 p-1 rounded-xl z-30 liquid-glass scale-90 origin-top-right" style="background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(60px); border-color: hsl(0 0% 20%);">
+            <button onclick="setDevice('desktop')" id="device-desktop" class="p-2 rounded-lg transition-all" style="background-color: hsl(0 0% 20%); color: hsl(210 40% 98%); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+              <i data-lucide="monitor" class="w-4 h-4"></i>
+            </button>
+            <button onclick="setDevice('tablet')" id="device-tablet" class="p-2 rounded-lg transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'" onmouseout="this.style.color='hsl(0 0% 65%)'">
+              <i data-lucide="tablet" class="w-4 h-4"></i>
+            </button>
+            <button onclick="setDevice('mobile')" id="device-mobile" class="p-2 rounded-lg transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'" onmouseout="this.style.color='hsl(0 0% 65%)'">
+              <i data-lucide="smartphone" class="w-4 h-4"></i>
+            </button>
+            <div class="w-px h-4 mx-1" style="background-color: hsl(0 0% 20%);"></div>
+            <button class="p-2 rounded-lg transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'; this.style.backgroundColor='hsl(0 0% 20%)'" onmouseout="this.style.color='hsl(0 0% 65%)'; this.style.backgroundColor='transparent'" title="Refresh Preview">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <div class="flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden">
+            <div class="flex flex-col items-center gap-6 p-12">
+              <div class="w-20 h-20 rounded-3xl flex items-center justify-center border" style="background-color: hsl(0 0% 20%); border-color: hsl(0 0% 27%);">
+                <i data-lucide="rocket" class="w-10 h-10" style="color: hsl(0 0% 65%);"></i>
+              </div>
+              <div class="space-y-2">
+                <h3 class="text-2xl font-bold" style="color: hsl(0 0% 98%);">Ready to build?</h3>
+                <p class="max-w-xs mx-auto" style="color: hsl(0 0% 65%);">Tell Aether what you want to create and watch it come to life here.</p>
+              </div>
+              <button class="rounded-xl border text-xs font-bold px-6 py-2 transition-all hover:bg-opacity-80" style="border-color: hsl(0 0% 27%); color: hsl(0 0% 98%);" onmouseover="this.style.backgroundColor='hsl(0 0% 20%)'" onmouseout="this.style.backgroundColor='transparent'">
+                Try an example
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Code Tab -->
+      <div id="content-code" class="flex-1 flex overflow-hidden hidden">
+        <!-- File Explorer -->
+        <div class="w-64 border-r overflow-y-auto p-4" style="border-color: hsl(0 0% 20%); background-color: rgba(255, 255, 255, 0.03);">
+          <div class="mb-4">
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 transform -translate-y-1/2" style="color: hsl(0 0% 65%);"></i>
+              <input 
+                type="text" 
+                placeholder="Search files..." 
+                class="w-full border rounded-lg pl-9 pr-3 py-2 text-xs outline-none transition-all"
+                style="background-color: hsl(0 0% 10%); border-color: hsl(0 0% 20%); color: hsl(210 40% 98%);"
+                onfocus="this.style.borderColor='rgba(59, 130, 246, 0.5)'"
+                onblur="this.style.borderColor='hsl(0 0% 20%)'"
+              />
+            </div>
+          </div>
+          
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-2 px-2 py-1.5 text-xs font-bold uppercase tracking-widest" style="color: rgba(255, 255, 255, 0.4);">
+              <i data-lucide="folder" class="w-3.5 h-3.5"></i>
+              <span>src</span>
+            </div>
+            <div class="ml-2 border-l pl-2 space-y-0.5" style="border-color: rgba(255, 255, 255, 0.05);">
+              <div class="flex items-center gap-2 px-2 py-1.5 text-xs font-bold uppercase tracking-widest" style="color: rgba(255, 255, 255, 0.4);">
+                <i data-lucide="folder" class="w-3.5 h-3.5"></i>
+                <span>app</span>
+              </div>
+              <div class="ml-2 border-l pl-2 space-y-0.5" style="border-color: rgba(255, 255, 255, 0.05);">
+                <button class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all font-bold shadow-sm" style="background-color: rgba(59, 130, 246, 0.1); color: rgb(59, 130, 246);">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+                  <span class="truncate">page.tsx</span>
+                </button>
+                <button class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'; this.style.backgroundColor='rgba(255, 255, 255, 0.05)'" onmouseout="this.style.color='hsl(0 0% 65%)'; this.style.backgroundColor='transparent'">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+                  <span class="truncate">layout.tsx</span>
+                </button>
+                <button class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'; this.style.backgroundColor='rgba(255, 255, 255, 0.05)'" onmouseout="this.style.color='hsl(0 0% 65%)'; this.style.backgroundColor='transparent'">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+                  <span class="truncate">globals.css</span>
+                </button>
+              </div>
+              
+              <div class="flex items-center gap-2 px-2 py-1.5 text-xs font-bold uppercase tracking-widest" style="color: rgba(255, 255, 255, 0.4);">
+                <i data-lucide="folder" class="w-3.5 h-3.5"></i>
+                <span>components</span>
+              </div>
+              <div class="ml-2 border-l pl-2 space-y-0.5" style="border-color: rgba(255, 255, 255, 0.05);">
+                <button class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'; this.style.backgroundColor='rgba(255, 255, 255, 0.05)'" onmouseout="this.style.color='hsl(0 0% 65%)'; this.style.backgroundColor='transparent'">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+                  <span class="truncate">button.tsx</span>
+                </button>
+                <button class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'; this.style.backgroundColor='rgba(255, 255, 255, 0.05)'" onmouseout="this.style.color='hsl(0 0% 65%)'; this.style.backgroundColor='transparent'">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+                  <span class="truncate">navbar.tsx</span>
+                </button>
+              </div>
+              
+              <div class="flex items-center gap-2 px-2 py-1.5 text-xs font-bold uppercase tracking-widest" style="color: rgba(255, 255, 255, 0.4);">
+                <i data-lucide="folder" class="w-3.5 h-3.5"></i>
+                <span>lib</span>
+              </div>
+              <div class="ml-2 border-l pl-2 space-y-0.5" style="border-color: rgba(255, 255, 255, 0.05);">
+                <button class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'; this.style.backgroundColor='rgba(255, 255, 255, 0.05)'" onmouseout="this.style.color='hsl(0 0% 65%)'; this.style.backgroundColor='transparent'">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+                  <span class="truncate">utils.ts</span>
+                </button>
+              </div>
+            </div>
+            
+            <button class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'; this.style.backgroundColor='rgba(255, 255, 255, 0.05)'" onmouseout="this.style.color='hsl(0 0% 65%)'; this.style.backgroundColor='transparent'">
+              <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+              <span class="truncate">package.json</span>
+            </button>
+            <button class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all" style="color: hsl(0 0% 65%);" onmouseover="this.style.color='hsl(210 40% 98%)'; this.style.backgroundColor='rgba(255, 255, 255, 0.05)'" onmouseout="this.style.color='hsl(0 0% 65%)'; this.style.backgroundColor='transparent'">
+              <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+              <span class="truncate">tailwind.config.js</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Code Editor -->
+        <div class="flex-1 flex flex-col" style="background-color: hsl(0 0% 3%);">
+          <div class="border-b px-4 py-2 flex items-center gap-2" style="border-color: hsl(0 0% 20%); background-color: rgba(255, 255, 255, 0.05);">
+            <span class="text-xs font-bold" style="color: hsl(0 0% 98%);">src/app/page.tsx</span>
+            <button class="ml-auto hover:opacity-80 transition-opacity" style="color: hsl(0 0% 65%);">
+              <i data-lucide="x" class="w-3 h-3"></i>
+            </button>
+          </div>
+          <div class="flex-1 overflow-auto p-4 font-mono text-sm">
+            <pre style="color: rgb(209, 213, 219);"><code><span style="color: rgb(192, 132, 252);">"use client"</span>
+
+<span style="color: rgb(192, 132, 252);">import</span> { <span style="color: rgb(96, 165, 250);">useState</span> } <span style="color: rgb(192, 132, 252);">from</span> <span style="color: rgb(134, 239, 172);">"react"</span>
+<span style="color: rgb(192, 132, 252);">import</span> { <span style="color: rgb(96, 165, 250);">Button</span> } <span style="color: rgb(192, 132, 252);">from</span> <span style="color: rgb(134, 239, 172);">"@/components/ui/button"</span>
+
+<span style="color: rgb(192, 132, 252);">export default function</span> <span style="color: rgb(250, 204, 21);">Home</span>() {
+  <span style="color: rgb(192, 132, 252);">const</span> [<span style="color: rgb(96, 165, 250);">count</span>, <span style="color: rgb(96, 165, 250);">setCount</span>] = <span style="color: rgb(250, 204, 21);">useState</span>(<span style="color: rgb(251, 146, 60);">0</span>)
+
+  <span style="color: rgb(192, 132, 252);">return</span> (
+    <span style="color: rgb(107, 114, 128);">&lt;</span><span style="color: rgb(134, 239, 172);">main</span> <span style="color: rgb(96, 165, 250);">className</span>=<span style="color: rgb(134, 239, 172);">"flex min-h-screen flex-col items-center justify-center p-24"</span><span style="color: rgb(107, 114, 128);">&gt;</span>
+      <span style="color: rgb(107, 114, 128);">&lt;</span><span style="color: rgb(134, 239, 172);">div</span> <span style="color: rgb(96, 165, 250);">className</span>=<span style="color: rgb(134, 239, 172);">"space-y-4"</span><span style="color: rgb(107, 114, 128);">&gt;</span>
+        <span style="color: rgb(107, 114, 128);">&lt;</span><span style="color: rgb(134, 239, 172);">h1</span> <span style="color: rgb(96, 165, 250);">className</span>=<span style="color: rgb(134, 239, 172);">"text-4xl font-bold"</span><span style="color: rgb(107, 114, 128);">&gt;</span>Welcome to Aether<span style="color: rgb(107, 114, 128);">&lt;/</span><span style="color: rgb(134, 239, 172);">h1</span><span style="color: rgb(107, 114, 128);">&gt;</span>
+        <span style="color: rgb(107, 114, 128);">&lt;</span><span style="color: rgb(134, 239, 172);">p</span><span style="color: rgb(107, 114, 128);">&gt;</span>Count: {count}<span style="color: rgb(107, 114, 128);">&lt;/</span><span style="color: rgb(134, 239, 172);">p</span><span style="color: rgb(107, 114, 128);">&gt;</span>
+        <span style="color: rgb(107, 114, 128);">&lt;</span><span style="color: rgb(96, 165, 250);">Button</span> <span style="color: rgb(96, 165, 250);">onClick</span>={() =&gt; <span style="color: rgb(250, 204, 21);">setCount</span>(count + <span style="color: rgb(251, 146, 60);">1</span>)}<span style="color: rgb(107, 114, 128);">&gt;</span>
+          Increment
+        <span style="color: rgb(107, 114, 128);">&lt;/</span><span style="color: rgb(96, 165, 250);">Button</span><span style="color: rgb(107, 114, 128);">&gt;</span>
+      <span style="color: rgb(107, 114, 128);">&lt;/</span><span style="color: rgb(134, 239, 172);">div</span><span style="color: rgb(107, 114, 128);">&gt;</span>
+    <span style="color: rgb(107, 114, 128);">&lt;/</span><span style="color: rgb(134, 239, 172);">main</span><span style="color: rgb(107, 114, 128);">&gt;</span>
+  )
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Terminal -->
+        <div class="w-96 border-l flex flex-col" style="border-color: hsl(0 0% 20%); background-color: hsl(0 0% 3%);">
+          <div class="border-b px-4 py-2 flex items-center justify-between" style="border-color: hsl(0 0% 20%); background-color: rgba(255, 255, 255, 0.05);">
+            <span class="text-xs font-bold" style="color: hsl(0 0% 98%);">Terminal</span>
+            <button class="hover:opacity-80 transition-opacity" style="color: hsl(0 0% 65%);">
+              <i data-lucide="trash-2" class="w-3 h-3"></i>
+            </button>
+          </div>
+          <div class="flex-1 overflow-auto p-4 font-mono text-xs space-y-2">
+            <div style="color: rgb(156, 163, 175);">
+              <span style="color: rgb(34, 197, 94);">[12:34:56]</span> Aether Engine v1.0.0 initialized.
+            </div>
+            <div style="color: rgb(156, 163, 175);">
+              <span style="color: rgb(34, 197, 94);">[12:34:57]</span> WebContainer booted successfully.
+            </div>
+            <div style="color: rgb(156, 163, 175);">
+              <span style="color: rgb(59, 130, 246);">[12:35:10]</span> <span style="color: hsl(0 0% 98%);">&gt; npm install</span>
+            </div>
+            <div style="color: rgb(156, 163, 175);">
+              <span style="color: rgb(34, 197, 94);">[12:35:12]</span> Installing dependencies...
+            </div>
+            <div style="color: rgb(156, 163, 175);">
+              <span style="color: rgb(34, 197, 94);">[12:35:15]</span> ✓ Packages installed successfully.
+            </div>
+            <div style="color: rgb(156, 163, 175);">
+              <span style="color: rgb(59, 130, 246);">[12:35:20]</span> <span style="color: hsl(0 0% 98%);">&gt; npm run dev</span>
+            </div>
+            <div style="color: rgb(156, 163, 175);">
+              <span style="color: rgb(34, 197, 94);">[12:35:22]</span> Starting development server...
+            </div>
+            <div style="color: rgb(156, 163, 175);">
+              <span style="color: rgb(34, 197, 94);">[12:35:24]</span> ✓ Server running at http://localhost:3000
+            </div>
+            <div class="flex items-center gap-2 mt-4">
+              <span style="color: rgb(59, 130, 246);">&gt;</span>
+              <input 
+                type="text" 
+                class="flex-1 bg-transparent border-none outline-none" 
+                style="color: hsl(0 0% 98%);"
+                placeholder="Type a command..."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="content-settings" class="flex-1 overflow-auto p-8 hidden">
+        <div class="max-w-4xl mx-auto space-y-8">
+          <div>
+            <h2 class="text-2xl font-bold mb-2" style="color: hsl(0 0% 98%);">Project Settings</h2>
+            <p class="text-sm" style="color: hsl(0 0% 65%);">Configure your project integrations and preferences</p>
+          </div>
+
+          <!-- Supabase Integration -->
+          <div class="border rounded-2xl p-6 space-y-4" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: rgba(34, 197, 94, 0.1);">
+                <i data-lucide="database" class="w-5 h-5" style="color: rgb(34, 197, 94);"></i>
+              </div>
+              <div>
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Supabase</h3>
+                <p class="text-xs" style="color: hsl(0 0% 65%);">Connect your Supabase database</p>
+              </div>
+            </div>
+            
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs font-bold uppercase tracking-wider mb-2 block" style="color: hsl(0 0% 65%);">Project URL</label>
+                <input 
+                  type="text" 
+                  placeholder="https://xxxxx.supabase.co" 
+                  class="w-full border rounded-lg px-4 py-2.5 text-sm outline-none transition-all"
+                  style="background-color: hsl(0 0% 10%); border-color: hsl(0 0% 20%); color: hsl(210 40% 98%);"
+                  onfocus="this.style.borderColor='rgba(59, 130, 246, 0.5)'"
+                  onblur="this.style.borderColor='hsl(0 0% 20%)'"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-bold uppercase tracking-wider mb-2 block" style="color: hsl(0 0% 65%);">Anon Key</label>
+                <input 
+                  type="password" 
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
+                  class="w-full border rounded-lg px-4 py-2.5 text-sm outline-none transition-all"
+                  style="background-color: hsl(0 0% 10%); border-color: hsl(0 0% 20%); color: hsl(210 40% 98%);"
+                  onfocus="this.style.borderColor='rgba(59, 130, 246, 0.5)'"
+                  onblur="this.style.borderColor='hsl(0 0% 20%)'"
+                />
+              </div>
+              <button class="w-full font-bold py-2.5 rounded-lg transition-all hover:opacity-90" style="background-color: rgb(34, 197, 94); color: white;">
+                Test Connection
+              </button>
+            </div>
+          </div>
+
+          <!-- GitHub Integration -->
+          <div class="border rounded-2xl p-6 space-y-4" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: rgba(168, 85, 247, 0.1);">
+                <i data-lucide="github" class="w-5 h-5" style="color: rgb(168, 85, 247);"></i>
+              </div>
+              <div>
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">GitHub</h3>
+                <p class="text-xs" style="color: hsl(0 0% 65%);">Push your code to GitHub</p>
+              </div>
+            </div>
+            
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs font-bold uppercase tracking-wider mb-2 block" style="color: hsl(0 0% 65%);">Repository</label>
+                <input 
+                  type="text" 
+                  placeholder="username/repository" 
+                  class="w-full border rounded-lg px-4 py-2.5 text-sm outline-none transition-all"
+                  style="background-color: hsl(0 0% 10%); border-color: hsl(0 0% 20%); color: hsl(210 40% 98%);"
+                  onfocus="this.style.borderColor='rgba(59, 130, 246, 0.5)'"
+                  onblur="this.style.borderColor='hsl(0 0% 20%)'"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-bold uppercase tracking-wider mb-2 block" style="color: hsl(0 0% 65%);">Personal Access Token</label>
+                <input 
+                  type="password" 
+                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" 
+                  class="w-full border rounded-lg px-4 py-2.5 text-sm outline-none transition-all"
+                  style="background-color: hsl(0 0% 10%); border-color: hsl(0 0% 20%); color: hsl(210 40% 98%);"
+                  onfocus="this.style.borderColor='rgba(59, 130, 246, 0.5)'"
+                  onblur="this.style.borderColor='hsl(0 0% 20%)'"
+                />
+              </div>
+              <button class="w-full font-bold py-2.5 rounded-lg transition-all hover:opacity-90" style="background-color: rgb(168, 85, 247); color: white;">
+                Push to GitHub
+              </button>
+            </div>
+          </div>
+
+          <!-- Database Schema -->
+          <div class="border rounded-2xl p-6 space-y-4" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: rgba(59, 130, 246, 0.1);">
+                  <i data-lucide="layers" class="w-5 h-5" style="color: rgb(59, 130, 246);"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold" style="color: hsl(0 0% 98%);">Database Schema</h3>
+                  <p class="text-xs" style="color: hsl(0 0% 65%);">Manage your database tables</p>
+                </div>
+              </div>
+              <button class="px-4 py-2 text-xs font-bold rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                + Add Table
+              </button>
+            </div>
+            
+            <div class="space-y-2">
+              <div class="border rounded-lg p-4" style="background-color: hsl(0 0% 10%); border-color: hsl(0 0% 20%);">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-bold text-sm" style="color: hsl(0 0% 98%);">users</span>
+                  <button class="text-xs hover:opacity-80 transition-opacity" style="color: rgb(239, 68, 68);">Delete</button>
+                </div>
+                <div class="space-y-1 text-xs" style="color: hsl(0 0% 65%);">
+                  <div>• id: uuid</div>
+                  <div>• email: text</div>
+                  <div>• created_at: timestamptz</div>
+                </div>
+              </div>
+              
+              <div class="border rounded-lg p-4" style="background-color: hsl(0 0% 10%); border-color: hsl(0 0% 20%);">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-bold text-sm" style="color: hsl(0 0% 98%);">projects</span>
+                  <button class="text-xs hover:opacity-80 transition-opacity" style="color: rgb(239, 68, 68);">Delete</button>
+                </div>
+                <div class="space-y-1 text-xs" style="color: hsl(0 0% 65%);">
+                  <div>• id: uuid</div>
+                  <div>• user_id: uuid (FK)</div>
+                  <div>• name: text</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="border rounded-2xl p-6 space-y-4" style="background-color: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.5);">
+            <div>
+              <h3 class="font-bold" style="color: rgb(239, 68, 68);">Danger Zone</h3>
+              <p class="text-xs mt-1" style="color: hsl(0 0% 65%);">Irreversible actions</p>
+            </div>
+            <button class="w-full font-bold py-2.5 rounded-lg transition-all hover:opacity-90 flex items-center justify-center gap-2" style="background-color: rgb(239, 68, 68); color: white;">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <span>Delete Project</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Knowledge Tab -->
+      <div id="content-knowledge" class="flex-1 overflow-auto p-8 hidden">
+        <div class="max-w-4xl mx-auto space-y-8">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold mb-2" style="color: hsl(0 0% 98%);">Knowledge Base</h2>
+              <p class="text-sm" style="color: hsl(0 0% 65%);">Store context and documentation for your AI assistant</p>
+            </div>
+            <button class="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>Generate Docs</span>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div class="border rounded-2xl p-6 space-y-3" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Project Overview</h3>
+                <button class="text-xs hover:opacity-80 transition-opacity" style="color: rgb(239, 68, 68);">Delete</button>
+              </div>
+              <p class="text-sm leading-relaxed" style="color: hsl(0 0% 65%);">
+                This is a modern SaaS landing page built with Next.js 14, Tailwind CSS, and Framer Motion. 
+                The project includes a responsive design, dark mode support, and smooth animations.
+              </p>
+              <button class="text-xs font-bold hover:opacity-80 transition-opacity" style="color: rgb(59, 130, 246);">Edit</button>
+            </div>
+
+            <div class="border rounded-2xl p-6 space-y-3" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Tech Stack</h3>
+                <button class="text-xs hover:opacity-80 transition-opacity" style="color: rgb(239, 68, 68);">Delete</button>
+              </div>
+              <ul class="text-sm space-y-1" style="color: hsl(0 0% 65%);">
+                <li>• Next.js 14 (App Router)</li>
+                <li>• Tailwind CSS for styling</li>
+                <li>• Framer Motion for animations</li>
+                <li>• Lucide React for icons</li>
+                <li>• TypeScript for type safety</li>
+              </ul>
+              <button class="text-xs font-bold hover:opacity-80 transition-opacity" style="color: rgb(59, 130, 246);">Edit</button>
+            </div>
+
+            <div class="border rounded-2xl p-6 space-y-3" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Design System</h3>
+                <button class="text-xs hover:opacity-80 transition-opacity" style="color: rgb(239, 68, 68);">Delete</button>
+              </div>
+              <p class="text-sm leading-relaxed" style="color: hsl(0 0% 65%);">
+                Primary color: Blue (#3B82F6)<br/>
+                Background: Dark gray (#1A1A1A)<br/>
+                Border radius: 0.75rem<br/>
+                Font: Inter
+              </p>
+              <button class="text-xs font-bold hover:opacity-80 transition-opacity" style="color: rgb(59, 130, 246);">Edit</button>
+            </div>
+
+            <button class="w-full border-2 border-dashed rounded-2xl p-6 transition-all hover:opacity-80" style="border-color: hsl(0 0% 20%); color: hsl(0 0% 65%);">
+              <i data-lucide="plus-circle" class="w-8 h-8 mx-auto mb-2"></i>
+              <span class="text-sm font-bold block">Add New Knowledge Entry</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Tab -->
+      <div id="content-history" class="flex-1 overflow-auto p-8 hidden">
+        <div class="max-w-4xl mx-auto space-y-8">
+          <div>
+            <h2 class="text-2xl font-bold mb-2" style="color: hsl(0 0% 98%);">Project History</h2>
+            <p class="text-sm" style="color: hsl(0 0% 65%);">View and restore previous versions of your project</p>
+          </div>
+
+          <div class="space-y-4">
+            <div class="border rounded-2xl p-6 space-y-4" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: rgba(59, 130, 246, 0.1);">
+                    <i data-lucide="history" class="w-5 h-5" style="color: rgb(59, 130, 246);"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-sm" style="color: hsl(0 0% 98%);">Added hero section with CTA</h3>
+                    <p class="text-xs" style="color: hsl(0 0% 65%);">2 minutes ago</p>
+                  </div>
+                </div>
+                <button class="px-4 py-2 text-xs font-bold rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                  Restore
+                </button>
+              </div>
+              <div class="text-xs" style="color: hsl(0 0% 65%);">
+                <span class="font-bold">Files modified:</span> src/app/page.tsx, src/components/hero.tsx
+              </div>
+            </div>
+
+            <div class="border rounded-2xl p-6 space-y-4" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: rgba(34, 197, 94, 0.1);">
+                    <i data-lucide="history" class="w-5 h-5" style="color: rgb(34, 197, 94);"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-sm" style="color: hsl(0 0% 98%);">Created pricing section</h3>
+                    <p class="text-xs" style="color: hsl(0 0% 65%);">15 minutes ago</p>
+                  </div>
+                </div>
+                <button class="px-4 py-2 text-xs font-bold rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                  Restore
+                </button>
+              </div>
+              <div class="text-xs" style="color: hsl(0 0% 65%);">
+                <span class="font-bold">Files modified:</span> src/app/page.tsx, src/components/pricing.tsx
+              </div>
+            </div>
+
+            <div class="border rounded-2xl p-6 space-y-4" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background-color: rgba(168, 85, 247, 0.1);">
+                    <i data-lucide="history" class="w-5 h-5" style="color: rgb(168, 85, 247);"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-sm" style="color: hsl(0 0% 98%);">Initial project setup</h3>
+                    <p class="text-xs" style="color: hsl(0 0% 65%);">1 hour ago</p>
+                  </div>
+                </div>
+                <button class="px-4 py-2 text-xs font-bold rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                  Restore
+                </button>
+              </div>
+              <div class="text-xs" style="color: hsl(0 0% 65%);">
+                <span class="font-bold">Files modified:</span> package.json, tailwind.config.js, src/app/layout.tsx
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Components Tab -->
+      <div id="content-components" class="flex-1 overflow-auto p-8 hidden">
+        <div class="max-w-6xl mx-auto space-y-8">
+          <div>
+            <h2 class="text-2xl font-bold mb-2" style="color: hsl(0 0% 98%);">Component Library</h2>
+            <p class="text-sm" style="color: hsl(0 0% 65%);">Add pre-built components to your project</p>
+          </div>
+
+          <div class="grid grid-cols-3 gap-6">
+            <!-- Hero Section -->
+            <div class="border rounded-2xl overflow-hidden transition-all cursor-pointer group hover:scale-105" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.5)'" onmouseout="this.style.borderColor='hsl(0 0% 20%)'">
+              <div class="aspect-video flex items-center justify-center border-b" style="background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(168, 85, 247, 0.2)); border-color: hsl(0 0% 20%);">
+                <i data-lucide="layout" class="w-12 h-12" style="color: hsl(0 0% 65%);"></i>
+              </div>
+              <div class="p-4 space-y-3">
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Hero Section</h3>
+                <p class="text-xs" style="color: hsl(0 0% 65%);">Modern hero with gradient background and CTA buttons</p>
+                <button class="w-full text-xs font-bold py-2 rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                  Add to Project
+                </button>
+              </div>
+            </div>
+
+            <!-- Pricing Cards -->
+            <div class="border rounded-2xl overflow-hidden transition-all cursor-pointer group hover:scale-105" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.5)'" onmouseout="this.style.borderColor='hsl(0 0% 20%)'">
+              <div class="aspect-video flex items-center justify-center border-b" style="background: linear-gradient(to bottom right, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2)); border-color: hsl(0 0% 20%);">
+                <i data-lucide="credit-card" class="w-12 h-12" style="color: hsl(0 0% 65%);"></i>
+              </div>
+              <div class="p-4 space-y-3">
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Pricing Cards</h3>
+                <p class="text-xs" style="color: hsl(0 0% 65%);">Beautiful pricing tiers with feature lists</p>
+                <button class="w-full text-xs font-bold py-2 rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                  Add to Project
+                </button>
+              </div>
+            </div>
+
+            <!-- Feature Grid -->
+            <div class="border rounded-2xl overflow-hidden transition-all cursor-pointer group hover:scale-105" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.5)'" onmouseout="this.style.borderColor='hsl(0 0% 20%)'">
+              <div class="aspect-video flex items-center justify-center border-b" style="background: linear-gradient(to bottom right, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2)); border-color: hsl(0 0% 20%);">
+                <i data-lucide="sparkles" class="w-12 h-12" style="color: hsl(0 0% 65%);"></i>
+              </div>
+              <div class="p-4 space-y-3">
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Feature Grid</h3>
+                <p class="text-xs" style="color: hsl(0 0% 65%);">Showcase features with icons and descriptions</p>
+                <button class="w-full text-xs font-bold py-2 rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                  Add to Project
+                </button>
+              </div>
+            </div>
+
+            <!-- Testimonials -->
+            <div class="border rounded-2xl overflow-hidden transition-all cursor-pointer group hover:scale-105" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.5)'" onmouseout="this.style.borderColor='hsl(0 0% 20%)'">
+              <div class="aspect-video flex items-center justify-center border-b" style="background: linear-gradient(to bottom right, rgba(249, 115, 22, 0.2), rgba(239, 68, 68, 0.2)); border-color: hsl(0 0% 20%);">
+                <i data-lucide="message-square" class="w-12 h-12" style="color: hsl(0 0% 65%);"></i>
+              </div>
+              <div class="p-4 space-y-3">
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Testimonials</h3>
+                <p class="text-xs" style="color: hsl(0 0% 65%);">Customer reviews with avatars and ratings</p>
+                <button class="w-full text-xs font-bold py-2 rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                  Add to Project
+                </button>
+              </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="border rounded-2xl overflow-hidden transition-all cursor-pointer group hover:scale-105" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.5)'" onmouseout="this.style.borderColor='hsl(0 0% 20%)'">
+              <div class="aspect-video flex items-center justify-center border-b" style="background: linear-gradient(to bottom right, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2)); border-color: hsl(0 0% 20%);">
+                <i data-lucide="mail" class="w-12 h-12" style="color: hsl(0 0% 65%);"></i>
+              </div>
+              <div class="p-4 space-y-3">
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Contact Form</h3>
+                <p class="text-xs" style="color: hsl(0 0% 65%);">Modern contact form with validation</p>
+                <button class="w-full text-xs font-bold py-2 rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                  Add to Project
+                </button>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="border rounded-2xl overflow-hidden transition-all cursor-pointer group hover:scale-105" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.5)'" onmouseout="this.style.borderColor='hsl(0 0% 20%)'">
+              <div class="aspect-video flex items-center justify-center border-b" style="background: linear-gradient(to bottom right, rgba(100, 116, 139, 0.2), rgba(71, 85, 105, 0.2)); border-color: hsl(0 0% 20%);">
+                <i data-lucide="layout" class="w-12 h-12" style="color: hsl(0 0% 65%);"></i>
+              </div>
+              <div class="p-4 space-y-3">
+                <h3 class="font-bold" style="color: hsl(0 0% 98%);">Footer</h3>
+                <p class="text-xs" style="color: hsl(0 0% 65%);">Complete footer with links and social icons</p>
+                <button class="w-full text-xs font-bold py-2 rounded-lg transition-all hover:opacity-90" style="background-color: rgb(59, 130, 246); color: white;">
+                  Add to Project
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deploy Tab -->
+      <div id="content-deploy" class="flex-1 overflow-auto p-8 hidden">
+        <div class="max-w-4xl mx-auto space-y-8">
+          <div>
+            <h2 class="text-2xl font-bold mb-2" style="color: hsl(0 0% 98%);">Deploy Your App</h2>
+            <p class="text-sm" style="color: hsl(0 0% 65%);">Ship your project to production in seconds</p>
+          </div>
+
+          <!-- Deployment Status -->
+          <div class="border rounded-2xl p-8 text-center space-y-4" style="background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1)); border-color: rgba(59, 130, 246, 0.3);">
+            <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style="background-color: rgba(59, 130, 246, 0.2);">
+              <i data-lucide="rocket" class="w-10 h-10" style="color: rgb(59, 130, 246);"></i>
+            </div>
+            <div>
+              <h3 class="text-2xl font-bold mb-2" style="color: hsl(0 0% 98%);">Ready to Deploy</h3>
+              <p style="color: hsl(0 0% 65%);">Your app is ready to be deployed to production</p>
+            </div>
+            <button class="flex items-center gap-2 px-8 py-3 font-bold rounded-xl transition-all hover:scale-105 active:scale-95 shadow-xl mx-auto" style="background-color: rgb(59, 130, 246); color: white;">
+              <i data-lucide="rocket" class="w-4 h-4"></i>
+              <span>Deploy Now</span>
+            </button>
+          </div>
+
+          <!-- Deployment Platforms -->
+          <div class="space-y-4">
+            <h3 class="font-bold" style="color: hsl(0 0% 98%);">Choose Platform</h3>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <div class="border rounded-2xl p-6 space-y-3 transition-all cursor-pointer hover:scale-105" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.5)'" onmouseout="this.style.borderColor='hsl(0 0% 20%)'">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: black;">
+                    <svg class="w-6 h-6" fill="white" viewBox="0 0 76 65">
+                      <path d="M37.5274 0L75.0548 65H0L37.5274 0Z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="font-bold" style="color: hsl(0 0% 98%);">Vercel</h4>
+                    <p class="text-xs" style="color: hsl(0 0% 65%);">Recommended for Next.js</p>
+                  </div>
+                </div>
+                <button class="w-full text-xs font-bold py-2 rounded-lg transition-all hover:opacity-90" style="background-color: hsl(0 0% 20%); color: hsl(0 0% 98%);">
+                  Deploy to Vercel
+                </button>
+              </div>
+
+              <div class="border rounded-2xl p-6 space-y-3 transition-all cursor-pointer hover:scale-105" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.5)'" onmouseout="this.style.borderColor='hsl(0 0% 20%)'">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: rgba(168, 85, 247, 0.2);">
+                    <i data-lucide="cloud" class="w-6 h-6" style="color: rgb(168, 85, 247);"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold" style="color: hsl(0 0% 98%);">Netlify</h4>
+                    <p class="text-xs" style="color: hsl(0 0% 65%);">Fast and reliable</p>
+                  </div>
+                </div>
+                <button class="w-full text-xs font-bold py-2 rounded-lg transition-all hover:opacity-90" style="background-color: hsl(0 0% 20%); color: hsl(0 0% 98%);">
+                  Deploy to Netlify
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Previous Deployments -->
+          <div class="space-y-4">
+            <h3 class="font-bold" style="color: hsl(0 0% 98%);">Deployment History</h3>
+            
+            <div class="border rounded-2xl p-6 space-y-4" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full" style="background-color: rgb(34, 197, 94);"></div>
+                  <div>
+                    <h4 class="font-bold text-sm" style="color: hsl(0 0% 98%);">Production</h4>
+                    <p class="text-xs" style="color: hsl(0 0% 65%);">Deployed 2 hours ago</p>
+                  </div>
+                </div>
+                <a href="#" class="flex items-center gap-1 text-xs font-bold hover:opacity-80 transition-opacity" style="color: rgb(59, 130, 246);">
+                  <span>Visit</span>
+                  <i data-lucide="external-link" class="w-3 h-3"></i>
+                </a>
+              </div>
+              <div class="text-xs" style="color: hsl(0 0% 65%);">
+                <span class="font-bold">URL:</span> https://aether-app.vercel.app
+              </div>
+            </div>
+
+            <div class="border rounded-2xl p-6 space-y-4" style="background-color: rgba(255, 255, 255, 0.05); border-color: hsl(0 0% 20%);">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full" style="background-color: hsl(0 0% 65%);"></div>
+                  <div>
+                    <h4 class="font-bold text-sm" style="color: hsl(0 0% 98%);">Preview</h4>
+                    <p class="text-xs" style="color: hsl(0 0% 65%);">Deployed 1 day ago</p>
+                  </div>
+                </div>
+                <a href="#" class="flex items-center gap-1 text-xs font-bold hover:opacity-80 transition-opacity" style="color: rgb(59, 130, 246);">
+                  <span>Visit</span>
+                  <i data-lucide="external-link" class="w-3 h-3"></i>
+                </a>
+              </div>
+              <div class="text-xs" style="color: hsl(0 0% 65%);">
+                <span class="font-bold">URL:</span> https://aether-app-preview.vercel.app
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
+    // Tab switching functionality
+    function switchTab(tabName) {
+      const contents = ['preview', 'code', 'settings', 'knowledge', 'history', 'components', 'deploy'];
+      
+      // Hide all content sections
+      contents.forEach(content => {
+        const element = document.getElementById('content-' + content);
+        if (element) {
+          element.classList.add('hidden');
+        }
+      });
+
+      // Show selected content
+      const selectedContent = document.getElementById('content-' + tabName);
+      if (selectedContent) {
+        selectedContent.classList.remove('hidden');
+      }
+
+      // Update tab button styles
+      contents.forEach(content => {
+        const button = document.getElementById('tab-' + content);
+        if (button) {
+          if (content === tabName) {
+            button.style.backgroundColor = 'hsl(0 0% 20%)';
+            button.style.color = 'hsl(210 40% 98%)';
+            button.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+          } else {
+            button.style.backgroundColor = 'transparent';
+            button.style.color = 'hsl(0 0% 65%)';
+            button.style.boxShadow = 'none';
+          }
+        }
+      });
+      
+      // Reinitialize icons after DOM changes
+      lucide.createIcons();
+    }
+
+    // Device switching functionality
+    function setDevice(deviceType) {
+      const devices = ['desktop', 'tablet', 'mobile'];
+      devices.forEach(device => {
+        const button = document.getElementById('device-' + device);
+        if (button) {
+          if (device === deviceType) {
+            button.style.backgroundColor = 'hsl(0 0% 20%)';
+            button.style.color = 'hsl(210 40% 98%)';
+            button.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+          } else {
+            button.style.backgroundColor = 'transparent';
+            button.style.color = 'hsl(0 0% 65%)';
+            button.style.boxShadow = 'none';
+          }
+        }
+      });
+      
+      lucide.createIcons();
+    }
+
+    // Initialize with preview tab active
+    switchTab('preview');
+  </script>
+</body>
+</html>

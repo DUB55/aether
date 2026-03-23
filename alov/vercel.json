@@ -1,0 +1,12 @@
+{
+  "buildCommand": "cd alov && npm install && npm run build",
+  "outputDirectory": "alov/.next",
+  "installCommand": "cd alov && npm install",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
+}
