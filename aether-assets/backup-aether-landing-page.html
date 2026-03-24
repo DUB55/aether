@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether | The Future of AI Development</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS Variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --landing-bg: #ffffff;
+            --primary: 240 10% 3.9%;
+            --primary-foreground: 0 0% 98%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --border: 214.3 31.8% 91.4%;
+            --glass-blur: 20px;
+            --glass-opacity: 0.03;
+            --glass-border-opacity: 0.08;
+        }
+
+        .dark {
+            --background: 0 0% 10%;
+            --foreground: 210 40% 98%;
+            --landing-bg: #1a1a1a;
+            --primary: 0 0% 98%;
+            --primary-foreground: 240 10% 3.9%;
+            --muted: 0 0% 20%;
+            --muted-foreground: 0 0% 65%;
+            --border: 0 0% 20%;
+            --glass-opacity: 0.05;
+            --glass-border-opacity: 0.1;
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            zoom: 0.9;
+        }
+
+        /* Liquid Glass Effect */
+        .liquid-glass {
+            background: rgba(255, 255, 255, var(--glass-opacity));
+            backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, var(--glass-border-opacity));
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.2, 0, 0.2, 1);
+        }
+
+        .dark .liquid-glass {
+            background: rgba(255, 255, 255, var(--glass-opacity));
+            border: 1px solid rgba(255, 255, 255, var(--glass-border-opacity));
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* Landing Background Gradients */
+        .landing-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100vh;
+            z-index: 0;
+            background-color: var(--landing-bg);
+            pointer-events: none;
+            transition: background-color 0.5s ease, background-image 0.5s ease;
+        }
+
+        .landing-bg.gradient-blue {
+            background-image:
+                radial-gradient(60% 40% at 50% 35%, rgba(154, 210, 255, 0.95) 0%, rgba(74, 163, 255, 0.8) 30%, rgba(138, 91, 255, 0) 70%),
+                radial-gradient(70% 50% at 50% 50%, rgba(255, 79, 216, 0.9) 0%, rgba(138, 91, 255, 0.7) 35%, rgba(255, 127, 202, 0) 70%),
+                radial-gradient(60% 40% at 50% 65%, rgba(255, 196, 100, 0.9) 0%, rgba(255, 179, 138, 0.75) 30%, rgba(255, 127, 202, 0) 70%);
+            filter: blur(100px) saturate(180%);
+        }
+
+        .dark .landing-bg.gradient-blue {
+            filter: blur(140px) saturate(220%);
+            background-image:
+                radial-gradient(70% 50% at 50% 35%, rgba(154, 210, 255, 0.85) 0%, rgba(74, 163, 255, 0.6) 30%, rgba(138, 91, 255, 0) 70%),
+                radial-gradient(80% 60% at 50% 50%, rgba(255, 79, 216, 0.8) 0%, rgba(138, 91, 255, 0.6) 35%, rgba(255, 127, 202, 0) 70%),
+                radial-gradient(70% 50% at 50% 65%, rgba(255, 196, 100, 0.8) 0%, rgba(255, 179, 138, 0.65) 30%, rgba(255, 127, 202, 0) 70%);
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen antialiased">
+
+    <!-- Navigation Bar -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 transition-all duration-500 bg-transparent border-b border-transparent">
+        <div class="flex items-center gap-10">
+            <a href="#" class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 dark:from-slate-200 dark:via-slate-100 dark:to-white shadow-lg shadow-slate-500/20"></div>
+                <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">Aether</span>
+            </a>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <button onclick="toggleTheme()" class="rounded-full w-9 h-9 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Landing Page -->
+    <div id="landing-page">
+        <div class="landing-bg gradient-blue"></div>
+        
+        <main class="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 pt-20">
+            <div class="max-w-4xl w-full text-center space-y-8">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 text-[13px] font-semibold border border-slate-200/50 dark:border-white/5">
+                    <span class="bg-slate-900 dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full text-[10px] uppercase font-black tracking-wider">Beta</span>
+                    Aether is now in public preview →
+                </div>
+
+                <h1 class="text-6xl md:text-[84px] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.05] mb-6">
+                    Build the future <br />
+                    <span class="bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 dark:from-white dark:via-slate-200 dark:to-slate-400 bg-clip-text text-transparent">with Aether AI</span>
+                </h1>
+
+                <p class="text-[18px] md:text-[22px] font-normal text-slate-700/80 dark:text-slate-300/80 max-w-2xl mx-auto tracking-normal leading-relaxed mb-4">
+                    The first autonomous platform that transforms your vision into production-ready software. Fast, free, and infinite.
+                </p>
+
+                <div class="max-w-3xl mx-auto mt-10">
+                    <form onsubmit="handleStartProject(event)" class="relative flex flex-col liquid-glass rounded-[32px] p-6 shadow-2xl dark:bg-white/[0.08] dark:border-white/[0.15] dark:backdrop-blur-3xl group transition-all duration-500 hover:dark:bg-white/[0.12] hover:dark:border-white/[0.2]">
+                        <textarea 
+                            id="landing-input"
+                            placeholder="Describe the application you want to build..."
+                            class="w-full h-36 bg-transparent border-none focus:ring-0 text-[20px] font-medium resize-none placeholder:text-slate-400 dark:placeholder:text-white/30 outline-none text-slate-800 dark:text-white leading-relaxed"
+                        ></textarea>
+                        <div class="flex items-center justify-between mt-2">
+                            <div class="flex items-center gap-4">
+                            </div>
+                            <div class="flex items-center gap-8">
+                                <button type="submit" class="bg-slate-100 dark:bg-[#333333] text-slate-500 dark:text-slate-400 rounded-full w-11 h-11 flex items-center justify-center hover:bg-[#111] hover:dark:bg-white hover:text-white hover:dark:text-black transition-all">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- Feature Cards Section -->
+        <section class="max-w-6xl mx-auto px-6 py-32 relative z-10">
+            <div class="grid md:grid-cols-3 gap-12">
+                <div class="space-y-4 p-8 rounded-[2rem] liquid-glass border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Instant Deployment</h3>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Watch your ideas come to life in seconds with our high-speed multi-agent orchestration.</p>
+                </div>
+                <div class="space-y-4 p-8 rounded-[2rem] liquid-glass border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Advanced Models</h3>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Powered by the latest LLMs, from local small models to the world's most capable cloud AI.</p>
+                </div>
+                <div class="space-y-4 p-8 rounded-[2rem] liquid-glass border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-pink-500/20 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">100% Private</h3>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Run everything locally for maximum security, or use our secure cloud routing for extra power.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            
+            if (isDark) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load theme from localStorage on page load
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        }
+
+        // Handle form submission
+        function handleStartProject(event) {
+            event.preventDefault();
+            
+            const input = document.getElementById('landing-input');
+            const text = input.value.trim();
+            
+            // Validate input
+            if (!text) {
+                // Visual feedback for empty input
+                input.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                setTimeout(() => {
+                    input.style.borderColor = '';
+                }, 1000);
+                return;
+            }
+            
+            // URL encode the text
+            const encodedPrompt = encodeURIComponent(text);
+            
+            // Navigate to editor with prompt parameter
+            window.location.href = `editor.html?prompt=${encodedPrompt}`;
+        }
+
+        // Handle Enter key in textarea
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            
+            const textarea = document.getElementById('landing-input');
+            textarea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleStartProject(e);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
