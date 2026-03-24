@@ -441,3 +441,364 @@ describe('CopyButton Component', () => {
 });
 
 console.log('CopyButton component tests defined. Run with a test runner like Jest to execute.');
+
+/**
+ * Bug Condition Exploration Test: Clipboard Permissions Fallback
+ * 
+ * **Validates: Requirements 2.1, 2.4**
+ * 
+ * This test explores the bug condition where the Clipboard API is blocked by permissions policy.
+ * 
+ * CRITICAL: This test is EXPECTED TO FAIL on unfixed code - failure confirms the bug exists.
+ * 
+ * Expected behavior (from design Property 1):
+ * - When Clipboard API throws NotAllowedError, copyFallback should be called
+ * - Success feedback should be shown to user
+ * 
+ * Expected outcome on UNFIXED code:
+ * - Test FAILS because copyFallback is not called
+ * - Error feedback is shown instead of success
+ * 
+ * Counterexample: "When Clipboard API throws NotAllowedError, copyFallback is not triggered and user sees error message"
+ */
+describe('Bug Condition Exploration: Clipboard Permissions Fallback', () => {
+  let mockButton;
+  let mockTargetElement;
+  let copyButton;
+  let copyFallbackSpy;
+  let showSuccessSpy;
+  let showErrorSpy;
+
+  beforeEach(() => {
+    // Reset mocks
+    mockButton = {
+      innerHTML: '<svg>copy-icon</svg>',
+      style: {},
+      addEventListener: jest.fn((event, handler) => {
+        mockButton._clickHandler = handler;
+      }),
+      click: function() {
+        if (this._clickHandler) this._clickHandler();
+      }
+    };
+
+    mockTargetElement = {
+      id: 'test-target',
+      value: 'Test URL to copy'
+    };
+
+    // Mock document.getElementById
+    global.document.getElementById = jest.fn((id) => {
+      if (id === 'test-target') return mockTargetElement;
+      return null;
+    });
+
+    // Mock document.createElement for fallback
+    global.document.createElement = jest.fn((tag) => {
+      if (tag === 'textarea') {
+        return {
+          value: '',
+          style: {},
+          select: jest.fn(),
+          remove: jest.fn()
+        };
+      }
+      return null;
+    });
+
+    // Mock document.body for fallback
+    global.document.body = {
+      appendChild: jest.fn(),
+      removeChild: jest.fn()
+    };
+
+    // Mock execCommand for fallback
+    global.document.execCommand = jest.fn().mockReturnValue(true);
+
+    // Mock setTimeout and clearTimeout
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test('EXPLORATION: Clipboard API blocked by permissions policy should trigger fallback', async () => {
+    // Mock navigator.clipboard.writeText to throw NotAllowedError (permissions policy violation)
+    const notAllowedError = new DOMException(
+      'Permissions policy violation: The Clipboard API has been blocked',
+      'NotAllowedError'
+    );
+    
+    global.navigator.clipboard = {
+      writeText: jest.fn().mockRejectedValue(notAllowedError)
+    };
+
+    // Create CopyButton instance
+    copyButton = new CopyButton('test-target', mockButton);
+
+    // Spy on copyFallback method
+    copyFallbackSpy = jest.spyOn(copyButton, 'copyFallback');
+    showSuccessSpy = jest.spyOn(copyButton, 'showSuccess');
+    showErrorSpy = jest.spyOn(copyButton, 'showError');
+
+    // Simulate user clicking copy button
+    await copyButton.copy();
+
+    // EXPECTED BEHAVIOR (from Property 1):
+    // When Clipboard API throws NotAllowedError, copyFallback should be called
+    expect(copyFallbackSpy).toHaveBeenCalledWith('Test URL to copy');
+    
+    // Success feedback should be shown to user
+    expect(showSuccessSpy).toHaveBeenCalled();
+    expect(copyButton.state).toBe('success');
+    
+    // Error should NOT be shown
+    expect(showErrorSpy).not.toHaveBeenCalled();
+
+    // EXPECTED OUTCOME ON UNFIXED CODE:
+    // This test will FAIL because:
+    // - copyFallback is NOT called (the catch block shows error instead)
+    // - showError IS called instead of showSuccess
+    // - copyButton.state is 'error' instead of 'success'
+    //
+    // Counterexample documented: "When Clipboard API throws NotAllowedError, 
+    // copyFallback is not triggered and user sees error message"
+  });
+
+  test('EXPLORATION: Clipboard API blocked by SecurityError should trigger fallback', async () => {
+    // Mock navigator.clipboard.writeText to throw SecurityError (another permissions-related error)
+    const securityError = new DOMException(
+      'Security error: Clipboard access denied',
+      'SecurityError'
+    );
+    
+    global.navigator.clipboard = {
+      writeText: jest.fn().mockRejectedValue(securityError)
+    };
+
+    // Create CopyButton instance
+    copyButton = new CopyButton('test-target', mockButton);
+
+    // Spy on copyFallback method
+    copyFallbackSpy = jest.spyOn(copyButton, 'copyFallback');
+    showSuccessSpy = jest.spyOn(copyButton, 'showSuccess');
+    showErrorSpy = jest.spyOn(copyButton, 'showError');
+
+    // Simulate user clicking copy button
+    await copyButton.copy();
+
+    // EXPECTED BEHAVIOR (from Property 1):
+    // When Clipboard API throws SecurityError, copyFallback should be called
+    expect(copyFallbackSpy).toHaveBeenCalledWith('Test URL to copy');
+    
+    // Success feedback should be shown to user
+    expect(showSuccessSpy).toHaveBeenCalled();
+    expect(copyButton.state).toBe('success');
+    
+    // Error should NOT be shown
+    expect(showErrorSpy).not.toHaveBeenCalled();
+
+    // EXPECTED OUTCOME ON UNFIXED CODE:
+    // This test will FAIL for the same reasons as the NotAllowedError test
+  });
+});
+
+console.log('Bug condition exploration tests for clipboard permissions defined.');
+
+/**
+ * Bug Condition Exploration Test: switchTab Null Reference Errors
+ * 
+ * **Validates: Requirements 2.3**
+ * 
+ * This test explores the bug condition where switchTab attempts to access classList
+ * on DOM elements that don't exist, causing "Cannot read properties of null" errors.
+ * 
+ * CRITICAL: This test is EXPECTED TO FAIL on unfixed code - failure confirms the bug exists.
+ * 
+ * Expected behavior (from design Property 3):
+ * - When pane elements are missing from DOM, no TypeError should be thrown
+ * - Existing elements should still be updated correctly
+ * 
+ * Expected outcome on UNFIXED code:
+ * - Test FAILS with TypeError: Cannot read properties of null (reading 'classList')
+ * 
+ * Counterexamples:
+ * - "When pane-history is missing, switchTab('history') throws TypeError on classList access"
+ * - "When pane-deploy is missing, switchTab('deploy') throws TypeError on classList access"
+ * - "When pane-code is missing, switchTab('code') throws TypeError on classList access"
+ */
+
+// Mock switchTab function (copy from app.js for testing)
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+  document.getElementById('pane-preview').style.display = tab === 'preview' ? 'flex' : 'none';
+  document.getElementById('pane-code').classList.toggle('on', tab === 'code');
+  ['history','deploy'].forEach(p => document.getElementById(`pane-${p}`).classList.toggle('on', tab === p));
+  refreshIcons();
+}
+
+// Mock refreshIcons function
+function refreshIcons() {
+  // No-op for testing
+}
+
+describe('Bug Condition Exploration: switchTab Null Reference Errors', () => {
+  let mockElements;
+
+  beforeEach(() => {
+    // Reset mock elements
+    mockElements = {
+      'pane-preview': {
+        style: { display: 'flex' }
+      },
+      'pane-code': {
+        classList: {
+          toggle: jest.fn()
+        }
+      },
+      'pane-history': {
+        classList: {
+          toggle: jest.fn()
+        }
+      },
+      'pane-deploy': {
+        classList: {
+          toggle: jest.fn()
+        }
+      }
+    };
+
+    // Mock querySelectorAll for tab elements
+    global.document.querySelectorAll = jest.fn((selector) => {
+      if (selector === '.tab') {
+        return [
+          { classList: { toggle: jest.fn() }, dataset: { tab: 'preview' } },
+          { classList: { toggle: jest.fn() }, dataset: { tab: 'code' } },
+          { classList: { toggle: jest.fn() }, dataset: { tab: 'history' } },
+          { classList: { toggle: jest.fn() }, dataset: { tab: 'deploy' } }
+        ];
+      }
+      return [];
+    });
+
+    // Mock document.getElementById
+    global.document.getElementById = jest.fn((id) => {
+      return mockElements[id] || null;
+    });
+  });
+
+  test('EXPLORATION: switchTab with missing pane-history should not throw TypeError', () => {
+    // Remove pane-history element from DOM (simulate missing element)
+    delete mockElements['pane-history'];
+
+    // EXPECTED BEHAVIOR (from Property 3):
+    // No TypeError should be thrown when pane-history is missing
+    expect(() => {
+      switchTab('history');
+    }).not.toThrow();
+
+    // Existing elements should still be updated correctly
+    expect(mockElements['pane-preview'].style.display).toBe('none');
+    expect(mockElements['pane-code'].classList.toggle).toHaveBeenCalledWith('on', false);
+
+    // EXPECTED OUTCOME ON UNFIXED CODE:
+    // This test will FAIL with:
+    // TypeError: Cannot read properties of null (reading 'classList')
+    // at line: document.getElementById(`pane-${p}`).classList.toggle('on', tab === p)
+    //
+    // Counterexample documented: "When pane-history is missing, 
+    // switchTab('history') throws TypeError on classList access"
+  });
+
+  test('EXPLORATION: switchTab with missing pane-deploy should not throw TypeError', () => {
+    // Remove pane-deploy element from DOM (simulate missing element)
+    delete mockElements['pane-deploy'];
+
+    // EXPECTED BEHAVIOR (from Property 3):
+    // No TypeError should be thrown when pane-deploy is missing
+    expect(() => {
+      switchTab('deploy');
+    }).not.toThrow();
+
+    // Existing elements should still be updated correctly
+    expect(mockElements['pane-preview'].style.display).toBe('none');
+    expect(mockElements['pane-code'].classList.toggle).toHaveBeenCalledWith('on', false);
+
+    // EXPECTED OUTCOME ON UNFIXED CODE:
+    // This test will FAIL with:
+    // TypeError: Cannot read properties of null (reading 'classList')
+    //
+    // Counterexample documented: "When pane-deploy is missing, 
+    // switchTab('deploy') throws TypeError on classList access"
+  });
+
+  test('EXPLORATION: switchTab with missing pane-code should not throw TypeError', () => {
+    // Remove pane-code element from DOM (simulate missing element)
+    delete mockElements['pane-code'];
+
+    // EXPECTED BEHAVIOR (from Property 3):
+    // No TypeError should be thrown when pane-code is missing
+    expect(() => {
+      switchTab('code');
+    }).not.toThrow();
+
+    // Existing elements should still be updated correctly
+    expect(mockElements['pane-preview'].style.display).toBe('none');
+
+    // EXPECTED OUTCOME ON UNFIXED CODE:
+    // This test will FAIL with:
+    // TypeError: Cannot read properties of null (reading 'classList')
+    // at line: document.getElementById('pane-code').classList.toggle('on', tab === 'code')
+    //
+    // Counterexample documented: "When pane-code is missing, 
+    // switchTab('code') throws TypeError on classList access"
+  });
+
+  test('EXPLORATION: switchTab with missing pane-preview should not throw TypeError', () => {
+    // Remove pane-preview element from DOM (simulate missing element)
+    delete mockElements['pane-preview'];
+
+    // EXPECTED BEHAVIOR (from Property 3):
+    // No TypeError should be thrown when pane-preview is missing
+    expect(() => {
+      switchTab('preview');
+    }).not.toThrow();
+
+    // Existing elements should still be updated correctly
+    expect(mockElements['pane-code'].classList.toggle).toHaveBeenCalledWith('on', false);
+
+    // EXPECTED OUTCOME ON UNFIXED CODE:
+    // This test will FAIL with:
+    // TypeError: Cannot read properties of null (reading 'style')
+    // at line: document.getElementById('pane-preview').style.display = ...
+    //
+    // Counterexample documented: "When pane-preview is missing, 
+    // switchTab('preview') throws TypeError on style access"
+  });
+
+  test('EXPLORATION: switchTab with multiple missing panes should not throw TypeError', () => {
+    // Remove multiple pane elements from DOM (simulate missing elements)
+    delete mockElements['pane-history'];
+    delete mockElements['pane-deploy'];
+
+    // EXPECTED BEHAVIOR (from Property 3):
+    // No TypeError should be thrown when multiple panes are missing
+    expect(() => {
+      switchTab('history');
+    }).not.toThrow();
+
+    expect(() => {
+      switchTab('deploy');
+    }).not.toThrow();
+
+    // Existing elements should still be updated correctly
+    expect(mockElements['pane-preview'].style.display).toBe('none');
+    expect(mockElements['pane-code'].classList.toggle).toHaveBeenCalled();
+
+    // EXPECTED OUTCOME ON UNFIXED CODE:
+    // This test will FAIL with TypeError for each missing pane
+  });
+});
+
+console.log('Bug condition exploration tests for switchTab null references defined.');

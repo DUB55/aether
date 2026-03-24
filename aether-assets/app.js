@@ -38,33 +38,41 @@ class CopyButton {
    * Returns a promise that resolves on success or rejects on failure
    */
   async copy() {
-    // Get the text to copy
-    const targetElement = document.getElementById(this.targetElementId);
-    if (!targetElement) {
-      this.showError();
-      return;
-    }
-    
-    const text = targetElement.value || targetElement.textContent || '';
-    if (!text) {
-      this.showError();
-      return;
+      // Get the text to copy
+      const targetElement = document.getElementById(this.targetElementId);
+      if (!targetElement) {
+        this.showError();
+        return;
+      }
+
+      const text = targetElement.value || targetElement.textContent || '';
+      if (!text) {
+        this.showError();
+        return;
+      }
+
+      try {
+        // Try modern Clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          this.showSuccess();
+        } else {
+          // Fallback for older browsers
+          this.copyFallback(text);
+        }
+      } catch (error) {
+        // Check if error is due to permissions policy or security restrictions
+        if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+          console.warn('Clipboard API blocked, using fallback:', error.message);
+          this.copyFallback(text);
+        } else {
+          console.warn('Copy failed, trying fallback:', error);
+          // Try fallback as last resort
+          this.copyFallback(text);
+        }
+      }
     }
 
-    try {
-      // Try modern Clipboard API first
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-        this.showSuccess();
-      } else {
-        // Fallback for older browsers
-        this.copyFallback(text);
-      }
-    } catch (error) {
-      console.error('Copy failed:', error);
-      this.showError();
-    }
-  }
 
   /**
    * Fallback copy method using execCommand
@@ -414,8 +422,8 @@ function withDefaults(p) {
 projects = projects.map(withDefaults);
 
 function persistProjects() { localStorage.setItem('dub5-projects', JSON.stringify(projects)); }
-function updateRunState(label) { document.getElementById('run-state').textContent = label; }
-function updateChangeSummary(text) { document.getElementById('change-summary').textContent = text; }
+function updateRunState(label) { /* Removed - UI element hidden */ }
+function updateChangeSummary(text) { /* Removed - UI element hidden */ }
 function getIndexHTML() { return files.find(f => f.name === 'index.html')?.content || ''; }
 function getFileContent(name) { return files.find(f => f.name === name)?.content || ''; }
 function isViewerMode() {
@@ -881,11 +889,27 @@ function dlHTML() {
 
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
-  document.getElementById('pane-preview').style.display = tab === 'preview' ? 'flex' : 'none';
-  document.getElementById('pane-code').classList.toggle('on', tab === 'code');
-  ['history','deploy'].forEach(p => document.getElementById(`pane-${p}`).classList.toggle('on', tab === p));
+
+  const previewPane = document.getElementById('pane-preview');
+  if (previewPane) {
+    previewPane.style.display = tab === 'preview' ? 'flex' : 'none';
+  }
+
+  const codePane = document.getElementById('pane-code');
+  if (codePane) {
+    codePane.classList.toggle('on', tab === 'code');
+  }
+
+  ['history', 'deploy'].forEach(p => {
+    const pane = document.getElementById(`pane-${p}`);
+    if (pane) {
+      pane.classList.toggle('on', tab === p);
+    }
+  });
+
   refreshIcons();
 }
+
 
 function dialog(title, msg, { input = false, okText = 'OK', cancelText = 'Cancel', value = '' } = {}) {
   return new Promise(resolve => {
@@ -1320,6 +1344,7 @@ async function send() {
   let statusEl = null;
 
   try {
+    console.log('Sending AI request to:', APP_CONFIG.aiEndpoint);
     const response = await fetch(APP_CONFIG.aiEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1333,7 +1358,27 @@ async function send() {
       }),
       signal: ctrl.signal,
     });
-    if (!response.ok) throw new Error(`AI request failed (${response.status})`);
+    if (!response.ok) {
+      // Try to get error details from response body
+      let errorDetails = '';
+      try {
+        const errorBody = await response.text();
+        errorDetails = errorBody ? ` - ${errorBody}` : '';
+        console.error('AI request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          endpoint: APP_CONFIG.aiEndpoint,
+          body: errorBody
+        });
+      } catch (e) {
+        console.error('AI request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          endpoint: APP_CONFIG.aiEndpoint
+        });
+      }
+      throw new Error(`AI request failed (${response.status})${errorDetails}`);
+    }
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let sse = '';
@@ -1398,9 +1443,24 @@ async function send() {
   } catch (error) {
     rmTyping();
     if (error.name !== 'AbortError') {
+      // Distinguish between network errors and HTTP errors
+      const isNetworkError = error instanceof TypeError && error.message.includes('fetch');
+      console.error('AI chat error:', {
+        message: error.message,
+        endpoint: APP_CONFIG.aiEndpoint,
+        errorType: isNetworkError ? 'Network Error' : 'HTTP Error',
+        error: error
+      });
+      
       const ai = ensureAiMsg();
-      ai.textContent = `Warning: ${error.message}`;
-      chatHist.push({ role: 'assistant', content: `Warning: ${error.message}` });
+      let userMessage = `Warning: ${error.message}`;
+      if (isNetworkError) {
+        userMessage += '. Please check your network connection and try again.';
+      } else {
+        userMessage += '. Please try again later or check the console for details.';
+      }
+      ai.textContent = userMessage;
+      chatHist.push({ role: 'assistant', content: userMessage });
       updateRunState('Error'); updateChangeSummary(error.message); saveCurrentProject();
     } else {
       updateRunState('Stopped'); updateChangeSummary('Generation stopped.');

@@ -1,0 +1,19 @@
+{
+  "name": "aether-assets-tests",
+  "version": "1.0.0",
+  "description": "Tests for Aether assets",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "fast-check": "^4.6.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testMatch": [
+      "**/*.test.js"
+    ]
+  }
+}
