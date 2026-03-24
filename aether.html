@@ -86,6 +86,16 @@
                 radial-gradient(70% 50% at 50% 65%, rgba(255, 196, 100, 0.8) 0%, rgba(255, 179, 138, 0.65) 30%, rgba(255, 127, 202, 0) 70%);
         }
 
+        /* Animations */
+        @keyframes bounce-intense {
+            0%, 100% { transform: translateY(-50%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        }
+
+        .animate-bounce-intense {
+            animation: bounce-intense 0.6s infinite;
+        }
+
         /* Hide scrollbar but keep functionality */
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
@@ -94,6 +104,14 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        /* Page transitions */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
     </style>
 </head>
 <body class="min-h-screen antialiased">
@@ -101,10 +119,17 @@
     <!-- Navigation Bar -->
     <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 transition-all duration-500 bg-transparent border-b border-transparent">
         <div class="flex items-center gap-10">
-            <a href="#" class="flex items-center gap-2">
+            <a href="#" onclick="showPage('landing')" class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 dark:from-slate-200 dark:via-slate-100 dark:to-white shadow-lg shadow-slate-500/20"></div>
                 <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">Aether</span>
             </a>
+            
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#" onclick="showPage('docs')" class="text-[15px] font-semibold text-[#444] dark:text-slate-300/70 hover:text-black dark:hover:text-white transition-colors">Documentation</a>
+                <a href="#" onclick="showPage('community')" class="text-[15px] font-semibold text-[#444] dark:text-slate-300/70 hover:text-black dark:hover:text-white transition-colors">Community</a>
+                <a href="#" onclick="showPage('changelog')" class="text-[15px] font-semibold text-[#444] dark:text-slate-300/70 hover:text-black dark:hover:text-white transition-colors">Changelog</a>
+                <a href="https://github.com" target="_blank" class="text-[15px] font-semibold text-[#444] dark:text-slate-300/70 hover:text-black dark:hover:text-white transition-colors">Github</a>
+            </div>
         </div>
 
         <div class="flex items-center gap-6">
@@ -112,11 +137,13 @@
                 <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
             </button>
+            <a href="#" onclick="showPage('login')" class="text-sm font-semibold text-[#111] dark:text-white/70 hover:text-black dark:hover:text-white transition-colors">Log in</a>
+            <a href="#" onclick="showPage('signup')" class="bg-white/10 hover:bg-white/20 dark:bg-white/10 dark:hover:bg-white/20 text-slate-900 dark:text-white border border-slate-200/50 dark:border-white/10 rounded-xl px-5 py-2 text-sm font-bold shadow-sm backdrop-blur-md transition-all">Get started</a>
         </div>
     </nav>
 
     <!-- Landing Page -->
-    <div id="landing-page">
+    <div id="landing-page" class="page active">
         <div class="landing-bg gradient-blue"></div>
         
         <main class="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 pt-20">
@@ -144,14 +171,53 @@
                         ></textarea>
                         <div class="flex items-center justify-between mt-2">
                             <div class="flex items-center gap-4">
+                                <button type="button" class="text-slate-400 dark:text-white/40 p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
                             </div>
                             <div class="flex items-center gap-8">
+                                <div class="flex bg-slate-100/80 dark:bg-white/5 p-1 rounded-xl border border-slate-200/50 dark:border-white/5 backdrop-blur-sm gap-0.5">
+                                    <button type="button" onclick="changeGradient('blue')" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-white dark:bg-white/10 shadow-sm ring-1 ring-slate-200 dark:ring-white/20">
+                                        <div class="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-blue-400 to-purple-500"></div>
+                                    </button>
+                                    <button type="button" onclick="changeGradient('pink')" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all opacity-40 hover:opacity-100">
+                                        <div class="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400"></div>
+                                    </button>
+                                    <button type="button" onclick="changeGradient('emerald')" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all opacity-40 hover:opacity-100">
+                                        <div class="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500"></div>
+                                    </button>
+                                </div>
+                                
                                 <button type="submit" class="bg-slate-100 dark:bg-[#333333] text-slate-500 dark:text-slate-400 rounded-full w-11 h-11 flex items-center justify-center hover:bg-[#111] hover:dark:bg-white hover:text-white hover:dark:text-black transition-all">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
                                 </button>
                             </div>
                         </div>
                     </form>
+
+                    <div class="mt-12 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Recent Projects</h3>
+                            <button onclick="showPage('projects')" class="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-all">
+                                View all projects 
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <button onclick="showPage('editor')" class="flex flex-col items-start p-4 rounded-2xl liquid-glass text-left group border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors">
+                                <div class="text-sm font-bold truncate w-full mb-1">My SaaS Landing Page</div>
+                                <div class="text-[11px] text-slate-500">Modified 12/15/2024</div>
+                            </button>
+                            <button onclick="showPage('editor')" class="flex flex-col items-start p-4 rounded-2xl liquid-glass text-left group border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors">
+                                <div class="text-sm font-bold truncate w-full mb-1">E-commerce Dashboard</div>
+                                <div class="text-[11px] text-slate-500">Modified 12/14/2024</div>
+                            </button>
+                            <button onclick="showPage('editor')" class="flex flex-col items-start p-4 rounded-2xl liquid-glass text-left group border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors">
+                                <div class="text-sm font-bold truncate w-full mb-1">Portfolio Website</div>
+                                <div class="text-[11px] text-slate-500">Modified 12/13/2024</div>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -184,6 +250,41 @@
         </section>
     </div>
 
+    <!-- Editor Page -->
+    <div id="editor-page" class="page">
+        <div class="flex flex-col h-screen bg-slate-950 text-white overflow-hidden">
+            <!-- Editor Header -->
+            <header class="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-xl z-50">
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2 cursor-pointer group" onclick="showPage('landing')">
+                        <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <div class="w-4 h-4 rounded-full border-2 border-slate-900"></div>
+                        </div>
+                        <span class="font-bold text-lg tracking-tight">Aether</span>
+                    </div>
+                    
+                    <div class="h-6 w-px bg-slate-800 mx-2"></div>
+                    
+                    <div class="flex items-center gap-1 bg-slate-800/30 p-1 rounded-xl border border-slate-700/50">
+                        <button onclick="switchEditorTab('preview')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-white shadow-sm">
+                            <svg class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Preview
+                        </button>
+                        <button onclick="switchEditorTab('code')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+                            <svg class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                            Code
+                        </button>
+                        <button onclick="switchEditorTab('settings')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+                            <svg class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap=
+"round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Settings
+                        </button>
+                    </div>
+                </div>
+            </header>
+        </div>
+    </div>
+
     <script>
         // Theme toggle functionality
         function toggleTheme() {
@@ -209,7 +310,7 @@
             }
         }
 
-        // Handle form submission
+        // Handle form submission - Navigate to editor.html with prompt
         function handleStartProject(event) {
             event.preventDefault();
             
@@ -229,7 +330,7 @@
             // URL encode the text
             const encodedPrompt = encodeURIComponent(text);
             
-            // Navigate to editor with prompt parameter
+            // Navigate to editor.html with prompt parameter
             window.location.href = `editor.html?prompt=${encodedPrompt}`;
         }
 
@@ -238,13 +339,26 @@
             loadTheme();
             
             const textarea = document.getElementById('landing-input');
-            textarea.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleStartProject(e);
-                }
-            });
+            if (textarea) {
+                textarea.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleStartProject(e);
+                    }
+                });
+            }
         });
+
+        // Gradient change functionality (placeholder)
+        function changeGradient(color) {
+            // This function can be implemented to change background gradients
+            console.log('Changing gradient to:', color);
+        }
+
+        // Page navigation (placeholder for multi-page functionality)
+        function showPage(pageName) {
+            console.log('Navigating to page:', pageName);
+        }
     </script>
 </body>
 </html>
