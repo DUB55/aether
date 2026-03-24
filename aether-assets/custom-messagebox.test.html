@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CustomMessagebox Test</title>
+  <style>
+    :root {
+      --mono: 'Courier New', monospace;
+      --t3: #9ca3af;
+      --bdr2: #3f3f46;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #000;
+      color: #fff;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #333;
+      border-radius: 8px;
+    }
+    .test-section h2 {
+      margin-top: 0;
+      color: #93c5fd;
+    }
+    .btn {
+      border: 1px solid rgba(255,255,255,.15);
+      background: #0a0a0a;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 9px;
+      font-size: 12px;
+      padding: 7px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 5px;
+    }
+    .btn:hover {
+      border-color: var(--bdr2);
+    }
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(8px);
+      z-index: 400;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-bg.on {
+      display: flex;
+    }
+    .modal {
+      width: min(520px,92vw);
+      background: #0a0a0a;
+      border: 1px solid #1f1f1f;
+      border-radius: 12px;
+      padding: 14px;
+      color: #fff;
+    }
+    .modal h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    .modal p {
+      font-size: 12.5px;
+      color: #cbd5e1;
+      margin-bottom: 10px;
+    }
+    .modal-acts {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+    .share-field {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin: 8px 0;
+    }
+    .share-input {
+      flex: 1;
+      background: #000;
+      border: 1px solid #1f1f1f;
+      border-radius: 8px;
+      color: #fff;
+      padding: 8px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      outline: none;
+    }
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .pass { color: #10b981; }
+    .fail { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <h1>CustomMessagebox Component Tests</h1>
+  
+  <div class="test-section">
+    <h2>Test 1: Basic Message</h2>
+    <p>Shows a simple message with title and close button</p>
+    <button class="btn" onclick="test1()">Run Test 1</button>
+    <div id="result1" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 2: Message with URL and Copy Button</h2>
+    <p>Shows a message with URL field and copy button</p>
+    <button class="btn" onclick="test2()">Run Test 2</button>
+    <div id="result2" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 3: Message with URL, Copy, and Open Buttons</h2>
+    <p>Shows a message with URL field, copy button, and open button</p>
+    <button class="btn" onclick="test3()">Run Test 3</button>
+    <div id="result3" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 4: Error Message (No URL)</h2>
+    <p>Shows an error message without URL field</p>
+    <button class="btn" onclick="test4()">Run Test 4</button>
+    <div id="result4" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 5: onClose Callback</h2>
+    <p>Tests that onClose callback is called when modal is closed</p>
+    <button class="btn" onclick="test5()">Run Test 5</button>
+    <div id="result5" class="result"></div>
+  </div>
+
+  <!-- CustomMessagebox HTML Structure -->
+  <div id="custom-messagebox-bg" class="modal-bg" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3 id="custom-messagebox-title">Message</h3>
+      <p id="custom-messagebox-message">...</p>
+      <div id="custom-messagebox-url-row" class="share-field" style="display:none">
+        <input id="custom-messagebox-url" class="share-input" readonly value=""/>
+      </div>
+      <div class="modal-acts">
+        <button class="btn" id="custom-messagebox-copy-btn" style="display:none">
+          Copy
+        </button>
+        <button class="btn" id="custom-messagebox-open-btn" style="display:none">
+          Open in New Tab
+        </button>
+        <button class="btn" id="custom-messagebox-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import the necessary classes from app.js
+    // For testing, we'll inline the classes here
+
+    class CopyButton {
+      constructor(targetElementId, buttonElement) {
+        this.targetElementId = targetElementId;
+        this.buttonElement = buttonElement;
+        this.state = 'idle';
+        this.timeoutId = null;
+        this.originalHTML = buttonElement.innerHTML;
+        
+        this.buttonElement.addEventListener('click', () => this.copy());
+      }
+
+      async copy() {
+        const targetElement = document.getElementById(this.targetElementId);
+        if (!targetElement) {
+          this.showError();
+          return;
+        }
+        
+        const text = targetElement.value || targetElement.textContent || '';
+        if (!text) {
+          this.showError();
+          return;
+        }
+
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            this.showSuccess();
+          } else {
+            this.copyFallback(text);
+          }
+        } catch (error) {
+          console.error('Copy failed:', error);
+          this.showError();
+        }
+      }
+
+      copyFallback(text) {
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          const success = document.execCommand('copy');
+          document.body.removeChild(textarea);
+          
+          if (success) {
+            this.showSuccess();
+          } else {
+            this.showError();
+          }
+        } catch (error) {
+          console.error('Fallback copy failed:', error);
+          this.showError();
+        }
+      }
+
+      showSuccess() {
+        this.clearTimeout();
+        this.state = 'success';
+        this.buttonElement.innerHTML = '✓';
+        this.buttonElement.style.color = '#10b981';
+        this.timeoutId = setTimeout(() => this.reset(), 2000);
+      }
+
+      showError() {
+        this.clearTimeout();
+        this.state = 'error';
+        this.buttonElement.innerHTML = '✗';
+        this.buttonElement.style.color = '#ef4444';
+        this.timeoutId = setTimeout(() => this.reset(), 2000);
+      }
+
+      reset() {
+        this.clearTimeout();
+        this.state = 'idle';
+        this.buttonElement.innerHTML = this.originalHTML;
+        this.buttonElement.style.color = '';
+      }
+
+      clearTimeout() {
+        if (this.timeoutId) {
+          clearTimeout(this.timeoutId);
+          this.timeoutId = null;
+        }
+      }
+    }
+
+    class CustomMessagebox {
+      constructor() {
+        this.isVisible = false;
+        this.copyButton = null;
+      }
+
+      show(config) {
+        const {
+          title = '',
+          message = '',
+          url = '',
+          showCopyButton = false,
+          showOpenButton = false,
+          onClose = null
+        } = config;
+
+        const bg = document.getElementById('custom-messagebox-bg');
+        const titleEl = document.getElementById('custom-messagebox-title');
+        const messageEl = document.getElementById('custom-messagebox-message');
+        const urlRow = document.getElementById('custom-messagebox-url-row');
+        const urlInput = document.getElementById('custom-messagebox-url');
+        const copyBtn = document.getElementById('custom-messagebox-copy-btn');
+        const openBtn = document.getElementById('custom-messagebox-open-btn');
+        const closeBtn = document.getElementById('custom-messagebox-close-btn');
+
+        if (!bg) {
+          console.error('CustomMessagebox: Modal element not found in DOM');
+          return;
+        }
+
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+
+        if (url) {
+          urlInput.value = url;
+          urlRow.style.display = 'flex';
+        } else {
+          urlRow.style.display = 'none';
+        }
+
+        if (showCopyButton && url) {
+          copyBtn.style.display = 'inline-flex';
+          if (this.copyButton) {
+            this.copyButton.clearTimeout();
+          }
+          this.copyButton = new CopyButton('custom-messagebox-url', copyBtn);
+        } else {
+          copyBtn.style.display = 'none';
+        }
+
+        if (showOpenButton && url) {
+          openBtn.style.display = 'inline-flex';
+          openBtn.onclick = () => {
+            window.open(url, '_blank', 'noopener,noreferrer');
+          };
+        } else {
+          openBtn.style.display = 'none';
+        }
+
+        closeBtn.onclick = () => {
+          this.hide();
+          if (onClose) onClose();
+        };
+
+        bg.classList.add('on');
+        this.isVisible = true;
+      }
+
+      hide() {
+        const bg = document.getElementById('custom-messagebox-bg');
+        if (bg) {
+          bg.classList.remove('on');
+        }
+        this.isVisible = false;
+        
+        if (this.copyButton) {
+          this.copyButton.clearTimeout();
+          this.copyButton = null;
+        }
+      }
+    }
+
+    // Create global instance
+    window.messagebox = new CustomMessagebox();
+
+    // Test functions
+    window.test1 = function() {
+      const result = document.getElementById('result1');
+      result.innerHTML = 'Running test...';
+      
+      try {
+        window.messagebox.show({
+          title: 'Test Message',
+          message: 'This is a basic message with no URL or buttons.'
+        });
+        
+        // Check if modal is visible
+        const bg = document.getElementById('custom-messagebox-bg');
+        const isVisible = bg.classList.contains('on');
+        const title = document.getElementById('custom-messagebox-title').textContent;
+        const message = document.getElementById('custom-messagebox-message').textContent;
+        const urlRow = document.getElementById('custom-messagebox-url-row');
+        
+        if (isVisible && title === 'Test Message' && message === 'This is a basic message with no URL or buttons.' && urlRow.style.display === 'none') {
+          result.innerHTML = '<span class="pass">✓ PASS: Modal displayed correctly</span>';
+        } else {
+          result.innerHTML = '<span class="fail">✗ FAIL: Modal not displayed correctly</span>';
+        }
+      } catch (error) {
+        result.innerHTML = `<span class="fail">✗ FAIL: ${error.message}</span>`;
+      }
+    };
+
+    window.test2 = function() {
+      const result = document.getElementById('result2');
+      result.innerHTML = 'Running test...';
+      
+      try {
+        window.messagebox.show({
+          title: 'Deployment Successful',
+          message: 'Your project has been deployed.',
+          url: 'https://example.com/project/123',
+          showCopyButton: true
+        });
+        
+        const bg = document.getElementById('custom-messagebox-bg');
+        const isVisible = bg.classList.contains('on');
+        const urlRow = document.getElementById('custom-messagebox-url-row');
+        const urlInput = document.getElementById('custom-messagebox-url');
+        const copyBtn = document.getElementById('custom-messagebox-copy-btn');
+        
+        if (isVisible && urlRow.style.display === 'flex' && urlInput.value === 'https://example.com/project/123' && copyBtn.style.display === 'inline-flex') {
+          result.innerHTML = '<span class="pass">✓ PASS: Modal with URL and copy button displayed correctly</span>';
+        } else {
+          result.innerHTML = '<span class="fail">✗ FAIL: Modal not displayed correctly</span>';
+        }
+      } catch (error) {
+        result.innerHTML = `<span class="fail">✗ FAIL: ${error.message}</span>`;
+      }
+    };
+
+    window.test3 = function() {
+      const result = document.getElementById('result3');
+      result.innerHTML = 'Running test...';
+      
+      try {
+        window.messagebox.show({
+          title: 'Deployment Successful',
+          message: 'Your project has been deployed and is ready to share.',
+          url: 'https://example.com/project/456',
+          showCopyButton: true,
+          showOpenButton: true
+        });
+        
+        const bg = document.getElementById('custom-messagebox-bg');
+        const isVisible = bg.classList.contains('on');
+        const copyBtn = document.getElementById('custom-messagebox-copy-btn');
+        const openBtn = document.getElementById('custom-messagebox-open-btn');
+        
+        if (isVisible && copyBtn.style.display === 'inline-flex' && openBtn.style.display === 'inline-flex') {
+          result.innerHTML = '<span class="pass">✓ PASS: Modal with all buttons displayed correctly</span>';
+        } else {
+          result.innerHTML = '<span class="fail">✗ FAIL: Modal not displayed correctly</span>';
+        }
+      } catch (error) {
+        result.innerHTML = `<span class="fail">✗ FAIL: ${error.message}</span>`;
+      }
+    };
+
+    window.test4 = function() {
+      const result = document.getElementById('result4');
+      result.innerHTML = 'Running test...';
+      
+      try {
+        window.messagebox.show({
+          title: 'Deployment Failed',
+          message: 'An error occurred during deployment. Please try again.'
+        });
+        
+        const bg = document.getElementById('custom-messagebox-bg');
+        const isVisible = bg.classList.contains('on');
+        const title = document.getElementById('custom-messagebox-title').textContent;
+        const urlRow = document.getElementById('custom-messagebox-url-row');
+        const copyBtn = document.getElementById('custom-messagebox-copy-btn');
+        const openBtn = document.getElementById('custom-messagebox-open-btn');
+        
+        if (isVisible && title === 'Deployment Failed' && urlRow.style.display === 'none' && copyBtn.style.display === 'none' && openBtn.style.display === 'none') {
+          result.innerHTML = '<span class="pass">✓ PASS: Error message displayed correctly</span>';
+        } else {
+          result.innerHTML = '<span class="fail">✗ FAIL: Error message not displayed correctly</span>';
+        }
+      } catch (error) {
+        result.innerHTML = `<span class="fail">✗ FAIL: ${error.message}</span>`;
+      }
+    };
+
+    window.test5 = function() {
+      const result = document.getElementById('result5');
+      result.innerHTML = 'Running test...';
+      
+      let callbackCalled = false;
+      
+      try {
+        window.messagebox.show({
+          title: 'Test Callback',
+          message: 'Close this modal to test the callback.',
+          onClose: () => {
+            callbackCalled = true;
+            result.innerHTML = '<span class="pass">✓ PASS: onClose callback was called</span>';
+          }
+        });
+        
+        // Simulate closing after 1 second
+        setTimeout(() => {
+          window.messagebox.hide();
+          
+          setTimeout(() => {
+            if (!callbackCalled) {
+              result.innerHTML = '<span class="fail">✗ FAIL: onClose callback was not called</span>';
+            }
+          }, 100);
+        }, 1000);
+        
+        result.innerHTML = 'Waiting for modal to close...';
+      } catch (error) {
+        result.innerHTML = `<span class="fail">✗ FAIL: ${error.message}</span>`;
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SettingsPanel Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #0a0a0a;
+      color: #fff;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      border: 1px solid #2a2a2a;
+    }
+    .test-result {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .pass {
+      background: #064e3b;
+      color: #6ee7b7;
+      border: 1px solid #10b981;
+    }
+    .fail {
+      background: #7f1d1d;
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+    }
+    button {
+      padding: 8px 16px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    .modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-bg.on {
+      display: flex;
+    }
+    .modal {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+    }
+    .modal h3 {
+      margin: 0 0 16px 0;
+      color: #fff;
+    }
+    .modal-acts {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+    .btn {
+      padding: 8px 16px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>SettingsPanel Component Tests</h1>
+  <p>Tests for the SettingsPanel component with persistence layer</p>
+
+  <div class="test-section">
+    <h2>Manual Tests</h2>
+    <button onclick="testOpenPanel()">Test: Open Settings Panel</button>
+    <button onclick="testLoadSettings()">Test: Load Settings</button>
+    <button onclick="testSaveSettings()">Test: Save Settings</button>
+    <button onclick="testValidation()">Test: Validation</button>
+    <button onclick="testPersistence()">Test: Persistence Round Trip</button>
+    <button onclick="clearStorage()">Clear localStorage</button>
+    <div id="manual-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Automated Tests</h2>
+    <button onclick="runAllTests()">Run All Tests</button>
+    <div id="test-results"></div>
+  </div>
+
+  <!-- Settings Panel HTML Structure -->
+  <div id="settings-panel-bg" class="modal-bg" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>Settings</h3>
+      <div style="margin-top:16px">
+        <h4 style="margin:0 0 8px 0;font-size:14px;color:#fff">Link Mode</h4>
+        <p style="margin:0 0 12px 0;font-size:13px;color:#9ca3af">Choose how share links are generated</p>
+        
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <label style="display:flex;align-items:start;gap:8px;cursor:pointer">
+            <input type="radio" name="link-mode" id="link-mode-safe" value="safe" checked onchange="settingsPanel.setLinkMode('safe')" style="margin-top:2px"/>
+            <div>
+              <div style="font-size:13px;color:#fff;font-weight:500">Safe Link</div>
+              <div style="font-size:12px;color:#9ca3af;margin-top:2px">Encrypted, requires backend deployment, more secure</div>
+            </div>
+          </label>
+          
+          <label style="display:flex;align-items:start;gap:8px;cursor:pointer">
+            <input type="radio" name="link-mode" id="link-mode-quick" value="quick" onchange="settingsPanel.setLinkMode('quick')" style="margin-top:2px"/>
+            <div>
+              <div style="font-size:13px;color:#fff;font-weight:500">Quick Link</div>
+              <div style="font-size:12px;color:#9ca3af;margin-top:2px">Hash-based, works offline, less secure</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div class="modal-acts" style="margin-top:24px">
+        <button class="btn" onclick="settingsPanel.close()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * SettingsPanel - A modal component for managing user preferences
+     */
+    class SettingsPanel {
+      constructor() {
+        this.isVisible = false;
+        this.settings = {
+          linkMode: 'safe' // Default to 'safe'
+        };
+      }
+
+      loadSettings() {
+        try {
+          const stored = localStorage.getItem('aether-settings');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed && typeof parsed === 'object') {
+              if (parsed.linkMode === 'safe' || parsed.linkMode === 'quick') {
+                this.settings.linkMode = parsed.linkMode;
+              } else {
+                console.warn('Invalid linkMode in settings, using default');
+                this.settings.linkMode = 'safe';
+              }
+            } else {
+              console.warn('Invalid settings structure, using defaults');
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to load settings from localStorage:', error);
+        }
+        return this.settings;
+      }
+
+      saveSettings(settings) {
+        try {
+          if (!settings || typeof settings !== 'object') {
+            console.error('Invalid settings object');
+            return;
+          }
+          
+          if (settings.linkMode !== 'safe' && settings.linkMode !== 'quick') {
+            console.error('Invalid linkMode value');
+            return;
+          }
+          
+          this.settings = { ...settings };
+          localStorage.setItem('aether-settings', JSON.stringify(this.settings));
+        } catch (error) {
+          console.error('Failed to save settings to localStorage:', error);
+        }
+      }
+
+      getSettings() {
+        return { ...this.settings };
+      }
+
+      open() {
+        const bg = document.getElementById('settings-panel-bg');
+        if (!bg) {
+          console.error('SettingsPanel: Modal element not found in DOM');
+          return;
+        }
+
+        this.loadSettings();
+        
+        const safeRadio = document.getElementById('link-mode-safe');
+        const quickRadio = document.getElementById('link-mode-quick');
+        
+        if (safeRadio && quickRadio) {
+          safeRadio.checked = this.settings.linkMode === 'safe';
+          quickRadio.checked = this.settings.linkMode === 'quick';
+        }
+
+        bg.classList.add('on');
+        this.isVisible = true;
+      }
+
+      close() {
+        const bg = document.getElementById('settings-panel-bg');
+        if (bg) {
+          bg.classList.remove('on');
+        }
+        this.isVisible = false;
+      }
+
+      setLinkMode(mode) {
+        if (mode !== 'safe' && mode !== 'quick') {
+          console.error('Invalid link mode:', mode);
+          return;
+        }
+        
+        this.settings.linkMode = mode;
+        this.saveSettings(this.settings);
+      }
+    }
+
+    // Initialize SettingsPanel
+    const settingsPanel = new SettingsPanel();
+
+    // Manual test functions
+    function testOpenPanel() {
+      settingsPanel.open();
+      addResult('manual-results', 'Settings panel opened. Check if modal is visible.', 'pass');
+    }
+
+    function testLoadSettings() {
+      const settings = settingsPanel.loadSettings();
+      addResult('manual-results', `Loaded settings: ${JSON.stringify(settings)}`, 'pass');
+    }
+
+    function testSaveSettings() {
+      settingsPanel.saveSettings({ linkMode: 'quick' });
+      const saved = localStorage.getItem('aether-settings');
+      addResult('manual-results', `Saved to localStorage: ${saved}`, 'pass');
+    }
+
+    function testValidation() {
+      // Test invalid settings
+      settingsPanel.saveSettings({ linkMode: 'invalid' });
+      const settings = settingsPanel.getSettings();
+      const isValid = settings.linkMode === 'safe' || settings.linkMode === 'quick';
+      addResult('manual-results', `Validation test: ${isValid ? 'PASS' : 'FAIL'} - Settings remain valid after invalid input`, isValid ? 'pass' : 'fail');
+    }
+
+    function testPersistence() {
+      // Save a setting
+      settingsPanel.saveSettings({ linkMode: 'quick' });
+      
+      // Create new instance to simulate reload
+      const newPanel = new SettingsPanel();
+      newPanel.loadSettings();
+      
+      const persisted = newPanel.getSettings().linkMode === 'quick';
+      addResult('manual-results', `Persistence test: ${persisted ? 'PASS' : 'FAIL'} - Settings persisted across instances`, persisted ? 'pass' : 'fail');
+    }
+
+    function clearStorage() {
+      localStorage.removeItem('aether-settings');
+      addResult('manual-results', 'localStorage cleared', 'pass');
+    }
+
+    // Automated test functions
+    function runAllTests() {
+      const resultsDiv = document.getElementById('test-results');
+      resultsDiv.innerHTML = '<p>Running tests...</p>';
+      
+      const tests = [
+        testDefaultSettings,
+        testSaveAndLoad,
+        testInvalidLinkMode,
+        testLocalStorageKey,
+        testGetSettings,
+        testSetLinkMode
+      ];
+
+      tests.forEach(test => test());
+    }
+
+    function testDefaultSettings() {
+      localStorage.removeItem('aether-settings');
+      const panel = new SettingsPanel();
+      const settings = panel.getSettings();
+      
+      const pass = settings.linkMode === 'safe';
+      addResult('test-results', 
+        `Test: Default settings - linkMode should be 'safe': ${pass ? 'PASS' : 'FAIL'}`,
+        pass ? 'pass' : 'fail'
+      );
+    }
+
+    function testSaveAndLoad() {
+      const panel = new SettingsPanel();
+      panel.saveSettings({ linkMode: 'quick' });
+      
+      const newPanel = new SettingsPanel();
+      newPanel.loadSettings();
+      
+      const pass = newPanel.getSettings().linkMode === 'quick';
+      addResult('test-results',
+        `Test: Save and load - Settings should persist: ${pass ? 'PASS' : 'FAIL'}`,
+        pass ? 'pass' : 'fail'
+      );
+    }
+
+    function testInvalidLinkMode() {
+      const panel = new SettingsPanel();
+      const beforeSettings = panel.getSettings();
+      
+      // Try to save invalid linkMode
+      panel.saveSettings({ linkMode: 'invalid' });
+      
+      const afterSettings = panel.getSettings();
+      const pass = beforeSettings.linkMode === afterSettings.linkMode;
+      
+      addResult('test-results',
+        `Test: Invalid linkMode validation - Should reject invalid values: ${pass ? 'PASS' : 'FAIL'}`,
+        pass ? 'pass' : 'fail'
+      );
+    }
+
+    function testLocalStorageKey() {
+      const panel = new SettingsPanel();
+      panel.saveSettings({ linkMode: 'safe' });
+      
+      const stored = localStorage.getItem('aether-settings');
+      const pass = stored !== null;
+      
+      addResult('test-results',
+        `Test: localStorage key - Should use 'aether-settings': ${pass ? 'PASS' : 'FAIL'}`,
+        pass ? 'pass' : 'fail'
+      );
+    }
+
+    function testGetSettings() {
+      const panel = new SettingsPanel();
+      panel.saveSettings({ linkMode: 'quick' });
+      
+      const settings = panel.getSettings();
+      const pass = settings.linkMode === 'quick' && typeof settings === 'object';
+      
+      addResult('test-results',
+        `Test: getSettings() - Should return current settings: ${pass ? 'PASS' : 'FAIL'}`,
+        pass ? 'pass' : 'fail'
+      );
+    }
+
+    function testSetLinkMode() {
+      const panel = new SettingsPanel();
+      panel.setLinkMode('quick');
+      
+      const settings = panel.getSettings();
+      const pass = settings.linkMode === 'quick';
+      
+      addResult('test-results',
+        `Test: setLinkMode() - Should update and save linkMode: ${pass ? 'PASS' : 'FAIL'}`,
+        pass ? 'pass' : 'fail'
+      );
+    }
+
+    function addResult(containerId, message, type) {
+      const container = document.getElementById(containerId);
+      const div = document.createElement('div');
+      div.className = `test-result ${type}`;
+      div.textContent = message;
+      container.appendChild(div);
+    }
+
+    // Load settings on page load
+    settingsPanel.loadSettings();
+    console.log('Initial settings:', settingsPanel.getSettings());
+  </script>
+</body>
+</html>

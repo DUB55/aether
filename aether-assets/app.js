@@ -15,6 +15,372 @@ function escapeHTML(v) {
   return (v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/**
+ * CopyButton - A reusable button component with instant visual feedback
+ * Provides clipboard copy functionality with state management
+ * States: idle (default), success (checkmark), error (error indicator)
+ * Auto-resets to idle state after 2 seconds
+ */
+class CopyButton {
+  constructor(targetElementId, buttonElement) {
+    this.targetElementId = targetElementId;
+    this.buttonElement = buttonElement;
+    this.state = 'idle';
+    this.timeoutId = null;
+    this.originalHTML = buttonElement.innerHTML;
+    
+    // Bind click handler
+    this.buttonElement.addEventListener('click', () => this.copy());
+  }
+
+  /**
+   * Copy text to clipboard with fallback support
+   * Returns a promise that resolves on success or rejects on failure
+   */
+  async copy() {
+    // Get the text to copy
+    const targetElement = document.getElementById(this.targetElementId);
+    if (!targetElement) {
+      this.showError();
+      return;
+    }
+    
+    const text = targetElement.value || targetElement.textContent || '';
+    if (!text) {
+      this.showError();
+      return;
+    }
+
+    try {
+      // Try modern Clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        this.showSuccess();
+      } else {
+        // Fallback for older browsers
+        this.copyFallback(text);
+      }
+    } catch (error) {
+      console.error('Copy failed:', error);
+      this.showError();
+    }
+  }
+
+  /**
+   * Fallback copy method using execCommand
+   * Used when Clipboard API is not available
+   */
+  copyFallback(text) {
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const success = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      
+      if (success) {
+        this.showSuccess();
+      } else {
+        this.showError();
+      }
+    } catch (error) {
+      console.error('Fallback copy failed:', error);
+      this.showError();
+    }
+  }
+
+  /**
+   * Show success state with checkmark icon
+   * Auto-resets to idle after 2 seconds
+   */
+  showSuccess() {
+    this.clearTimeout();
+    this.state = 'success';
+    this.buttonElement.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    this.buttonElement.style.color = '#10b981'; // Green color for success
+    this.timeoutId = setTimeout(() => this.reset(), 2000);
+  }
+
+  /**
+   * Show error state with error indicator
+   * Auto-resets to idle after 2 seconds
+   */
+  showError() {
+    this.clearTimeout();
+    this.state = 'error';
+    this.buttonElement.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+    this.buttonElement.style.color = '#ef4444'; // Red color for error
+    this.timeoutId = setTimeout(() => this.reset(), 2000);
+  }
+
+  /**
+   * Reset to idle state with original icon
+   */
+  reset() {
+    this.clearTimeout();
+    this.state = 'idle';
+    this.buttonElement.innerHTML = this.originalHTML;
+    this.buttonElement.style.color = '';
+  }
+
+  /**
+   * Clear any pending timeout
+   */
+  clearTimeout() {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
+  }
+}
+
+/**
+ * SettingsPanel - A modal component for managing user preferences
+ * Provides a settings dialog with link mode toggle and persistence
+ * Features: link mode selection (safe/quick), localStorage persistence
+ */
+class SettingsPanel {
+  constructor() {
+    this.isVisible = false;
+    this.settings = {
+      linkMode: 'safe' // Default to 'safe'
+    };
+  }
+
+  /**
+   * Load settings from localStorage
+   * Returns the loaded settings or defaults if unavailable
+   */
+  loadSettings() {
+    try {
+      const stored = localStorage.getItem('aether-settings');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Validate settings structure
+        if (parsed && typeof parsed === 'object') {
+          // Validate linkMode
+          if (parsed.linkMode === 'safe' || parsed.linkMode === 'quick') {
+            this.settings.linkMode = parsed.linkMode;
+          } else {
+            console.warn('Invalid linkMode in settings, using default');
+            this.settings.linkMode = 'safe';
+          }
+        } else {
+          console.warn('Invalid settings structure, using defaults');
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load settings from localStorage:', error);
+      // Fall back to in-memory settings (session-only)
+    }
+    return this.settings;
+  }
+
+  /**
+   * Save settings to localStorage
+   * @param {Object} settings - Settings object to save
+   */
+  saveSettings(settings) {
+    try {
+      // Validate settings before saving
+      if (!settings || typeof settings !== 'object') {
+        console.error('Invalid settings object');
+        return;
+      }
+      
+      // Validate linkMode
+      if (settings.linkMode !== 'safe' && settings.linkMode !== 'quick') {
+        console.error('Invalid linkMode value');
+        return;
+      }
+      
+      this.settings = { ...settings };
+      localStorage.setItem('aether-settings', JSON.stringify(this.settings));
+    } catch (error) {
+      console.error('Failed to save settings to localStorage:', error);
+      // Settings will remain in memory but won't persist
+    }
+  }
+
+  /**
+   * Get current settings
+   * @returns {Object} Current settings object
+   */
+  getSettings() {
+    return { ...this.settings };
+  }
+
+  /**
+   * Open the settings panel
+   */
+  open() {
+    const bg = document.getElementById('settings-panel-bg');
+    if (!bg) {
+      console.error('SettingsPanel: Modal element not found in DOM');
+      return;
+    }
+
+    // Load current settings and update UI
+    this.loadSettings();
+    
+    // Update radio buttons to reflect current setting
+    const safeRadio = document.getElementById('link-mode-safe');
+    const quickRadio = document.getElementById('link-mode-quick');
+    
+    if (safeRadio && quickRadio) {
+      safeRadio.checked = this.settings.linkMode === 'safe';
+      quickRadio.checked = this.settings.linkMode === 'quick';
+    }
+
+    // Show modal
+    bg.classList.add('on');
+    this.isVisible = true;
+
+    // Refresh icons
+    refreshIcons();
+  }
+
+  /**
+   * Close the settings panel
+   */
+  close() {
+    const bg = document.getElementById('settings-panel-bg');
+    if (bg) {
+      bg.classList.remove('on');
+    }
+    this.isVisible = false;
+  }
+
+  /**
+   * Handle link mode change
+   * @param {string} mode - The selected link mode ('safe' or 'quick')
+   */
+  setLinkMode(mode) {
+    if (mode !== 'safe' && mode !== 'quick') {
+      console.error('Invalid link mode:', mode);
+      return;
+    }
+    
+    this.settings.linkMode = mode;
+    this.saveSettings(this.settings);
+  }
+}
+
+/**
+ * CustomMessagebox - A reusable modal component for displaying messages
+ * Provides a clean modal dialog with optional URL field and interactive buttons
+ * Features: title, message, optional URL field, copy button, open button
+ */
+class CustomMessagebox {
+  constructor() {
+    this.isVisible = false;
+    this.copyButton = null;
+  }
+
+  /**
+   * Show the messagebox with the provided configuration
+   * @param {Object} config - Configuration object
+   * @param {string} config.title - Modal title
+   * @param {string} config.message - Modal message/description
+   * @param {string} [config.url] - Optional URL to display
+   * @param {boolean} [config.showCopyButton] - Show copy button (default: false)
+   * @param {boolean} [config.showOpenButton] - Show open in new tab button (default: false)
+   * @param {Function} [config.onClose] - Callback when modal is closed
+   */
+  show(config) {
+    const {
+      title = '',
+      message = '',
+      url = '',
+      showCopyButton = false,
+      showOpenButton = false,
+      onClose = null
+    } = config;
+
+    // Get modal elements
+    const bg = document.getElementById('custom-messagebox-bg');
+    const titleEl = document.getElementById('custom-messagebox-title');
+    const messageEl = document.getElementById('custom-messagebox-message');
+    const urlRow = document.getElementById('custom-messagebox-url-row');
+    const urlInput = document.getElementById('custom-messagebox-url');
+    const copyBtn = document.getElementById('custom-messagebox-copy-btn');
+    const openBtn = document.getElementById('custom-messagebox-open-btn');
+    const closeBtn = document.getElementById('custom-messagebox-close-btn');
+
+    if (!bg) {
+      console.error('CustomMessagebox: Modal element not found in DOM');
+      return;
+    }
+
+    // Set content
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+
+    // Handle URL field
+    if (url) {
+      urlInput.value = url;
+      urlRow.style.display = 'flex';
+    } else {
+      urlRow.style.display = 'none';
+    }
+
+    // Handle copy button
+    if (showCopyButton && url) {
+      copyBtn.style.display = 'inline-flex';
+      // Initialize CopyButton for the URL field
+      if (this.copyButton) {
+        this.copyButton.clearTimeout();
+      }
+      this.copyButton = new CopyButton('custom-messagebox-url', copyBtn);
+    } else {
+      copyBtn.style.display = 'none';
+    }
+
+    // Handle open button
+    if (showOpenButton && url) {
+      openBtn.style.display = 'inline-flex';
+      openBtn.onclick = () => {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      };
+    } else {
+      openBtn.style.display = 'none';
+    }
+
+    // Handle close button
+    closeBtn.onclick = () => {
+      this.hide();
+      if (onClose) onClose();
+    };
+
+    // Show modal
+    bg.classList.add('on');
+    this.isVisible = true;
+
+    // Refresh icons
+    refreshIcons();
+  }
+
+  /**
+   * Hide the messagebox
+   */
+  hide() {
+    const bg = document.getElementById('custom-messagebox-bg');
+    if (bg) {
+      bg.classList.remove('on');
+    }
+    this.isVisible = false;
+    
+    // Clean up copy button
+    if (this.copyButton) {
+      this.copyButton.clearTimeout();
+      this.copyButton = null;
+    }
+  }
+}
+
 function escapeAttr(v) { return escapeHTML(v).replace(/'/g,'&#39;'); }
 function formatTime(v) { return new Date(v).toLocaleString(); }
 
@@ -658,60 +1024,130 @@ async function shareGitHub() {
 }
 
 async function deployProject() {
-  const btn = document.getElementById('deploy-btn');
-  const statusEl = document.getElementById('deploy-status');
-  const urlRow = document.getElementById('deploy-url-row');
+  // Get the deploy button from header
+  const btn = document.querySelector('[onclick="deployProject()"]');
+  if (!btn) {
+    console.error('Deploy button not found');
+    return;
+  }
+
+  // Show loading state on deploy button
+  const originalHTML = btn.innerHTML;
   btn.disabled = true;
-  statusEl.textContent = 'Deploying...';
-  urlRow.style.display = 'none';
+  btn.innerHTML = '<svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"/></svg>';
+  btn.style.animation = 'spin 1s linear infinite';
+
   try {
-    if (/github\.io$/i.test(window.location.hostname) && APP_CONFIG.publishEndpoint.startsWith(window.location.origin)) {
-      throw new Error('Set window.AETHER_CONFIG.publishEndpoint to your deployed Vercel URL.');
+    // Read link mode from settings
+    const settings = window.settingsPanel?.getSettings() || { linkMode: 'safe' };
+    const linkMode = settings.linkMode || 'safe';
+
+    let deployUrl = '';
+
+    if (linkMode === 'quick') {
+      // Quick link deployment (hash-based, works offline)
+      deployUrl = await createQuickLink(files);
+    } else {
+      // Safe link deployment (encrypted, requires backend)
+      if (/github\.io$/i.test(window.location.hostname) && APP_CONFIG.publishEndpoint.startsWith(window.location.origin)) {
+        throw new Error('Set window.AETHER_CONFIG.publishEndpoint to your deployed Vercel URL.');
+      }
+
+      const { encryptedPayload, keyB64 } = await createEncryptedSharePayload(files);
+      const projectId = currentProjectId || `proj-${Date.now()}`;
+      
+      const response = await fetch(APP_CONFIG.publishEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          projectId, 
+          pathHint: `projects/${projectId}.json`, 
+          encryptedPayload, 
+          message: `DUB5: deploy ${projectId}` 
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.rawUrl) {
+        throw new Error(data.error || `Deploy failed (${response.status})`);
+      }
+
+      deployUrl = `${location.origin}${location.pathname}?src=${encodeURIComponent(data.rawUrl)}#key=${keyB64}`;
     }
-    const { encryptedPayload, keyB64 } = await createEncryptedSharePayload(files);
-    const projectId = currentProjectId || `proj-${Date.now()}`;
-    const response = await fetch(APP_CONFIG.publishEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId, pathHint: `projects/${projectId}.json`, encryptedPayload, message: `DUB5: deploy ${projectId}` }),
+
+    // Display success messagebox with deployment URL
+    window.customMessagebox?.show({
+      title: 'Deployment Successful',
+      message: 'Your project has been deployed and is ready to share.',
+      url: deployUrl,
+      showCopyButton: true,
+      showOpenButton: true
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.rawUrl) throw new Error(data.error || `Deploy failed (${response.status})`);
-    const url = `${location.origin}${location.pathname}?src=${encodeURIComponent(data.rawUrl)}#key=${keyB64}`;
-    document.getElementById('deploy-url').value = url;
-    urlRow.style.display = 'flex';
-    statusEl.textContent = 'Deployed successfully';
-    toast('Deployed');
-    
-    // Generate viewer URLs with the GitHub URL
-    await generateViewerUrls(data.rawUrl);
+
   } catch (error) {
-    console.error(error);
-    statusEl.textContent = `Error: ${error.message}`;
+    console.error('Deployment error:', error);
+    
+    // Display error messagebox with error details
+    window.customMessagebox?.show({
+      title: 'Deployment Failed',
+      message: error.message || 'An error occurred during deployment. Please try again.',
+      showCopyButton: false,
+      showOpenButton: false
+    });
   } finally {
+    // Restore button state
     btn.disabled = false;
+    btn.innerHTML = originalHTML;
+    btn.style.animation = '';
+    refreshIcons();
   }
 }
 
+// Copy button instances - initialized on page load
+let copyDeployUrlBtn = null;
+let copyViewerQuickUrlBtn = null;
+let copyViewerSecureUrlBtn = null;
+
 function copyDeployUrl() {
-  const el = document.getElementById('deploy-url');
-  if (!el?.value) return toast('Nothing to copy');
-  navigator.clipboard.writeText(el.value).then(() => toast('Copied'));
+  // This function is now handled by CopyButton component
+  // Kept for backward compatibility
+  if (!copyDeployUrlBtn) {
+    const btn = document.querySelector('[onclick="copyDeployUrl()"]');
+    if (btn) {
+      copyDeployUrlBtn = new CopyButton('deploy-url', btn);
+    }
+  }
+  if (copyDeployUrlBtn) {
+    copyDeployUrlBtn.copy();
+  }
 }
 
 function copyViewerQuickUrl() {
-  const el = document.getElementById('viewer-quick-url');
-  if (!el?.value) return toast('Nothing to copy');
-  navigator.clipboard.writeText(el.value)
-    .then(() => toast('Copied'))
-    .catch(() => toast('Failed to copy URL'));
+  // This function is now handled by CopyButton component
+  // Kept for backward compatibility
+  if (!copyViewerQuickUrlBtn) {
+    const btn = document.querySelector('[onclick="copyViewerQuickUrl()"]');
+    if (btn) {
+      copyViewerQuickUrlBtn = new CopyButton('viewer-quick-url', btn);
+    }
+  }
+  if (copyViewerQuickUrlBtn) {
+    copyViewerQuickUrlBtn.copy();
+  }
 }
+
 function copyViewerSecureUrl() {
-  const el = document.getElementById('viewer-secure-url');
-  if (!el?.value) return toast('Nothing to copy');
-  navigator.clipboard.writeText(el.value)
-    .then(() => toast('Copied'))
-    .catch(() => toast('Failed to copy URL'));
+  // This function is now handled by CopyButton component
+  // Kept for backward compatibility
+  if (!copyViewerSecureUrlBtn) {
+    const btn = document.querySelector('[onclick="copyViewerSecureUrl()"]');
+    if (btn) {
+      copyViewerSecureUrlBtn = new CopyButton('viewer-secure-url', btn);
+    }
+  }
+  if (copyViewerSecureUrlBtn) {
+    copyViewerSecureUrlBtn.copy();
+  }
 }
 
 
@@ -1042,6 +1478,15 @@ Object.assign(window, {
   switchTab, toggleMdPreview, triggerImport,
   uiDeleteFile, uiNewFile, uiRenameFile,
 });
+
+// Initialize CustomMessagebox instance
+window.customMessagebox = new CustomMessagebox();
+
+// Initialize SettingsPanel instance
+window.settingsPanel = new SettingsPanel();
+
+// Load settings on application initialization
+window.settingsPanel.loadSettings();
 
 bindEvents();
 setSendBtn('send');

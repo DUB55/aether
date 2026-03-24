@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CopyButton Component Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .test-section {
+      margin: 30px 0;
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+    }
+    .test-section h2 {
+      margin-top: 0;
+      color: #60a5fa;
+    }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 15px 0;
+    }
+    input {
+      flex: 1;
+      padding: 10px;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 14px;
+    }
+    button {
+      padding: 10px 16px;
+      background: #3b82f6;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    .success {
+      color: #10b981;
+    }
+    .error {
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <h1>CopyButton Component Tests</h1>
+  <p>This page tests the CopyButton component with various scenarios.</p>
+
+  <div class="test-section">
+    <h2>Test 1: Basic Copy Functionality</h2>
+    <p>Click the copy button to copy the text from the input field.</p>
+    <div class="input-group">
+      <input type="text" id="test1-input" value="Hello, World! This is a test." readonly>
+      <button id="test1-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="status" id="test1-status">Status: Ready</div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 2: Long Text Copy</h2>
+    <p>Test copying a longer text string.</p>
+    <div class="input-group">
+      <input type="text" id="test2-input" value="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris." readonly>
+      <button id="test2-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="status" id="test2-status">Status: Ready</div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 3: Special Characters</h2>
+    <p>Test copying text with special characters and symbols.</p>
+    <div class="input-group">
+      <input type="text" id="test3-input" value="Special chars: !@#$%^&*()_+-=[]{}|;':&quot;,.<>?/~`" readonly>
+      <button id="test3-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="status" id="test3-status">Status: Ready</div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 4: Empty Text (Error Case)</h2>
+    <p>Test copying from an empty input (should show error state).</p>
+    <div class="input-group">
+      <input type="text" id="test4-input" value="" readonly>
+      <button id="test4-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="status" id="test4-status">Status: Ready (should show error)</div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 5: Multiple Rapid Clicks</h2>
+    <p>Test clicking the button multiple times rapidly (should handle state correctly).</p>
+    <div class="input-group">
+      <input type="text" id="test5-input" value="Rapid click test" readonly>
+      <button id="test5-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="status" id="test5-status">Status: Ready (click multiple times quickly)</div>
+  </div>
+
+  <script type="module">
+    // CopyButton class implementation
+    class CopyButton {
+      constructor(targetElementId, buttonElement) {
+        this.targetElementId = targetElementId;
+        this.buttonElement = buttonElement;
+        this.state = 'idle';
+        this.timeoutId = null;
+        this.originalHTML = buttonElement.innerHTML;
+        
+        // Bind click handler
+        this.buttonElement.addEventListener('click', () => this.copy());
+      }
+
+      async copy() {
+        const targetElement = document.getElementById(this.targetElementId);
+        if (!targetElement) {
+          this.showError();
+          return;
+        }
+        
+        const text = targetElement.value || targetElement.textContent || '';
+        if (!text) {
+          this.showError();
+          return;
+        }
+
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            this.showSuccess();
+          } else {
+            this.copyFallback(text);
+          }
+        } catch (error) {
+          console.error('Copy failed:', error);
+          this.showError();
+        }
+      }
+
+      copyFallback(text) {
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          const success = document.execCommand('copy');
+          document.body.removeChild(textarea);
+          
+          if (success) {
+            this.showSuccess();
+          } else {
+            this.showError();
+          }
+        } catch (error) {
+          console.error('Fallback copy failed:', error);
+          this.showError();
+        }
+      }
+
+      showSuccess() {
+        this.clearTimeout();
+        this.state = 'success';
+        this.buttonElement.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        this.buttonElement.style.color = '#10b981';
+        this.timeoutId = setTimeout(() => this.reset(), 2000);
+      }
+
+      showError() {
+        this.clearTimeout();
+        this.state = 'error';
+        this.buttonElement.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        this.buttonElement.style.color = '#ef4444';
+        this.timeoutId = setTimeout(() => this.reset(), 2000);
+      }
+
+      reset() {
+        this.clearTimeout();
+        this.state = 'idle';
+        this.buttonElement.innerHTML = this.originalHTML;
+        this.buttonElement.style.color = '';
+      }
+
+      clearTimeout() {
+        if (this.timeoutId) {
+          clearTimeout(this.timeoutId);
+          this.timeoutId = null;
+        }
+      }
+    }
+
+    // Initialize CopyButton instances for each test
+    const tests = [
+      { id: 'test1', name: 'Basic Copy' },
+      { id: 'test2', name: 'Long Text' },
+      { id: 'test3', name: 'Special Characters' },
+      { id: 'test4', name: 'Empty Text' },
+      { id: 'test5', name: 'Rapid Clicks' }
+    ];
+
+    tests.forEach(test => {
+      const button = document.getElementById(`${test.id}-button`);
+      const status = document.getElementById(`${test.id}-status`);
+      const copyBtn = new CopyButton(`${test.id}-input`, button);
+      
+      // Add event listener to track state changes
+      const originalShowSuccess = copyBtn.showSuccess.bind(copyBtn);
+      const originalShowError = copyBtn.showError.bind(copyBtn);
+      const originalReset = copyBtn.reset.bind(copyBtn);
+      
+      copyBtn.showSuccess = function() {
+        originalShowSuccess();
+        status.textContent = `Status: ✓ Copied successfully!`;
+        status.className = 'status success';
+      };
+      
+      copyBtn.showError = function() {
+        originalShowError();
+        status.textContent = `Status: ✗ Copy failed (empty or error)`;
+        status.className = 'status error';
+      };
+      
+      copyBtn.reset = function() {
+        originalReset();
+        status.textContent = `Status: Ready`;
+        status.className = 'status';
+      };
+    });
+
+    console.log('CopyButton tests initialized. Try clicking the copy buttons!');
+  </script>
+</body>
+</html>
