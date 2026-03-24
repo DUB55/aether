@@ -1,151 +1,363 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DUB5 - Build with AI</title>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    :root{
-      --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
-      --ease:cubic-bezier(.4,0,.2,1);
-      --g1:#ec4899;--g2:#8b5cf6;--g3:#3b82f6;
-      --bg:#0c0c0e;--bg2:#141416;--bg3:#1a1a1d;
-      --t:#fff;--t2:rgba(255,255,255,.78);--t3:rgba(255,255,255,.45);
-      --bdr:rgba(255,255,255,.10);--bdr2:rgba(255,255,255,.18);
-      --shadow:0 20px 60px rgba(0,0,0,.55);
-    }
-    html,body{height:100%;margin:0;font-family:var(--font);background:var(--bg);color:var(--t)}
-    *{box-sizing:border-box}
-    a{color:inherit;text-decoration:none}
-    .land-bg{
-      position:fixed;inset:0;
-      background:
-        radial-gradient(ellipse 75% 55% at 15% 45%,rgba(139,92,246,.72) 0%,transparent 58%),
-        radial-gradient(ellipse 55% 50% at 85% 15%,rgba(59,130,246,.62) 0%,transparent 52%),
-        radial-gradient(ellipse 65% 65% at 52% 105%,rgba(236,72,153,.82) 0%,transparent 52%),
-        radial-gradient(ellipse 45% 38% at 88% 82%,rgba(217,70,239,.52) 0%,transparent 50%),
-        #0d0d1c;
-      animation:bgshift 14s ease-in-out infinite alternate;
-      z-index:0;
-    }
-    @keyframes bgshift{0%{filter:hue-rotate(0)}50%{filter:hue-rotate(12deg)}100%{filter:hue-rotate(-8deg)}}
-    .land-nav{position:relative;z-index:2;display:flex;align-items:center;gap:10px;padding:0 16px;height:56px}
-    .brand{display:flex;align-items:center;gap:10px;color:#fff;user-select:none}
-    .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--g1),var(--g2),var(--g3));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
-    .brand-name{font-size:15px;font-weight:700}
-    .nav-btn{border:1px solid rgba(255,255,255,.15);background:transparent;color:#fff;cursor:pointer;border-radius:9px;font-size:12px;padding:7px 10px;display:flex;align-items:center;gap:6px}
-    .nav-btn:hover{border-color:var(--bdr2)}
-    .nav-btn svg{width:14px;height:14px}
-    .land-hero{position:relative;z-index:2;min-height:calc(100vh - 56px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px 84px;text-align:center}
-    .land-pill{display:inline-flex;gap:8px;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:4px 10px;font-size:12px;color:rgba(255,255,255,.88);margin-bottom:22px}
-    .pill-tag{background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
-    .land-h1{font-size:clamp(40px,6.5vw,68px);font-weight:700;line-height:1.05;letter-spacing:-.05em;margin-bottom:12px;max-width:720px}
-    .land-sub{font-size:16px;color:rgba(255,255,255,.72);margin-bottom:28px;max-width:720px}
-    .land-box{width:100%;max-width:720px;background:rgba(18,18,22,.97);border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
-    .land-ta{width:100%;min-height:70px;max-height:170px;background:transparent;border:none;outline:none;color:#fff;font-size:15px;line-height:1.6;padding:18px 18px 10px;resize:none}
-    .land-ta::placeholder{color:var(--t3)}
-    .land-box-foot{display:flex;justify-content:flex-end;padding:8px 12px 12px}
-    .land-send{width:36px;height:36px;border-radius:10px;border:none;background:rgba(255,255,255,.4);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
-    .land-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
-    .land-chips{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:860px}
-    .chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.11);color:#fff;font-size:12.5px;padding:6px 12px;border-radius:999px;cursor:pointer}
-    .chip:hover{background:rgba(255,255,255,.16)}
-    .recent-strip{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:860px}
-    .recent-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.11);color:#fff;font-size:12.5px;padding:6px 12px;border-radius:999px;cursor:pointer}
-    .recent-pill:hover{background:rgba(255,255,255,.16)}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether | The Future of AI Development</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS Variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --landing-bg: #ffffff;
+            --primary: 240 10% 3.9%;
+            --primary-foreground: 0 0% 98%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --border: 214.3 31.8% 91.4%;
+            --glass-blur: 20px;
+            --glass-opacity: 0.03;
+            --glass-border-opacity: 0.08;
+        }
+
+        .dark {
+            --background: 0 0% 10%;
+            --foreground: 210 40% 98%;
+            --landing-bg: #1a1a1a;
+            --primary: 0 0% 98%;
+            --primary-foreground: 240 10% 3.9%;
+            --muted: 0 0% 20%;
+            --muted-foreground: 0 0% 65%;
+            --border: 0 0% 20%;
+            --glass-opacity: 0.05;
+            --glass-border-opacity: 0.1;
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            zoom: 0.9;
+        }
+
+        /* Liquid Glass Effect */
+        .liquid-glass {
+            background: rgba(255, 255, 255, var(--glass-opacity));
+            backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, var(--glass-border-opacity));
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.2, 0, 0.2, 1);
+        }
+
+        .dark .liquid-glass {
+            background: rgba(255, 255, 255, var(--glass-opacity));
+            border: 1px solid rgba(255, 255, 255, var(--glass-border-opacity));
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* Landing Background Gradients */
+        .landing-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100vh;
+            z-index: 0;
+            background-color: var(--landing-bg);
+            pointer-events: none;
+            transition: background-color 0.5s ease, background-image 0.5s ease;
+        }
+
+        .landing-bg.gradient-blue {
+            background-image:
+                radial-gradient(60% 40% at 50% 35%, rgba(154, 210, 255, 0.95) 0%, rgba(74, 163, 255, 0.8) 30%, rgba(138, 91, 255, 0) 70%),
+                radial-gradient(70% 50% at 50% 50%, rgba(255, 79, 216, 0.9) 0%, rgba(138, 91, 255, 0.7) 35%, rgba(255, 127, 202, 0) 70%),
+                radial-gradient(60% 40% at 50% 65%, rgba(255, 196, 100, 0.9) 0%, rgba(255, 179, 138, 0.75) 30%, rgba(255, 127, 202, 0) 70%);
+            filter: blur(100px) saturate(180%);
+        }
+
+        .dark .landing-bg.gradient-blue {
+            filter: blur(140px) saturate(220%);
+            background-image:
+                radial-gradient(70% 50% at 50% 35%, rgba(154, 210, 255, 0.85) 0%, rgba(74, 163, 255, 0.6) 30%, rgba(138, 91, 255, 0) 70%),
+                radial-gradient(80% 60% at 50% 50%, rgba(255, 79, 216, 0.8) 0%, rgba(138, 91, 255, 0.6) 35%, rgba(255, 127, 202, 0) 70%),
+                radial-gradient(70% 50% at 50% 65%, rgba(255, 196, 100, 0.8) 0%, rgba(255, 179, 138, 0.65) 30%, rgba(255, 127, 202, 0) 70%);
+        }
+
+        /* Animations */
+        @keyframes bounce-intense {
+            0%, 100% { transform: translateY(-50%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        }
+
+        .animate-bounce-intense {
+            animation: bounce-intense 0.6s infinite;
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Page transitions */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+    </style>
 </head>
-<body>
-  <div class="land-bg"></div>
-  <nav class="land-nav">
-    <a class="brand" href="index.html">
-      <div class="logo">D5</div><div class="brand-name">DUB5</div>
-    </a>
-    <button class="nav-btn" onclick="location.href='projects.html'">
-      <svg data-lucide="folder"></svg> Projects
-    </button>
-  </nav>
-  <div class="land-hero">
-    <div class="land-pill"><span class="pill-tag">New</span> Build websites free - no signup needed</div>
-    <h1 class="land-h1">Build something<br/>beautiful</h1>
-    <p class="land-sub">Create websites by chatting with AI, then preview, share, export, and revisit your projects in one place.</p>
-    <div class="land-box">
-      <textarea class="land-ta" id="land-ta" placeholder="Ask DUB5 to create a landing page for my idea..." rows="2"></textarea>
-      <div class="land-box-foot">
-        <button class="land-send" onclick="startApp()" title="Start building">
-          <svg data-lucide="arrow-up" width="14" height="14"></svg>
-        </button>
-      </div>
+<body class="min-h-screen antialiased">
+
+    <!-- Navigation Bar -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 transition-all duration-500 bg-transparent border-b border-transparent">
+        <div class="flex items-center gap-10">
+            <a href="#" onclick="showPage('landing')" class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 dark:from-slate-200 dark:via-slate-100 dark:to-white shadow-lg shadow-slate-500/20"></div>
+                <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">Aether</span>
+            </a>
+            
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#" onclick="showPage('docs')" class="text-[15px] font-semibold text-[#444] dark:text-slate-300/70 hover:text-black dark:hover:text-white transition-colors">Documentation</a>
+                <a href="#" onclick="showPage('community')" class="text-[15px] font-semibold text-[#444] dark:text-slate-300/70 hover:text-black dark:hover:text-white transition-colors">Community</a>
+                <a href="#" onclick="showPage('changelog')" class="text-[15px] font-semibold text-[#444] dark:text-slate-300/70 hover:text-black dark:hover:text-white transition-colors">Changelog</a>
+                <a href="https://github.com" target="_blank" class="text-[15px] font-semibold text-[#444] dark:text-slate-300/70 hover:text-black dark:hover:text-white transition-colors">Github</a>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <button onclick="toggleTheme()" class="rounded-full w-9 h-9 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+            <a href="#" onclick="showPage('login')" class="text-sm font-semibold text-[#111] dark:text-white/70 hover:text-black dark:hover:text-white transition-colors">Log in</a>
+            <a href="#" onclick="showPage('signup')" class="bg-white/10 hover:bg-white/20 dark:bg-white/10 dark:hover:bg-white/20 text-slate-900 dark:text-white border border-slate-200/50 dark:border-white/10 rounded-xl px-5 py-2 text-sm font-bold shadow-sm backdrop-blur-md transition-all">Get started</a>
+        </div>
+    </nav>
+
+    <!-- Landing Page -->
+    <div id="landing-page" class="page active">
+        <div class="landing-bg gradient-blue"></div>
+        
+        <main class="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 pt-20">
+            <div class="max-w-4xl w-full text-center space-y-8">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 text-[13px] font-semibold border border-slate-200/50 dark:border-white/5">
+                    <span class="bg-slate-900 dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-full text-[10px] uppercase font-black tracking-wider">Beta</span>
+                    Aether is now in public preview →
+                </div>
+
+                <h1 class="text-6xl md:text-[84px] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.05] mb-6">
+                    Build the future <br />
+                    <span class="bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 dark:from-white dark:via-slate-200 dark:to-slate-400 bg-clip-text text-transparent">with Aether AI</span>
+                </h1>
+
+                <p class="text-[18px] md:text-[22px] font-normal text-slate-700/80 dark:text-slate-300/80 max-w-2xl mx-auto tracking-normal leading-relaxed mb-4">
+                    The first autonomous platform that transforms your vision into production-ready software. Fast, free, and infinite.
+                </p>
+
+                <div class="max-w-3xl mx-auto mt-10">
+                    <form onsubmit="handleStartProject(event)" class="relative flex flex-col liquid-glass rounded-[32px] p-6 shadow-2xl dark:bg-white/[0.08] dark:border-white/[0.15] dark:backdrop-blur-3xl group transition-all duration-500 hover:dark:bg-white/[0.12] hover:dark:border-white/[0.2]">
+                        <textarea 
+                            id="landing-input"
+                            placeholder="Describe the application you want to build..."
+                            class="w-full h-36 bg-transparent border-none focus:ring-0 text-[20px] font-medium resize-none placeholder:text-slate-400 dark:placeholder:text-white/30 outline-none text-slate-800 dark:text-white leading-relaxed"
+                        ></textarea>
+                        <div class="flex items-center justify-between mt-2">
+                            <div class="flex items-center gap-4">
+                                <button type="button" class="text-slate-400 dark:text-white/40 p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-8">
+                                <div class="flex bg-slate-100/80 dark:bg-white/5 p-1 rounded-xl border border-slate-200/50 dark:border-white/5 backdrop-blur-sm gap-0.5">
+                                    <button type="button" onclick="changeGradient('blue')" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-white dark:bg-white/10 shadow-sm ring-1 ring-slate-200 dark:ring-white/20">
+                                        <div class="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-blue-400 to-purple-500"></div>
+                                    </button>
+                                    <button type="button" onclick="changeGradient('pink')" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all opacity-40 hover:opacity-100">
+                                        <div class="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400"></div>
+                                    </button>
+                                    <button type="button" onclick="changeGradient('emerald')" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all opacity-40 hover:opacity-100">
+                                        <div class="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500"></div>
+                                    </button>
+                                </div>
+                                
+                                <button type="submit" class="bg-slate-100 dark:bg-[#333333] text-slate-500 dark:text-slate-400 rounded-full w-11 h-11 flex items-center justify-center hover:bg-[#111] hover:dark:bg-white hover:text-white hover:dark:text-black transition-all">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="mt-12 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Recent Projects</h3>
+                            <button onclick="showPage('projects')" class="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-all">
+                                View all projects 
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <button onclick="showPage('editor')" class="flex flex-col items-start p-4 rounded-2xl liquid-glass text-left group border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors">
+                                <div class="text-sm font-bold truncate w-full mb-1">My SaaS Landing Page</div>
+                                <div class="text-[11px] text-slate-500">Modified 12/15/2024</div>
+                            </button>
+                            <button onclick="showPage('editor')" class="flex flex-col items-start p-4 rounded-2xl liquid-glass text-left group border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors">
+                                <div class="text-sm font-bold truncate w-full mb-1">E-commerce Dashboard</div>
+                                <div class="text-[11px] text-slate-500">Modified 12/14/2024</div>
+                            </button>
+                            <button onclick="showPage('editor')" class="flex flex-col items-start p-4 rounded-2xl liquid-glass text-left group border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors">
+                                <div class="text-sm font-bold truncate w-full mb-1">Portfolio Website</div>
+                                <div class="text-[11px] text-slate-500">Modified 12/13/2024</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Feature Cards Section -->
+        <section class="max-w-6xl mx-auto px-6 py-32 relative z-10">
+            <div class="grid md:grid-cols-3 gap-12">
+                <div class="space-y-4 p-8 rounded-[2rem] liquid-glass border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Instant Deployment</h3>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Watch your ideas come to life in seconds with our high-speed multi-agent orchestration.</p>
+                </div>
+                <div class="space-y-4 p-8 rounded-[2rem] liquid-glass border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Advanced Models</h3>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Powered by the latest LLMs, from local small models to the world's most capable cloud AI.</p>
+                </div>
+                <div class="space-y-4 p-8 rounded-[2rem] liquid-glass border border-transparent hover:bg-slate-200 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-pink-500/20 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">100% Private</h3>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Run everything locally for maximum security, or use our secure cloud routing for extra power.</p>
+                </div>
+            </div>
+        </section>
     </div>
-    <div class="land-acts">
-      <button class="nav-btn" onclick="startApp()">Start from prompt</button>
-      <button class="nav-btn" onclick="startBlank()">Start blank</button>
-      <button class="nav-btn" onclick="location.href='projects.html'">
-        <svg data-lucide="folder"></svg> Open recent
-      </button>
+
+    <!-- Editor Page -->
+    <div id="editor-page" class="page">
+        <div class="flex flex-col h-screen bg-slate-950 text-white overflow-hidden">
+            <!-- Editor Header -->
+            <header class="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/50 backdrop-blur-xl z-50">
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2 cursor-pointer group" onclick="showPage('landing')">
+                        <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <div class="w-4 h-4 rounded-full border-2 border-slate-900"></div>
+                        </div>
+                        <span class="font-bold text-lg tracking-tight">Aether</span>
+                    </div>
+                    
+                    <div class="h-6 w-px bg-slate-800 mx-2"></div>
+                    
+                    <div class="flex items-center gap-1 bg-slate-800/30 p-1 rounded-xl border border-slate-700/50">
+                        <button onclick="switchEditorTab('preview')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-white shadow-sm">
+                            <svg class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Preview
+                        </button>
+                        <button onclick="switchEditorTab('code')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+                            <svg class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                            Code
+                        </button>
+                        <button onclick="switchEditorTab('settings')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+                            <svg class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Settings
+                        </button>
+                    </div>
+                </div>
+            </header>
+        </div>
     </div>
-    <div class="land-chips">
-      <span class="chip" onclick="setP(this)">Personal portfolio with case studies</span>
-      <span class="chip" onclick="setP(this)">SaaS landing page with pricing</span>
-      <span class="chip" onclick="setP(this)">Restaurant site with booking CTA</span>
-      <span class="chip" onclick="setP(this)">Event countdown and RSVP page</span>
-      <span class="chip" onclick="setP(this)">Product showcase with testimonials</span>
-      <span class="chip" onclick="setP(this)">Contact page with map and FAQ</span>
-    </div>
-    <div id="recent-strip" class="recent-strip"></div>
-  </div>
 
-  <script>
-    try { window.lucide?.createIcons(); } catch(e){}
-    document.addEventListener('DOMContentLoaded', () => {
-      try { window.lucide?.createIcons(); } catch(e){}
-      renderRecent();
-    });
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            
+            if (isDark) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
 
-    function renderRecent() {
-      const projects = JSON.parse(localStorage.getItem('dub5-projects') || '[]');
-      const strip = document.getElementById('recent-strip');
-      const recent = [...projects].sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)).slice(0,4);
-      strip.innerHTML = recent.map(p =>
-        `<button class="recent-pill" onclick="openProject('${p.id}')">${escapeHTML(p.name)}</button>`
-      ).join('');
-    }
+        // Load theme from localStorage on page load
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        }
 
-    function escapeHTML(v) {
-      return (v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+        // Handle form submission - Navigate to editor.html with prompt
+        function handleStartProject(event) {
+            event.preventDefault();
+            
+            const input = document.getElementById('landing-input');
+            const text = input.value.trim();
+            
+            // Validate input
+            if (!text) {
+                // Visual feedback for empty input
+                input.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                setTimeout(() => {
+                    input.style.borderColor = '';
+                }, 1000);
+                return;
+            }
+            
+            // URL encode the text
+            const encodedPrompt = encodeURIComponent(text);
+            
+            // Navigate to editor.html with prompt parameter
+            window.location.href = `editor.html?prompt=${encodedPrompt}`;
+        }
 
-    function setP(el) {
-      const ta = document.getElementById('land-ta');
-      ta.value = `Build a ${String(el.textContent||'').trim().toLowerCase()}`;
-      ta.focus();
-    }
+        // Handle Enter key in textarea
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            
+            const textarea = document.getElementById('landing-input');
+            if (textarea) {
+                textarea.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleStartProject(e);
+                    }
+                });
+            }
+        });
 
-    function startApp() {
-      const prompt = (document.getElementById('land-ta').value||'').trim();
-      if (prompt) sessionStorage.setItem('dub5-start-prompt', prompt);
-      sessionStorage.removeItem('dub5-open-project');
-      location.href = 'editor.html';
-    }
+        // Gradient change functionality (placeholder)
+        function changeGradient(color) {
+            // This function can be implemented to change background gradients
+            console.log('Changing gradient to:', color);
+        }
 
-    function startBlank() {
-      sessionStorage.removeItem('dub5-start-prompt');
-      sessionStorage.removeItem('dub5-open-project');
-      location.href = 'editor.html';
-    }
-
-    function openProject(id) {
-      sessionStorage.setItem('dub5-open-project', id);
-      sessionStorage.removeItem('dub5-start-prompt');
-      location.href = 'editor.html';
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('land-ta').addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); startApp(); }
-      });
-    });
-  </script>
+        // Page navigation (placeholder for multi-page functionality)
+        function showPage(pageName) {
+            console.log('Navigating to page:', pageName);
+        }
+    </script>
 </body>
 </html>
