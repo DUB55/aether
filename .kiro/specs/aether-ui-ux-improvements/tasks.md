@@ -176,7 +176,7 @@ This plan implements six key improvements to the Aether web-based editor: instan
     - Handle malformed file blocks gracefully
     - _Requirements: 6.5_
   
-  - [x] 8.4 Implement AI error handling
+  - [ ] 8.4 Implement AI error handling
     - Catch network errors and display in chat
     - Parse backend error responses
     - Display appropriate error messages

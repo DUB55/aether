@@ -426,6 +426,127 @@ function updateRunState(label) { /* Removed - UI element hidden */ }
 function updateChangeSummary(text) { /* Removed - UI element hidden */ }
 function getIndexHTML() { return files.find(f => f.name === 'index.html')?.content || ''; }
 function getFileContent(name) { return files.find(f => f.name === name)?.content || ''; }
+
+/**
+ * Validates that a file name is properly formatted and exists
+ * @param {string} fileName - The file name to validate
+ * @returns {object} - { valid: boolean, error: string }
+ */
+function validateFileName(fileName) {
+  const trimmed = (fileName || '').trim();
+  
+  // Check if empty
+  if (!trimmed) {
+    return { valid: false, error: 'File name cannot be empty' };
+  }
+  
+  // Check for .html extension
+  if (!trimmed.endsWith('.html')) {
+    return { valid: false, error: 'Invalid file format. Use .html extension' };
+  }
+  
+  // Check if file exists in files array
+  const fileExists = files.some(f => f.name === trimmed);
+  if (!fileExists) {
+    return { valid: false, error: 'File not found' };
+  }
+  
+  return { valid: true, error: null };
+}
+
+// File navigator error state
+let fileNavErrorTimeout = null;
+
+/**
+ * Displays an error message in the file navigator
+ * @param {string} message - The error message to display
+ */
+function showFileError(message) {
+  const errorEl = document.getElementById('file-nav-error');
+  if (!errorEl) return;
+  
+  // Clear any existing timeout
+  if (fileNavErrorTimeout) {
+    clearTimeout(fileNavErrorTimeout);
+    fileNavErrorTimeout = null;
+  }
+  
+  // Display error message
+  errorEl.textContent = message;
+  
+  // Set auto-clear timeout (3 seconds)
+  fileNavErrorTimeout = setTimeout(() => {
+    clearFileError();
+  }, 3000);
+}
+
+/**
+ * Clears any displayed error message in the file navigator
+ */
+function clearFileError() {
+  const errorEl = document.getElementById('file-nav-error');
+  if (!errorEl) return;
+  
+  // Clear timeout if exists
+  if (fileNavErrorTimeout) {
+    clearTimeout(fileNavErrorTimeout);
+    fileNavErrorTimeout = null;
+  }
+  
+  // Clear error message
+  errorEl.textContent = '';
+}
+
+/**
+ * Loads and displays a file from the files array
+ * @param {string} fileName - The name of the file to load
+ * @returns {boolean} - true if file loaded successfully, false otherwise
+ */
+function loadFileByName(fileName) {
+  // Trim whitespace
+  const trimmed = (fileName || '').trim();
+  
+  // Default to index.html if empty
+  const targetFile = trimmed || 'index.html';
+  
+  // Validate file name
+  const validation = validateFileName(targetFile);
+  
+  if (!validation.valid) {
+    showFileError(validation.error);
+    return false;
+  }
+  
+  // Get file content
+  const content = getFileContent(targetFile);
+  
+  // Render preview
+  renderPrev(content);
+  
+  return true;
+}
+
+/**
+ * Handles file navigation when Enter key is pressed
+ * @param {KeyboardEvent} event - The keyboard event
+ */
+function handleFileNavigation(event) {
+  // Check if Enter key was pressed
+  if (event.key !== 'Enter') return;
+  
+  // Get input value
+  const input = document.getElementById('file-nav-input');
+  if (!input) return;
+  
+  const fileName = input.value;
+  
+  // Clear any existing errors
+  clearFileError();
+  
+  // Load the file
+  loadFileByName(fileName);
+}
+
 function isViewerMode() {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get('mode') === 'viewer';
@@ -1487,6 +1608,17 @@ function bindEvents() {
   document.getElementById('pinput').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   });
+  
+  // File navigator event listeners
+  const fileNavInput = document.getElementById('file-nav-input');
+  if (fileNavInput) {
+    // Enter key to navigate
+    fileNavInput.addEventListener('keydown', handleFileNavigation);
+    
+    // Clear errors on typing
+    fileNavInput.addEventListener('input', clearFileError);
+  }
+  
   const editor = document.getElementById('code-editor');
   let editTimer = null;
   editor.addEventListener('input', () => { clearTimeout(editTimer); editTimer = setTimeout(() => writeFile(activeFile, editor.value ?? ''), 220); });
@@ -1520,6 +1652,13 @@ function initEditor() {
   document.getElementById('code-editor').value = '';
   document.getElementById('editor-info').textContent = activeFile;
   renderFileTree(); renderNotes(); renderSnapshots(); showPreviewEmpty();
+  
+  // Initialize file navigator
+  const fileNavInput = document.getElementById('file-nav-input');
+  if (fileNavInput) {
+    fileNavInput.value = '';
+  }
+  
   saveCurrentProject();
   switchTab('preview');
 
