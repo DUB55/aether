@@ -1632,9 +1632,22 @@ function bindEvents() {
 // --- Init ---
 function initEditor() {
   const openId = sessionStorage.getItem('dub5-open-project');
-  const startPrompt = sessionStorage.getItem('dub5-start-prompt');
+  let startPrompt = sessionStorage.getItem('dub5-start-prompt');
   sessionStorage.removeItem('dub5-open-project');
   sessionStorage.removeItem('dub5-start-prompt');
+
+  // Check for URL parameter prompt
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlPrompt = urlParams.get('prompt');
+  if (urlPrompt) {
+    try {
+      startPrompt = decodeURIComponent(urlPrompt);
+      // Clear the URL parameter to avoid re-triggering on refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } catch (error) {
+      console.error('Failed to decode URL prompt:', error);
+    }
+  }
 
   if (openId) {
     const p = projects.find(x => x.id === openId);
@@ -1663,7 +1676,19 @@ function initEditor() {
   switchTab('preview');
 
   if (startPrompt) {
-    setTimeout(() => { document.getElementById('pinput').value = startPrompt; send(); }, 250);
+    // Display the user message in chat
+    addUserMsg(startPrompt);
+    chatHist.push({ role: 'user', content: startPrompt });
+    saveCurrentProject();
+    
+    // Auto-send after a brief delay to ensure UI is ready
+    setTimeout(() => {
+      send().catch(error => {
+        console.error('Auto-send failed:', error);
+        const aiEl = ensureAiMsg();
+        aiEl.textContent = 'Failed to send message automatically. Please try sending manually.';
+      });
+    }, 100);
   }
 }
 
