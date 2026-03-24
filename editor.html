@@ -138,6 +138,26 @@
     .toast{background:#141416;border:1px solid #2a2a2a;color:#fff;padding:7px 12px;border-radius:999px;font-size:12.5px}
     @media(max-width:980px){.workspace{flex-direction:column}.chat{width:100%;max-height:46%;border-right:none;border-top:1px solid var(--ed-border)}.surface{height:54%}.change-summary{max-width:50%}}
     @media(max-width:640px){.actions{justify-content:flex-end}.runbar{height:auto;align-items:flex-start;flex-direction:column;padding:8px 10px}.change-summary{max-width:100%;white-space:normal}.files{width:180px}}
+    
+    /* Viewer mode styles */
+    body.viewer-mode{overflow:hidden}
+    body.viewer-mode .app-hdr,body.viewer-mode .chat,body.viewer-mode .topbar,body.viewer-mode .runbar,body.viewer-mode .files,body.viewer-mode .editor,body.viewer-mode .pane-code,body.viewer-mode .pane-panel{display:none!important}
+    body.viewer-mode .workspace{flex-direction:column}
+    body.viewer-mode .surface{flex:1;display:flex;flex-direction:column}
+    body.viewer-mode .main{flex:1}
+    body.viewer-mode .pane-preview{flex:1;padding:0}
+    body.viewer-mode .preview-card{border-radius:0;border:none}
+    body.viewer-mode .pframe{display:block!important;width:100%;height:100%}
+    body.viewer-mode .prev-empty{display:none!important}
+    
+    /* Viewer error display styles */
+    .viewer-error{position:fixed;inset:0;background:#0c0c0e;z-index:500;display:none;align-items:center;justify-content:center}
+    .viewer-error.on{display:flex}
+    .viewer-error-content{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;max-width:480px;padding:24px}
+    .viewer-error-content svg{color:#ef4444;flex-shrink:0}
+    .viewer-error-content h2{font-size:20px;color:#fff;margin:0}
+    .viewer-error-content p{font-size:14px;color:var(--t2);margin:0;line-height:1.6}
+    .viewer-error-content .btn{margin-top:8px}
   </style>
 </head>
 <body style="display:flex;flex-direction:column;height:100%">
@@ -191,7 +211,7 @@
                 <div style="font-size:12.5px;color:var(--t2)">Chat on the left or edit files in <b>Code</b>. Preview updates automatically.</div>
               </div>
             </div>
-            <iframe class="pframe" id="pframe" sandbox="allow-scripts allow-forms allow-modals" title="Preview"></iframe>
+            <iframe class="pframe" id="pframe" sandbox="allow-scripts allow-forms allow-modals allow-popups" title="Preview"></iframe>
           </div>
         </div>
         <div class="pane-code" id="pane-code">
@@ -248,6 +268,30 @@
               <button class="btn" onclick="copyDeployUrl()"><svg data-lucide="copy"></svg></button>
             </div>
           </div>
+          <div class="card" id="viewer-urls-card" style="display:none">
+            <div style="color:#fff;margin-bottom:8px">Fullscreen Preview URL</div>
+            <div style="font-size:12.5px;color:var(--t2);margin-bottom:10px">
+              Share this URL to display only the webpage without editor UI
+            </div>
+            
+            <!-- Quick Link Viewer URL -->
+            <div style="font-size:11.5px;color:var(--t3);margin-bottom:4px">Quick Link</div>
+            <div class="deploy-url-row">
+              <input class="deploy-url-input" id="viewer-quick-url" readonly value=""/>
+              <button class="btn" onclick="copyViewerQuickUrl()">
+                <svg data-lucide="copy"></svg> Copy
+              </button>
+            </div>
+            
+            <!-- Secure Link Viewer URL -->
+            <div style="font-size:11.5px;color:var(--t3);margin-bottom:4px;margin-top:12px">Secure Link</div>
+            <div class="deploy-url-row">
+              <input class="deploy-url-input" id="viewer-secure-url" readonly value=""/>
+              <button class="btn" onclick="copyViewerSecureUrl()">
+                <svg data-lucide="copy"></svg> Copy
+              </button>
+            </div>
+          </div>
           <div class="card">
             <div style="color:#fff;margin-bottom:8px">Project tools</div>
             <div class="btn-row">
@@ -259,6 +303,18 @@
         </div>
       </div>
     </section>
+  </div>
+
+  <!-- Viewer Error Display -->
+  <div id="viewer-error" class="viewer-error">
+    <div class="viewer-error-content">
+      <svg data-lucide="alert-circle" width="48" height="48"></svg>
+      <h2 id="viewer-error-title">Unable to Load Preview</h2>
+      <p id="viewer-error-message">The preview could not be loaded. Please check the URL and try again.</p>
+      <a href="index.html" class="btn">
+        <svg data-lucide="arrow-left"></svg> Return to Aether
+      </a>
+    </div>
   </div>
 
   <div id="dialog-bg" class="modal-bg" aria-hidden="true">

@@ -100,3 +100,33 @@ export async function unpackEncryptedShare(payload, keyB64) {
   const inflated = await inflateRaw(plain);
   return JSON.parse(dec.decode(inflated));
 }
+
+export async function createQuickLinkViewer(files) {
+  const editorUrl = await createQuickLink(files);
+  const url = new URL(editorUrl);
+  url.searchParams.set('mode', 'viewer');
+  return url.toString();
+}
+
+export async function createViewerUrls(files, githubUrl = null) {
+  const baseUrl = `${location.origin}${location.pathname}`;
+  
+  if (githubUrl) {
+    // Generate secure (GitHub-based) URLs
+    const { encryptedPayload, keyB64 } = await createEncryptedSharePayload(files);
+    return {
+      editorUrl: `${baseUrl}?src=${encodeURIComponent(githubUrl)}#key=${keyB64}`,
+      viewerUrl: `${baseUrl}?mode=viewer&src=${encodeURIComponent(githubUrl)}#key=${keyB64}`,
+      encryptedPayload,
+      keyB64
+    };
+  } else {
+    // Generate quick link URLs
+    const editorUrl = await createQuickLink(files);
+    const viewerUrl = await createQuickLinkViewer(files);
+    return {
+      editorUrl,
+      viewerUrl
+    };
+  }
+}

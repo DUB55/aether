@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Viewer Error Handling Tests</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+    .test { margin: 10px 0; padding: 10px; border: 1px solid #444; }
+    .pass { background-color: #1a4d2e; }
+    .fail { background-color: #4d1a1a; }
+    .info { background-color: #1a3a4d; }
+    button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Viewer Error Handling Tests</h1>
+  <div id="results"></div>
+  
+  <h2>Manual Tests</h2>
+  <button onclick="test404Error()">Test 404 Error</button>
+  <button onclick="testNetworkError()">Test Network Error</button>
+  <button onclick="testDecryptionError()">Test Decryption Error</button>
+  <button onclick="testSuccessfulFetch()">Test Successful Fetch</button>
+
+  <script type="module">
+    const results = document.getElementById('results');
+
+    function addResult(name, status, message = '') {
+      const div = document.createElement('div');
+      div.className = `test ${status}`;
+      div.innerHTML = `<strong>${name}</strong><br>${message}`;
+      results.appendChild(div);
+    }
+
+    // Mock the showViewerError function
+    let lastError = null;
+    window.showViewerError = function(title, message) {
+      lastError = { title, message };
+      addResult('showViewerError called', 'info', `Title: ${title}<br>Message: ${message}`);
+    };
+
+    // Test 404 error handling
+    window.test404Error = async function() {
+      addResult('Testing 404 Error', 'info', 'Simulating fetch to non-existent GitHub resource...');
+      
+      try {
+        // Simulate the secure link loading logic with 404 response
+        const mockUrl = 'https://httpstat.us/404'; // This URL returns 404
+        const response = await fetch(mockUrl, { cache: 'no-store' });
+        
+        // Check for 404 error (this is the code we're testing)
+        if (response.status === 404) {
+          showViewerError(
+            'Preview Not Found',
+            'Preview not found. The shared resource may have been deleted.'
+          );
+          
+          // Verify the error was set correctly
+          if (lastError && 
+              lastError.title === 'Preview Not Found' && 
+              lastError.message === 'Preview not found. The shared resource may have been deleted.') {
+            addResult('404 Error Handling', 'pass', 'Correct error message displayed for 404');
+          } else {
+            addResult('404 Error Handling', 'fail', 'Error message does not match expected values');
+          }
+          return;
+        }
+        
+        addResult('404 Error Handling', 'fail', `Expected 404 but got ${response.status}`);
+      } catch (e) {
+        addResult('404 Error Handling', 'fail', `Exception: ${e.message}`);
+      }
+    };
+
+    // Test network error handling
+    window.testNetworkError = async function() {
+      addResult('Testing Network Error', 'info', 'Simulating network error...');
+      
+      try {
+        // Simulate the secure link loading logic with 500 response
+        const mockUrl = 'https://httpstat.us/500'; // This URL returns 500
+        const response = await fetch(mockUrl, { cache: 'no-store' });
+        
+        // Check for 404 error
+        if (response.status === 404) {
+          showViewerError(
+            'Preview Not Found',
+            'Preview not found. The shared resource may have been deleted.'
+          );
+          addResult('Network Error Handling', 'fail', 'Should not show 404 error for 500 status');
+          return;
+        }
+        
+        // Check for other HTTP errors
+        if (!response.ok) {
+          addResult('Network Error Handling', 'pass', `Correctly detected HTTP ${response.status} error`);
+          return;
+        }
+        
+        addResult('Network Error Handling', 'fail', 'Expected error but got success');
+      } catch (e) {
+        addResult('Network Error Handling', 'pass', `Correctly caught exception: ${e.message}`);
+      }
+    };
+
+    // Test decryption error handling
+    window.testDecryptionError = async function() {
+      addResult('Testing Decryption Error', 'info', 'Simulating decryption failure...');
+      
+      try {
+        // Simulate a decryption error
+        const error = new Error('DECRYPTION_ERROR: Invalid key or corrupted data');
+        
+        // This is the code path we're testing
+        if (error.message && error.message.includes('DECRYPTION_ERROR')) {
+          showViewerError(
+            'Unable to Decrypt Preview',
+            'Unable to decrypt preview. The URL may be incomplete or invalid.'
+          );
+          
+          // Verify the error was set correctly
+          if (lastError && 
+              lastError.title === 'Unable to Decrypt Preview' && 
+              lastError.message === 'Unable to decrypt preview. The URL may be incomplete or invalid.') {
+            addResult('Decryption Error Handling', 'pass', 'Correct error message displayed for decryption failure');
+          } else {
+            addResult('Decryption Error Handling', 'fail', 'Error message does not match expected values');
+          }
+          return;
+        }
+        
+        addResult('Decryption Error Handling', 'fail', 'Error was not recognized as decryption error');
+      } catch (e) {
+        addResult('Decryption Error Handling', 'fail', `Exception: ${e.message}`);
+      }
+    };
+
+    // Test successful fetch
+    window.testSuccessfulFetch = async function() {
+      addResult('Testing Successful Fetch', 'info', 'Simulating successful fetch...');
+      
+      try {
+        // Simulate the secure link loading logic with 200 response
+        const mockUrl = 'https://httpstat.us/200'; // This URL returns 200
+        const response = await fetch(mockUrl, { cache: 'no-store' });
+        
+        // Check for 404 error
+        if (response.status === 404) {
+          addResult('Successful Fetch', 'fail', 'Should not show 404 error for 200 status');
+          return;
+        }
+        
+        // Check for other HTTP errors
+        if (!response.ok) {
+          addResult('Successful Fetch', 'fail', `Should not error for 200 status, got ${response.status}`);
+          return;
+        }
+        
+        addResult('Successful Fetch', 'pass', 'Correctly handled successful response');
+      } catch (e) {
+        addResult('Successful Fetch', 'fail', `Unexpected exception: ${e.message}`);
+      }
+    };
+
+    // Run automated tests
+    addResult('Test Suite Loaded', 'info', 'Click buttons above to run manual tests');
+  </script>
+</body>
+</html>

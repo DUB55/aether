@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share Crypto Tests</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+    .pass { background-color: #d4edda; }
+    .fail { background-color: #f8d7da; }
+  </style>
+</head>
+<body>
+  <h1>Share Crypto Tests</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    import { createViewerUrls, createQuickLink, createQuickLinkViewer } from './share-crypto.js';
+
+    const results = document.getElementById('results');
+
+    function addResult(name, passed, message = '') {
+      const div = document.createElement('div');
+      div.className = `test ${passed ? 'pass' : 'fail'}`;
+      div.innerHTML = `<strong>${passed ? '✓' : '✗'} ${name}</strong><br>${message}`;
+      results.appendChild(div);
+    }
+
+    async function runTests() {
+      const testFiles = [
+        { name: 'index.html', content: '<!DOCTYPE html><html><body>Test</body></html>' },
+        { name: 'style.css', content: 'body { margin: 0; }' }
+      ];
+
+      try {
+        // Test 1: createViewerUrls with quick link format
+        const quickUrls = await createViewerUrls(testFiles);
+        const hasEditorUrl = quickUrls.editorUrl && typeof quickUrls.editorUrl === 'string';
+        const hasViewerUrl = quickUrls.viewerUrl && typeof quickUrls.viewerUrl === 'string';
+        const viewerHasMode = quickUrls.viewerUrl.includes('mode=viewer');
+        
+        addResult(
+          'createViewerUrls (quick link)',
+          hasEditorUrl && hasViewerUrl && viewerHasMode,
+          `Editor URL: ${quickUrls.editorUrl.substring(0, 50)}...<br>Viewer URL: ${quickUrls.viewerUrl.substring(0, 50)}...`
+        );
+
+        // Test 2: Verify viewer URL has mode parameter
+        addResult(
+          'Viewer URL contains mode=viewer',
+          viewerHasMode,
+          `mode=viewer found: ${viewerHasMode}`
+        );
+
+        // Test 3: createViewerUrls with secure format
+        const githubUrl = 'https://raw.githubusercontent.com/user/repo/main/data.json';
+        const secureUrls = await createViewerUrls(testFiles, githubUrl);
+        const hasSecureEditor = secureUrls.editorUrl && secureUrls.editorUrl.includes('src=');
+        const hasSecureViewer = secureUrls.viewerUrl && secureUrls.viewerUrl.includes('mode=viewer') && secureUrls.viewerUrl.includes('src=');
+        const hasKey = secureUrls.keyB64 && typeof secureUrls.keyB64 === 'string';
+        
+        addResult(
+          'createViewerUrls (secure link)',
+          hasSecureEditor && hasSecureViewer && hasKey,
+          `Editor URL: ${secureUrls.editorUrl.substring(0, 50)}...<br>Viewer URL: ${secureUrls.viewerUrl.substring(0, 50)}...<br>Has key: ${hasKey}`
+        );
+
+        // Test 4: Verify secure URLs have correct parameters
+        const secureEditorUrl = new URL(secureUrls.editorUrl);
+        const secureViewerUrl = new URL(secureUrls.viewerUrl);
+        const editorHasSrc = secureEditorUrl.searchParams.has('src');
+        const viewerHasSrc = secureViewerUrl.searchParams.has('src');
+        const viewerHasMode = secureViewerUrl.searchParams.get('mode') === 'viewer';
+        const editorHasKey = secureEditorUrl.hash.includes('key=');
+        const viewerHasKey = secureViewerUrl.hash.includes('key=');
+        
+        addResult(
+          'Secure URLs have correct parameters',
+          editorHasSrc && viewerHasSrc && viewerHasMode && editorHasKey && viewerHasKey,
+          `Editor has src: ${editorHasSrc}, key: ${editorHasKey}<br>Viewer has src: ${viewerHasSrc}, mode: ${viewerHasMode}, key: ${viewerHasKey}`
+        );
+
+        // Test 5: Verify createQuickLinkViewer works
+        const viewerUrl = await createQuickLinkViewer(testFiles);
+        const isValidViewer = viewerUrl.includes('mode=viewer') && viewerUrl.includes('#v1:');
+        
+        addResult(
+          'createQuickLinkViewer',
+          isValidViewer,
+          `URL: ${viewerUrl.substring(0, 50)}...`
+        );
+
+      } catch (error) {
+        addResult('Test execution', false, `Error: ${error.message}`);
+      }
+    }
+
+    runTests();
+  </script>
+</body>
+</html>

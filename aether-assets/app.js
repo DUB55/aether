@@ -2,6 +2,7 @@ import { APP_CONFIG } from './config.js';
 import {
   createEncryptedSharePayload,
   createQuickLink,
+  createViewerUrls,
   unpackEncryptedShare,
   unpackQuickLink,
 } from './share-crypto.js';
@@ -51,6 +52,38 @@ function updateRunState(label) { document.getElementById('run-state').textConten
 function updateChangeSummary(text) { document.getElementById('change-summary').textContent = text; }
 function getIndexHTML() { return files.find(f => f.name === 'index.html')?.content || ''; }
 function getFileContent(name) { return files.find(f => f.name === name)?.content || ''; }
+function isViewerMode() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('mode') === 'viewer';
+}
+
+function initViewer() {
+  // Add viewer-mode class to body element
+  document.body.classList.add('viewer-mode');
+  
+  // The CSS (added in task 3.1) will handle:
+  // - Hiding all editor UI elements (chat, code editor, tabs, toolbars, file tree)
+  // - Making preview iframe occupy full viewport
+  // - Disabling editor interactions
+}
+
+/**
+ * Displays an error message in viewer mode
+ * @param {string} title - Error title
+ * @param {string} message - Error message
+ */
+function showViewerError(title, message) {
+  const errorEl = document.getElementById('viewer-error');
+  const titleEl = document.getElementById('viewer-error-title');
+  const messageEl = document.getElementById('viewer-error-message');
+
+  if (errorEl && titleEl && messageEl) {
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    errorEl.classList.add('on');
+  }
+}
+
 
 function showPreviewEmpty() {
   document.getElementById('prev-empty').style.display = 'flex';
@@ -63,8 +96,105 @@ function hidePreviewEmpty() {
 function renderPrev(html) {
   if (!html) { showPreviewEmpty(); return; }
   hidePreviewEmpty();
-  document.getElementById('pframe').srcdoc = html;
+  // Resolve file references for multi-file projects
+  // This handles CSS links, script tags, and other file references
+  // Works in both editor mode and viewer mode
+  const processedHtml = resolveFileReferences(html);
+  document.getElementById('pframe').srcdoc = processedHtml;
 }
+/**
+ * Resolves file references in HTML by converting them to data URLs or inline content
+ * Handles CSS links, script tags, and other file references
+ * @param {string} html - The HTML content to process
+ * @returns {string} HTML with resolved file references
+ */
+/**
+ * Resolves file references in HTML for multi-file projects
+ * Converts external file references to inline content or data URLs
+ * This ensures that CSS, JavaScript, and other assets work correctly
+ * in both editor preview mode and fullscreen viewer mode
+ * 
+ * @param {string} html - The HTML content to process
+ * @returns {string} - The processed HTML with resolved file references
+ */
+function resolveFileReferences(html) {
+  if (!html) return html;
+
+  let processedHtml = html;
+
+  // Process CSS link tags: <link rel="stylesheet" href="style.css">
+  processedHtml = processedHtml.replace(
+    /<link\s+([^>]*\s)?href=["']([^"']+\.css)["']([^>]*)>/gi,
+    (match, before, filename, after) => {
+      const file = files.find(f => f.name === filename);
+      if (file && file.content) {
+        // Inline the CSS as a style tag
+        return `<style>${file.content}</style>`;
+      }
+      return match; // Keep original if file not found
+    }
+  );
+
+  // Process script tags: <script src="script.js"></script>
+  processedHtml = processedHtml.replace(
+    /<script\s+([^>]*\s)?src=["']([^"']+\.js)["']([^>]*)><\/script>/gi,
+    (match, before, filename, after) => {
+      const file = files.find(f => f.name === filename);
+      if (file && file.content) {
+        // Inline the JavaScript
+        const attrs = (before || '') + (after || '');
+        return `<script${attrs}>${file.content}</script>`;
+      }
+      return match; // Keep original if file not found
+    }
+  );
+
+  // Process other file references (images, etc.) - convert to data URLs
+  // This handles: <img src="image.png">, <source src="video.mp4">, etc.
+  processedHtml = processedHtml.replace(
+    /\b(src|href)=["']([^"':]+\.[a-zA-Z0-9]+)["']/gi,
+    (match, attr, filename) => {
+      // Skip if it's already a URL (http://, https://, data:, blob:, etc.)
+      if (/^(https?:|data:|blob:|\/\/)/i.test(filename)) {
+        return match;
+      }
+
+      const file = files.find(f => f.name === filename);
+      if (file && file.content) {
+        // Determine MIME type based on file extension
+        const ext = filename.split('.').pop().toLowerCase();
+        const mimeTypes = {
+          'html': 'text/html',
+          'css': 'text/css',
+          'js': 'application/javascript',
+          'json': 'application/json',
+          'txt': 'text/plain',
+          'svg': 'image/svg+xml',
+          'png': 'image/png',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'gif': 'image/gif',
+          'webp': 'image/webp',
+        };
+        const mimeType = mimeTypes[ext] || 'text/plain';
+
+        // For text-based files, create data URL with base64 encoding
+        try {
+          const base64Content = btoa(unescape(encodeURIComponent(file.content)));
+          return `${attr}="data:${mimeType};base64,${base64Content}"`;
+        } catch (e) {
+          console.warn(`Failed to encode ${filename}:`, e);
+          return match;
+        }
+      }
+
+      return match; // Keep original if file not found
+    }
+  );
+
+  return processedHtml;
+}
+
 
 function renderNotes() {
   const box = document.getElementById('hist-list');
@@ -552,6 +682,9 @@ async function deployProject() {
     urlRow.style.display = 'flex';
     statusEl.textContent = 'Deployed successfully';
     toast('Deployed');
+    
+    // Generate viewer URLs with the GitHub URL
+    await generateViewerUrls(data.rawUrl);
   } catch (error) {
     console.error(error);
     statusEl.textContent = `Error: ${error.message}`;
@@ -566,28 +699,166 @@ function copyDeployUrl() {
   navigator.clipboard.writeText(el.value).then(() => toast('Copied'));
 }
 
+function copyViewerQuickUrl() {
+  const el = document.getElementById('viewer-quick-url');
+  if (!el?.value) return toast('Nothing to copy');
+  navigator.clipboard.writeText(el.value)
+    .then(() => toast('Copied'))
+    .catch(() => toast('Failed to copy URL'));
+}
+function copyViewerSecureUrl() {
+  const el = document.getElementById('viewer-secure-url');
+  if (!el?.value) return toast('Nothing to copy');
+  navigator.clipboard.writeText(el.value)
+    .then(() => toast('Copied'))
+    .catch(() => toast('Failed to copy URL'));
+}
+
+
+async function generateViewerUrls(githubUrl = null) {
+  try {
+    // Generate both quick link and secure viewer URLs
+    const quickUrls = await createViewerUrls(files);
+    const secureUrls = githubUrl ? await createViewerUrls(files, githubUrl) : null;
+    
+    // Populate quick link viewer URL
+    const quickUrlInput = document.getElementById('viewer-quick-url');
+    if (quickUrlInput) {
+      quickUrlInput.value = quickUrls.viewerUrl;
+    }
+    
+    // Populate secure link viewer URL (if GitHub URL is provided)
+    const secureUrlInput = document.getElementById('viewer-secure-url');
+    if (secureUrlInput && secureUrls) {
+      secureUrlInput.value = secureUrls.viewerUrl;
+    }
+    
+    // Show the viewer URLs card
+    const viewerUrlsCard = document.getElementById('viewer-urls-card');
+    if (viewerUrlsCard) {
+      viewerUrlsCard.style.display = 'block';
+    }
+  } catch (error) {
+    console.error('Failed to generate viewer URLs:', error);
+  }
+}
+
 async function viewerAuto() {
+  const inViewerMode = isViewerMode();
+
+  // Handle quick link format (#v1:...)
   if (location.hash.startsWith('#v1:')) {
     try {
       const pkg = await unpackQuickLink(location.hash.slice(4));
       files = Object.entries(pkg.files).map(([name, content]) => ({ name, content }));
       activeFile = files.find(f => f.name === 'index.html') ? 'index.html' : files[0]?.name || 'index.html';
-      renderFileTree(); openFile(activeFile); renderPrev(getIndexHTML()); switchTab('preview');
-    } catch (e) { console.error(e); toast('Failed to open quick link'); }
+
+      if (inViewerMode) {
+        // In viewer mode: just render the preview
+        renderPrev(getIndexHTML());
+      } else {
+        // In editor mode: full initialization
+        renderFileTree();
+        openFile(activeFile);
+        renderPrev(getIndexHTML());
+        switchTab('preview');
+      }
+    } catch (e) {
+      console.error(e);
+      if (inViewerMode) {
+        // In viewer mode: show error display
+        showViewerError(
+          'Unable to Load Preview',
+          'Unable to load preview. The URL may be corrupted or incomplete.'
+        );
+      } else {
+        // In editor mode: show toast
+        toast('Failed to open quick link');
+      }
+    }
   }
+
+  // Handle secure link format (?src=...#key=...)
   const search = new URLSearchParams(location.search);
   if (search.has('src') && location.hash.includes('key=')) {
     try {
       const response = await fetch(search.get('src'), { cache: 'no-store' });
+      
+      // Check for 404 error
+      if (response.status === 404) {
+        if (inViewerMode) {
+          showViewerError(
+            'Preview Not Found',
+            'Preview not found. The shared resource may have been deleted.'
+          );
+        } else {
+          toast('Shared resource not found');
+        }
+        return;
+      }
+      
+      // Check for other HTTP errors
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const payload = await response.json();
+      
+      // Check if key is present in URL
+      if (!location.hash.includes('key=')) {
+        throw new Error('DECRYPTION_ERROR: Missing encryption key');
+      }
+      
       const keyB64 = location.hash.split('key=')[1].split('&')[0];
-      const pkg = await unpackEncryptedShare(payload, keyB64);
-      files = Object.entries(pkg.files).map(([name, content]) => ({ name, content }));
-      activeFile = files.find(f => f.name === 'index.html') ? 'index.html' : files[0]?.name || 'index.html';
-      renderFileTree(); openFile(activeFile); renderPrev(getIndexHTML()); switchTab('preview');
-    } catch (e) { console.error(e); toast('Failed to open shared link'); }
+      
+      // Check if key is empty
+      if (!keyB64 || keyB64.trim() === '') {
+        throw new Error('DECRYPTION_ERROR: Empty encryption key');
+      }
+      
+      try {
+        const pkg = await unpackEncryptedShare(payload, keyB64);
+        files = Object.entries(pkg.files).map(([name, content]) => ({ name, content }));
+        activeFile = files.find(f => f.name === 'index.html') ? 'index.html' : files[0]?.name || 'index.html';
+
+        if (inViewerMode) {
+          // In viewer mode: just render the preview
+          renderPrev(getIndexHTML());
+        } else {
+          // In editor mode: full initialization
+          renderFileTree();
+          openFile(activeFile);
+          renderPrev(getIndexHTML());
+          switchTab('preview');
+        }
+      } catch (decryptError) {
+        // Catch decryption-specific errors
+        throw new Error('DECRYPTION_ERROR: ' + decryptError.message);
+      }
+    } catch (e) {
+      console.error(e);
+      if (inViewerMode) {
+        // Check if this is a decryption error
+        if (e.message && e.message.includes('DECRYPTION_ERROR')) {
+          showViewerError(
+            'Unable to Decrypt Preview',
+            'Unable to decrypt preview. The URL may be incomplete or invalid.'
+          );
+        } else {
+          // Generic error for other issues
+          showViewerError(
+            'Unable to Load Preview',
+            'Unable to load preview. The URL may be corrupted or incomplete.'
+          );
+        }
+      } else {
+        // In editor mode: show toast
+        toast('Failed to open shared link');
+      }
+    }
   }
 }
+
 
 async function send() {
   const input = document.getElementById('pinput');
@@ -777,5 +1048,14 @@ setSendBtn('send');
 renderNotes();
 renderSnapshots();
 refreshIcons();
-viewerAuto();
-initEditor();
+
+// Check if we're in viewer mode
+if (isViewerMode()) {
+  // In viewer mode: load data and initialize viewer
+  viewerAuto();
+  initViewer();
+} else {
+  // In editor mode: normal initialization
+  viewerAuto();
+  initEditor();
+}
