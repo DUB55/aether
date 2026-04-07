@@ -3,6 +3,14 @@
 import React, { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import FallbackIcon from '@/components/FallbackIcon'
+import { 
+  ChevronDown,
+  ArrowUp,
+  Loader2,
+  Rocket,
+  Heart,
+  AlertTriangle,
+} from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
