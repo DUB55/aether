@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aether</title>  
+    <style>
+        html, body, iframe {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        class SimpleIframeRouter {
+            constructor() {
+                this.baseUrl = 'https://aether-vert.vercel.app';
+                this.defaultPage = 'home';
+                this.init();
+            }
+
+            init() {
+                this.handleRoute();
+                window.addEventListener('popstate', () => this.handleRoute());
+            }
+
+            getCurrentPage() {
+                const params = new URLSearchParams(window.location.search);
+                const page = params.get('page') || this.defaultPage;
+                
+                const routeMap = {
+                    'home': '',
+                    'projects': '#/projects',
+                    'templates': '#/templates',
+                    'community': '#/community',
+                    'pricing': '#/pricing',
+                    'docs': '#/docs',
+                    'privacy-policy': '#/privacy-policy',
+                    'terms-of-service': '#/terms-of-service'
+                };
+                
+                return {
+                    page: page,
+                    route: routeMap[page] || ''
+                };
+            }
+
+            handleRoute() {
+                const { page, route } = this.getCurrentPage();
+                const iframeSrc = `${this.baseUrl}/${route}`;
+                
+                const iframe = document.getElementById('aether-frame');
+                iframe.src = iframeSrc;
+                
+                const newUrl = page === this.defaultPage ? 
+                    window.location.pathname : 
+                    `${window.location.pathname}?page=${page}`;
+                
+                if (window.location.search !== `?page=${page}`) {
+                    history.pushState({ page }, '', newUrl);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const iframe = document.createElement('iframe');
+            iframe.id = 'aether-frame';
+            iframe.src = '';
+            iframe.width = '100%';
+            iframe.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.position = 'absolute';
+            iframe.style.top = '0';
+            iframe.style.left = '0';
+            
+            document.body.appendChild(iframe);
+            
+            window.simpleRouter = new SimpleIframeRouter();
+        });
+    </script>
+</body>
+</html>

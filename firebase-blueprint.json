@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique identifier for the user." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "format": "uri", "description": "The user's profile photo URL." },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "The user's role in the application." }
+      },
+      "required": ["uid", "email"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "A project created by a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique identifier for the project." },
+        "name": { "type": "string", "description": "The name of the project." },
+        "lastModified": { "type": "number", "description": "The timestamp of the last modification." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "The timestamp of the last update." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp of creation." },
+        "files": { "type": "object", "description": "A map of file paths to their contents." },
+        "messages": { "type": "array", "items": { "type": "object" }, "description": "The chat history for the project." },
+        "ownerId": { "type": "string", "description": "The UID of the user who owns the project." },
+        "isPublic": { "type": "boolean", "description": "Whether the project is publicly viewable via a share link." },
+        "settings": { "type": "object", "description": "Project-specific settings." }
+      },
+      "required": ["id", "name", "ownerId"]
+    },
+    "Snapshot": {
+      "title": "Snapshot",
+      "description": "A snapshot of a project's files at a specific point in time.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique identifier for the snapshot." },
+        "projectId": { "type": "string", "description": "The ID of the parent project." },
+        "files": { "type": "object", "description": "A map of file paths to their contents at the time of the snapshot." },
+        "note": { "type": "string", "description": "An optional note for the snapshot." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp of creation." }
+      },
+      "required": ["id", "projectId", "files"]
+    },
+    "TemplateStats": {
+      "title": "TemplateStats",
+      "description": "Statistics for a template, such as like counts.",
+      "type": "object",
+      "properties": {
+        "likes": { "type": "integer", "description": "The number of likes for the template." }
+      },
+      "required": ["likes"]
+    },
+    "TemplateLike": {
+      "title": "TemplateLike",
+      "description": "A record of a user liking a template.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who liked the template." },
+        "templateId": { "type": "string", "description": "The ID of the template that was liked." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp of when the template was liked." }
+      },
+      "required": ["userId", "templateId"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "Collection of user profiles."
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Collection of projects."
+    },
+    "/projects/{projectId}/snapshots/{snapshotId}": {
+      "schema": "Snapshot",
+      "description": "Subcollection of project snapshots."
+    },
+    "/template_stats/{templateId}": {
+      "schema": "TemplateStats",
+      "description": "Collection of template statistics."
+    },
+    "/template_likes/{likeId}": {
+      "schema": "TemplateLike",
+      "description": "Collection of template likes."
+    }
+  }
+}

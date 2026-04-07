@@ -1,0 +1,168 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required) - The user's UID
+    //   - email: string (required) - The user's email
+    //   - displayName: string (optional) - The user's display name
+    //   - photoURL: string (optional) - The user's photo URL
+    //   - role: string (required, enum: ['admin', 'user']) - The user's role
+    //
+    // Collection: projects
+    // Document ID: {projectId}
+    // Fields:
+    //   - id: string (required) - The project ID
+    //   - name: string (required, max length 100) - The project name
+    //   - ownerId: string (required) - The owner's UID
+    //   - lastModified: number (required) - Timestamp
+    //   - updatedAt: timestamp (required) - Timestamp
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - files: map (required) - File contents
+    //   - messages: list (optional) - Chat history
+    //   - settings: map (optional) - Project settings
+    //
+    // Collection: projects/{projectId}/snapshots
+    // Document ID: {snapshotId}
+    // Fields:
+    //   - id: string (required) - The snapshot ID
+    //   - projectId: string (required) - The parent project ID
+    //   - files: map (required) - File contents
+    //   - note: string (optional, max length 500) - Snapshot note
+    //   - createdAt: timestamp (required) - Timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "tcookdub5@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'role']) &&
+             hasOnlyAllowedFields(['uid', 'email', 'displayName', 'photoURL', 'role']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             data.role in ['admin', 'user'];
+    }
+
+    function isValidProject(data) {
+      return hasRequiredFields(['id', 'name', 'ownerId', 'lastModified', 'updatedAt', 'createdAt', 'files']) &&
+             hasOnlyAllowedFields(['id', 'name', 'ownerId', 'lastModified', 'updatedAt', 'createdAt', 'files', 'messages', 'settings', 'isPublic', 'authorName', 'authorPhoto']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.ownerId is string && data.ownerId == request.auth.uid &&
+             data.lastModified is number &&
+             data.updatedAt is timestamp &&
+             data.createdAt is timestamp &&
+             data.files is map &&
+             (!('isPublic' in data) || data.isPublic is bool) &&
+             (!('authorName' in data) || (data.authorName is string && data.authorName.size() <= 100)) &&
+             (!('authorPhoto' in data) || (data.authorPhoto is string && data.authorPhoto.size() <= 1000));
+    }
+
+    function isValidSnapshot(data, projectId) {
+      return hasRequiredFields(['id', 'projectId', 'files', 'createdAt']) &&
+             hasOnlyAllowedFields(['id', 'projectId', 'files', 'note', 'createdAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.projectId == projectId &&
+             data.files is map &&
+             (!('note' in data) || (data.note is string && data.note.size() <= 500)) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidTemplateStat(data) {
+      return hasRequiredFields(['likes']) &&
+             hasOnlyAllowedFields(['likes']) &&
+             data.likes is int;
+    }
+
+    function isValidTemplateLike(data) {
+      return hasRequiredFields(['userId', 'templateId', 'createdAt']) &&
+             hasOnlyAllowedFields(['userId', 'templateId', 'createdAt']) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.templateId is string &&
+             data.createdAt is string; // Using string as per component implementation
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /test/connection {
+      allow read: if true;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /template_stats/{templateId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidTemplateStat(request.resource.data);
+      allow update: if isAuthenticated() && isValidTemplateStat(request.resource.data);
+    }
+
+    match /template_likes/{likeId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && isValidTemplateLike(request.resource.data) && likeId == request.auth.uid + "_" + request.resource.data.templateId;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidProject(request.resource.data);
+      allow update: if isAuthenticated() && isValidProject(request.resource.data) && (isOwner(resource.data.ownerId) || isAdmin());
+      allow delete: if isAuthenticated() && (isOwner(resource.data.ownerId) || isAdmin());
+
+      match /snapshots/{snapshotId} {
+        allow read: if get(/databases/$(database)/documents/projects/$(projectId)).data.isPublic == true || isOwner(get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId) || isAdmin();
+        allow create: if isAuthenticated() && isValidSnapshot(request.resource.data, projectId) && (isOwner(get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId) || isAdmin());
+        allow update: if false; // Snapshots are immutable
+        allow delete: if isAuthenticated() && (isOwner(get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId) || isAdmin());
+      }
+    }
+  }
+}

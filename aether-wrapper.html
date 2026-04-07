@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether - AI Development Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background 0.3s;
+        }
+        
+        .nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .iframe-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .iframe-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            height: 80vh;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .iframe-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="?page=home" class="logo">⚡ Aether</a>
+        <nav class="nav">
+            <a href="?page=home" data-page="home">Home</a>
+            <a href="?page=projects" data-page="projects">Projects</a>
+            <a href="?page=templates" data-page="templates">Templates</a>
+            <a href="?page=community" data-page="community">Community</a>
+            <a href="?page=privacy-policy" data-page="privacy-policy">Privacy</a>
+            <a href="?page=terms-of-service" data-page="terms-of-service">Terms</a>
+        </nav>
+    </header>
+    
+    <div class="iframe-container">
+        <div class="iframe-wrapper">
+            <div class="loading">Loading Aether...</div>
+            <iframe id="aether-frame" src="" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+        </div>
+    </div>
+
+    <script>
+        class IframeRouter {
+            constructor() {
+                this.iframe = document.getElementById('aether-frame');
+                this.baseUrl = 'https://aether-vert.vercel.app'; // Replace with your actual Vercel URL
+                this.defaultPage = 'home';
+                this.init();
+            }
+
+            init() {
+                // Handle initial page load
+                this.handleRoute();
+                
+                // Listen for browser navigation
+                window.addEventListener('popstate', () => this.handleRoute());
+                
+                // Listen for URL parameter changes
+                window.addEventListener('hashchange', () => this.handleRoute());
+                
+                // Set up message listener for iframe communication
+                window.addEventListener('message', (event) => this.handleIframeMessage(event));
+                
+                // Update navigation active state
+                this.updateNavigation();
+            }
+
+            getCurrentPage() {
+                const params = new URLSearchParams(window.location.search);
+                const page = params.get('page') || this.defaultPage;
+                
+                // Map page names to app routes
+                const routeMap = {
+                    'home': '',
+                    'projects': '#/projects',
+                    'templates': '#/templates',
+                    'community': '#/community',
+                    'pricing': '#/pricing',
+                    'docs': '#/docs',
+                    'privacy-policy': '#/privacy-policy',
+                    'terms-of-service': '#/terms-of-service'
+                };
+                
+                return {
+                    page: page,
+                    route: routeMap[page] || ''
+                };
+            }
+
+            handleRoute() {
+                const { page, route } = this.getCurrentPage();
+                const iframeSrc = `${this.baseUrl}/${route}`;
+                
+                // Update iframe src
+                this.iframe.src = iframeSrc;
+                
+                // Update browser URL without page reload
+                const newUrl = page === this.defaultPage ? 
+                    window.location.pathname : 
+                    `${window.location.pathname}?page=${page}`;
+                
+                if (window.location.search !== `?page=${page}`) {
+                    history.pushState({ page }, '', newUrl);
+                }
+                
+                // Update navigation active state
+                this.updateNavigation();
+            }
+
+            updateNavigation() {
+                const { page } = this.getCurrentPage();
+                const navLinks = document.querySelectorAll('.nav a');
+                
+                navLinks.forEach(link => {
+                    const linkPage = link.getAttribute('data-page');
+                    if (linkPage === page) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+            }
+
+            handleIframeMessage(event) {
+                // Handle messages from iframe (optional - for advanced features)
+                if (event.data.type === 'navigate') {
+                    const newPage = event.data.page;
+                    window.location.search = `?page=${newPage}`;
+                }
+                
+                if (event.data.type === 'ready') {
+                    console.log('Aether app loaded successfully');
+                }
+            }
+
+            // Public method to navigate programmatically
+            navigate(page) {
+                window.location.search = `?page=${page}`;
+            }
+        }
+
+        // Initialize the router when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.iframeRouter = new IframeRouter();
+        });
+
+        // Handle direct navigation
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.getAttribute('data-page');
+                if (window.iframeRouter) {
+                    window.iframeRouter.navigate(page);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
