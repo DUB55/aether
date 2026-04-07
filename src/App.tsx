@@ -1092,29 +1092,38 @@ function AppContent() {
                 { 
                   title: "Autonomous Engine", 
                   desc: "Our AI understands your entire project architecture and manages dependencies automatically.",
+                  icon: <Cpu className="w-6 h-6" />
                 },
                 { 
                   title: "Instant Previews", 
                   desc: "See your changes in real-time with integrated WebContainer technology. No local setup required.",
+                  icon: <Zap className="w-6 h-6" />
                 },
                 { 
                   title: "Visual Inspector", 
                   desc: "Click any element in your preview to instantly locate and edit its code.",
+                  icon: <MousePointer2 className="w-6 h-6" />
                 },
                 { 
                   title: "GitHub Sync", 
                   desc: "Seamlessly push your generated code to GitHub. Your code, your repository, your control.",
+                  icon: <Code2 className="w-6 h-6" />
                 },
                 { 
                   title: "Multi-File Editing", 
                   desc: "The AI can modify multiple files simultaneously, ensuring consistent updates across your entire application.",
+                  icon: <Layers className="w-6 h-6" />
                 },
                 { 
                   title: "Secure by Design", 
                   desc: "Integrated Firebase support with automatically generated security rules and authentication patterns.",
+                  icon: <Shield className="w-6 h-6" />
                 }
               ].map((feature, idx) => (
                 <div key={idx} className="p-8 liquid-glass rounded-[40px] border border-[var(--bdr)] dark:border-white/5 space-y-4 group hover:border-primary/30 transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                    {feature.icon}
+                  </div>
                   <h3 className="text-2xl font-bold text-[var(--t)]">{feature.title}</h3>
                   <p className="text-[var(--t2)] leading-relaxed text-sm">{feature.desc}</p>
                 </div>
