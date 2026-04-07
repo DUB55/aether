@@ -18,7 +18,7 @@ export default defineConfig(({mode}) => {
       },
     },
     build: {
-      outDir: 'dist',
+      outDir: 'public',
       assetsDir: 'assets',
       sourcemap: !isProduction,
       minify: isProduction ? 'esbuild' : false,
@@ -32,7 +32,8 @@ export default defineConfig(({mode}) => {
           }
         }
       },
-      chunkSizeWarningLimit: 1000
+      chunkSizeWarningLimit: 1000,
+      emptyOutDir: true
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
