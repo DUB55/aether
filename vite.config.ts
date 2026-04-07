@@ -15,6 +15,7 @@ export default defineConfig(({mode}) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        '@/assets': path.resolve(__dirname, './src/assets'),
       },
     },
     build: {
@@ -29,7 +30,10 @@ export default defineConfig(({mode}) => {
             firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
             editor: ['@monaco-editor/react'],
             ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu']
-          }
+          },
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]'
         }
       },
       chunkSizeWarningLimit: 1000,
