@@ -1,22 +1,15 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "public"
-      }
-    },
-    {
-      "src": "server.ts",
-      "use": "@vercel/node"
+  "outputDirectory": "public",
+  "functions": {
+    "api/server.ts": {
+      "maxDuration": 30
     }
-  ],
+  },
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server.ts"
+      "dest": "/api/server.ts"
     },
     {
       "src": "/privacy-policy.html",
@@ -35,19 +28,10 @@
       "dest": "/public/index.html"
     }
   ],
-  "env": {
-    "GEMINI_API_KEYS": "@gemini-api-keys",
-    "GEMINI_API_KEY": "@gemini-api-key",
-    "APP_URL": "@app-url"
-  },
-  "functions": {
-    "server.ts": {
-      "maxDuration": 30
-    }
-  },
   "build": {
     "env": {
-      "NODE_ENV": "production"
+      "NODE_ENV": "production",
+      "BUILD_TIMESTAMP": "2025-04-07-23-35"
     }
   }
 }
