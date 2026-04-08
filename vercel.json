@@ -20,6 +20,14 @@
       "dest": "/terms-of-service.html"
     },
     {
+      "src": "/icons/(.*)",
+      "dest": "/icons/$1"
+    },
+    {
+      "src": "/logo.png",
+      "dest": "/logo.png"
+    },
+    {
       "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
       "dest": "/public/$1"
     },
@@ -31,7 +39,7 @@
   "build": {
     "env": {
       "NODE_ENV": "production",
-      "BUILD_TIMESTAMP": "2025-04-07-23-35"
+      "BUILD_TIMESTAMP": "2026-04-08-12-45"
     }
   }
 }
