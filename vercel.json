@@ -39,7 +39,7 @@
   "build": {
     "env": {
       "NODE_ENV": "production",
-      "BUILD_TIMESTAMP": "2026-04-08-16-05"
+      "BUILD_TIMESTAMP": "2026-04-08-17-20"
     }
   }
 }
