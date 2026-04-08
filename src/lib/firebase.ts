@@ -13,8 +13,29 @@ const firebaseConfig = {
   firestoreDatabaseId: process.env.VITE_FIREBASE_DATABASE_ID
 };
 
-// Initialize Firebase SDK
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase SDK with proper configuration
+let app: ReturnType<typeof initializeApp>;
+
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.appId) {
+  console.error('Firebase is not properly configured. Please check your environment variables.');
+  console.error('Required variables: VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID');
+  // Create a fallback configuration to prevent complete failure
+  const fallbackConfig = {
+    apiKey: 'demo-key',
+    authDomain: 'demo.firebaseapp.com',
+    projectId: 'demo-project',
+    appId: 'demo-app-id',
+    measurementId: 'demo-measurement-id',
+    messagingSenderId: 'demo-sender-id',
+    storageBucket: 'demo-project.appspot.com',
+    firestoreDatabaseId: 'demo-database'
+  };
+  app = initializeApp(fallbackConfig);
+} else {
+  // Initialize Firebase SDK with real configuration
+  app = initializeApp(firebaseConfig);
+}
+
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
