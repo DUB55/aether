@@ -19,7 +19,7 @@ export default defineConfig(({mode}) => {
       },
     },
     build: {
-      outDir: 'public',
+      outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: !isProduction,
       minify: isProduction ? 'esbuild' : false,

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "outputDirectory": "public",
+  "outputDirectory": "dist",
   "functions": {
     "api/server.ts": {
       "maxDuration": 30
@@ -29,17 +29,17 @@
     },
     {
       "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
-      "dest": "/public/$1"
+      "dest": "/dist/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/public/index.html"
+      "dest": "/dist/index.html"
     }
   ],
   "build": {
     "env": {
       "NODE_ENV": "production",
-      "BUILD_TIMESTAMP": "2026-04-08-14-05"
+      "BUILD_TIMESTAMP": "2026-04-08-14-10"
     }
   }
 }
