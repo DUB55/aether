@@ -320,7 +320,7 @@ export function AgentMode({ isOpen, onClose, onProjectComplete }: AgentModeProps
     // Mark project as completed
     setProject(prev => prev ? { ...prev, status: 'completed', overallProgress: 100 } : null)
     setIsRunning(false)
-    addLog('✨ Project completed successfully!')
+    addLog('🎉 Project completed successfully!')
     toast.success('Agent project completed successfully!')
     
     if (onProjectComplete && project) {
@@ -379,7 +379,7 @@ export function AgentMode({ isOpen, onClose, onProjectComplete }: AgentModeProps
         )
       } : null)
       
-      addLog(`✓ ${task.title} completed`)
+      addLog(`✅ ${task.title} completed`)
     }
   }
 

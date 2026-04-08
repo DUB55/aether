@@ -2,35 +2,40 @@
 
 import React, { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import FallbackIcon from '@/components/FallbackIcon'
 import { 
-  Plus, 
-  Search, 
-  Settings2,
-  Brain,
+  ChevronDown,
   ArrowUp,
   ArrowLeft,
   Loader2,
   Rocket,
-  Shield,
-  Zap,
-  ChevronDown,
-  Upload,
-  Globe,
-  Code2,
-  Cpu,
-  ClipboardList,
+  Heart,
+  AlertTriangle,
+  Plus,
+  Search,
+  Settings2,
+  Brain,
   Trash2,
   Layout,
   Users,
-  Heart,
-  MessageSquare,
-  Share2,
-  MoreHorizontal,
   Lock,
   Calendar,
   Clock,
-  AlertTriangle,
   Library,
+  Sparkles,
+  ZapOff,
+  Terminal,
+  Share2,
+  Globe,
+  Cpu,
+  Zap,
+  MousePointer2,
+  Code2,
+  Layers,
+  Shield,
+  MessageSquare,
+  MoreHorizontal,
+  ImageIcon,
 } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
@@ -49,8 +54,15 @@ import { TemplateMarketplace } from '@/components/TemplateMarketplace'
 import { CommunityGallery } from '@/components/CommunityGallery'
 import { ProjectPreview } from '@/components/ProjectPreview'
 import { LoginModal } from '@/components/LoginModal'
+import PrivacyPolicy from '@/pages/PrivacyPolicy'
+import TermsOfService from '@/pages/TermsOfService'
 import { CONFIG } from '@/config'
 import { type Template, TEMPLATES } from '@/lib/templates'
+import { IconSystem } from '@/components/IconSystem'
+import { ImageGenerator } from '@/components/ImageGenerator'
+import { AgentMode } from '@/components/AgentMode'
+import { Pricing } from '@/components/Pricing'
+import { Ads } from '@/components/Ads'
 
 export default function App() {
   return (
@@ -62,6 +74,29 @@ export default function App() {
 
 function AppContent() {
   const { user, loading, signIn, logout, projects: allProjects, saveProject, deleteProject } = useFirebase()
+
+  useEffect(() => {
+    // Suppress WebSocket/Vite errors that are expected in sandboxed environments
+    const originalError = console.error;
+    console.error = (...args) => {
+      if (args[0] && typeof args[0] === 'string' && (args[0].includes('WebSocket') || args[0].includes('vite'))) {
+        return;
+      }
+      originalError.apply(console, args);
+    };
+
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason && event.reason.message && (event.reason.message.includes('WebSocket') || event.reason.message.includes('vite'))) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleRejection);
+    return () => {
+      window.removeEventListener('unhandledrejection', handleRejection);
+      console.error = originalError;
+    };
+  }, []);
   const [gradientTheme, setGradientTheme] = useState<'blue' | 'pink' | 'emerald' | 'sunset' | 'sea' | 'purple' | 'midnight' | 'amber'>('midnight')
   const [executionMode, setExecutionMode] = useState<'plan' | 'fast'>('fast')
   const [input, setInput] = useState("")
@@ -73,8 +108,12 @@ function AppContent() {
   const [activeDoc, setActiveDoc] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [showImageGenerator, setShowImageGenerator] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [showAgentMode, setShowAgentMode] = useState(false)
 
-  const recentProjects = allProjects.slice(0, 3)
+  const sortedProjects = [...allProjects].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  const recentProjects = sortedProjects.slice(0, 3)
 
   useEffect(() => {
     // Check for onboarding
@@ -149,6 +188,27 @@ function AppContent() {
       } else if (hash === '#/pricing') {
         setCurrentRoute('pricing')
         setActiveProjectId(null)
+      } else if (hash === '#/ads') {
+        setCurrentRoute('ads')
+        setActiveProjectId(null)
+      } else if (currentRoute === 'pricing') {
+        setCurrentRoute('pricing')
+        setActiveProjectId(null)
+      } else if (hash === '#/ads') {
+        setCurrentRoute('ads')
+        setActiveProjectId(null)
+      } else if (currentRoute === 'ads') {
+        setCurrentRoute('ads')
+        setActiveProjectId(null)
+      } else if (hash === '#/privacy-policy') {
+        setCurrentRoute('ads')
+        setActiveProjectId(null)
+      } else if (hash === '#/privacy-policy') {
+        setCurrentRoute('privacy-policy')
+        setActiveProjectId(null)
+      } else if (hash === '#/terms-of-service') {
+        setCurrentRoute('terms-of-service')
+        setActiveProjectId(null)
       } else {
         setActiveProjectId(null)
         setCurrentRoute('')
@@ -184,7 +244,7 @@ function AppContent() {
     const id = Math.random().toString(36).substring(7)
     const newProject: Project = {
       id,
-      name: trimmed.slice(0, 30) || "Untitled Project",
+      name: "New Project",
       lastModified: Date.now(),
       updatedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
@@ -262,7 +322,23 @@ function AppContent() {
     )
   }
 
-  if (currentRoute === 'docs' || currentRoute === 'community' || currentRoute === 'changelog' || currentRoute === 'projects' || currentRoute === 'templates' || currentRoute === 'pricing') {
+  if (currentRoute === 'privacy-policy') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
+        <PrivacyPolicy />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'terms-of-service') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
+        <TermsOfService />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'docs' || currentRoute === 'community' || currentRoute === 'changelog' || currentRoute === 'projects' || currentRoute === 'templates' || currentRoute === 'pricing' || currentRoute === 'ads') {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
         <div className={cn(
@@ -314,72 +390,11 @@ function AppContent() {
               </div>
 
               {currentRoute === 'pricing' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {[
-                    { 
-                      name: 'Starter', 
-                      price: '0', 
-                      description: 'Perfect for exploring Aether and building your first apps.',
-                      features: ['Unlimited Projects', 'Access to Basic Models', 'Instant Preview', 'Community Support', 'Free Deployment'],
-                      highlight: false
-                    },
-                    { 
-                      name: 'Pro', 
-                      price: '0', 
-                      description: 'Advanced features for power users who want more control.',
-                      features: ['Everything in Starter', 'Advanced AI Models', 'Priority Support', 'Custom Domains', 'Advanced Analytics'],
-                      highlight: true
-                    },
-                    { 
-                      name: 'Enterprise', 
-                      price: '0', 
-                      description: 'Maximum power and security for large-scale applications.',
-                      features: ['Everything in Pro', 'Dedicated AI Resources', '24/7 Support', 'SLA Guarantees', 'Custom Integrations'],
-                      highlight: false
-                    }
-                  ].map((plan, idx) => (
-                    <motion.div 
-                      key={plan.name}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className={cn(
-                        "relative p-8 bento-card transition-all group cursor-pointer",
-                        plan.highlight ? "border-primary/40 ring-1 ring-primary/20 shadow-2xl shadow-primary/5 scale-105 z-10" : "hover:border-primary/20"
-                      )}
-                    >
-                      <div className="relative z-10 space-y-8">
-                        <div className="space-y-2">
-                          <h3 className="text-2xl font-bold">{plan.name}</h3>
-                          <p className="text-muted-foreground text-sm leading-relaxed">{plan.description}</p>
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-5xl font-black">€{plan.price}</span>
-                          <span className="text-muted-foreground font-medium">/month</span>
-                        </div>
-                        <div className="space-y-4">
-                          {plan.features.map(feature => (
-                            <div key={feature} className="flex items-center gap-3 text-sm">
-                              <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Plus className="w-3 h-3 text-primary" />
-                              </div>
-                              <span className="text-slate-600 dark:text-slate-300">{feature}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <Button 
-                          className={cn(
-                            "w-full rounded-2xl font-bold py-4 sm:py-6 transition-all duration-300 cursor-pointer",
-                            plan.highlight ? "bg-primary text-primary-foreground hover:scale-[1.02]" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                          )}
-                          onClick={() => window.location.hash = ''}
-                        >
-                          Get Started Free
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                <Pricing />
+              )}
+
+              {currentRoute === 'ads' && (
+                <Ads />
               )}
 
               {currentRoute === 'docs' && activeDoc && (
@@ -669,7 +684,7 @@ function AppContent() {
                   </div>
                 ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {allProjects.length > 0 ? allProjects.map((p) => (
+                  {sortedProjects.length > 0 ? sortedProjects.map((p) => (
                     <motion.div
                       key={p.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -680,9 +695,6 @@ function AppContent() {
                     >
                       <div className="aspect-video bg-muted relative overflow-hidden">
                         <ProjectPreview project={p} />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button variant="secondary" className="rounded-full font-bold">Open Editor</Button>
-                        </div>
                       </div>
                       <div className="p-6">
                         <div className="flex items-center justify-between mb-3">
@@ -792,82 +804,79 @@ function AppContent() {
                       </section>
                     </div>
                   )}
-                  {currentRoute === 'templates' && (
-                    <div className="space-y-8">
-                      <div className="flex flex-col gap-2">
-                        <h2 className="text-3xl font-black tracking-tight">Project Templates</h2>
-                        <p className="text-muted-foreground">Start your next big idea with a pre-configured foundation.</p>
-                      </div>
-                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {TEMPLATES.map((template) => (
-                          <div 
-                            key={template.id} 
-                            className="p-8 rounded-[40px] liquid-glass border border-[var(--bdr)] group hover:border-primary/30 transition-all cursor-pointer flex flex-col justify-between h-full"
-                            onClick={async () => {
-                              if (!user) {
-                                setIsLoginModalOpen(true);
-                                return;
-                              }
-                              const id = Math.random().toString(36).substring(2, 15);
-                              const newProject: Project = {
-                                id,
-                                name: template.name,
-                                description: template.description,
-                                files: template.files,
-                                messages: [{ role: 'user', content: `Starting with ${template.name} template.` }],
-                                createdAt: new Date().toISOString(),
-                                updatedAt: new Date().toISOString(),
-                                ownerId: user.uid,
-                                isPublic: false,
-                                lastModified: Date.now(),
-                                settings: {}
-                              };
-                              await saveProject(newProject);
-                              setActiveProjectId(id);
-                              window.location.hash = '';
-                            }}
-                          >
-                            <div className="space-y-6">
-                              <div className="w-16 h-16 rounded-3xl bg-[var(--bg3)] flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
-                                {template.icon}
-                              </div>
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-[10px] font-black text-primary uppercase tracking-widest">{template.category}</span>
-                                </div>
-                                <h3 className="text-2xl font-bold text-[var(--t)] group-hover:text-primary transition-colors">{template.name}</h3>
-                                <p className="text-sm text-[var(--t2)] leading-relaxed">{template.description}</p>
-                              </div>
-                            </div>
-                            <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
-                              <span className="text-[10px] font-black text-[var(--t3)] uppercase tracking-widest">{Object.keys(template.files).length} FILES</span>
-                              <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                                <Plus className="w-5 h-5" />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   {currentRoute === 'changelog' && (
-                    <div className="space-y-8">
+                    <div className="space-y-12 max-w-4xl mx-auto">
+                      <div className="space-y-4 text-center mb-16">
+                        <h2 className="text-5xl font-black tracking-tight">Changelog</h2>
+                        <p className="text-xl text-muted-foreground">The journey of building Aether, one update at a time.</p>
+                      </div>
                       {[
-                        { v: '2.0.0', d: 'April 2026', c: 'Official production launch of Aether. Complete UI overhaul with Liquid Glass design system, real-time project previews, and community gallery integration.', t: 'The Production Update' },
-                        { v: '1.5.0', d: 'January 2026', c: 'Enhanced AI orchestration engine with multi-file editing capabilities and improved Tailwind CSS generation.', t: 'Engine Optimization' },
-                        { v: '1.0.0', d: 'December 2025', c: 'Initial public beta release of the Aether autonomous development platform.', t: 'Public Beta' }
+                        { 
+                          v: '2.1.0', 
+                          d: 'April 2026', 
+                          t: 'The Design Refinement',
+                          c: 'Major overhaul of the landing page for a more minimal and consistent aesthetic. Updated branding to DUB5. Improved community sharing with direct preview URLs. Standardized template marketplace with real-time previews.',
+                          features: [
+                            'Minimalist landing page redesign',
+                            'DUB5 branding integration',
+                            'Direct preview sharing in Community Gallery',
+                            'Standardized Template Marketplace UI',
+                            'Animated pricing plan hover states',
+                            'Removed "Open Editor" hover buttons for cleaner project management'
+                          ]
+                        },
+                        { 
+                          v: '2.0.0', 
+                          d: 'April 2026', 
+                          t: 'The Production Update',
+                          c: 'Official production launch of Aether. Complete UI overhaul with Liquid Glass design system, real-time project previews, and community gallery integration.',
+                          features: [
+                            'Liquid Glass design system',
+                            'Real-time project previews',
+                            'Community Gallery integration',
+                            'Advanced AI orchestration engine'
+                          ]
+                        },
+                        { 
+                          v: '1.5.0', 
+                          d: 'January 2026', 
+                          t: 'Engine Optimization',
+                          c: 'Enhanced AI orchestration engine with multi-file editing capabilities and improved Tailwind CSS generation.',
+                          features: [
+                            'Multi-file editing support',
+                            'Tailwind CSS generation improvements',
+                            'Faster dependency management'
+                          ]
+                        },
+                        { 
+                          v: '1.0.0', 
+                          d: 'December 2025', 
+                          t: 'Public Beta',
+                          c: 'Initial public beta release of the Aether autonomous development platform.',
+                          features: [
+                            'Autonomous code generation',
+                            'Integrated WebContainer environment',
+                            'Basic project management'
+                          ]
+                        }
                       ].map(item => (
-                        <div key={item.v} className="p-8 rounded-[40px] liquid-glass border border-[var(--bdr)] group hover:border-primary/30 transition-all overflow-hidden flex gap-8">
-                          <div className="flex-shrink-0 w-16 h-16 rounded-3xl bg-[var(--bg3)] flex items-center justify-center text-xl font-black text-[var(--t3)]">
-                            v{item.v.split('.')[0]}
-                          </div>
-                          <div className="space-y-3">
+                        <div key={item.v} className="relative pl-12 border-l-2 border-primary/20 pb-12 last:pb-0">
+                          <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-[var(--bg)]" />
+                          <div className="space-y-4">
                             <div className="flex items-center gap-4">
-                              <span className="text-2xl font-bold text-[var(--t)]">v{item.v}</span>
-                              <span className="px-3 py-1 rounded-full bg-[var(--bg3)] text-xs font-bold text-[var(--t3)]">{item.d}</span>
+                              <span className="text-3xl font-black text-[var(--t)]">v{item.v}</span>
+                              <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">{item.d}</span>
                             </div>
-                            <h4 className="text-xl font-bold text-primary">{item.t}</h4>
-                            <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">{item.c}</p>
+                            <h4 className="text-2xl font-bold text-primary">{item.t}</h4>
+                            <p className="text-lg text-[var(--t2)] leading-relaxed">{item.c}</p>
+                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+                              {item.features?.map(f => (
+                                <li key={f} className="flex items-center gap-2 text-sm font-medium text-[var(--t3)]">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                                  {f}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         </div>
                       ))}
@@ -881,15 +890,13 @@ function AppContent() {
         </div>
       </ThemeProvider>
     )
-  }
-
-  return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
-      <div className="relative min-h-screen selection:bg-primary/30 transition-colors duration-500 text-foreground">
+  }  return (
+    <ThemeProvider attribute="class" defaultTheme="system" themes={["light", "dark", "black"]}>
+      <div className="relative min-h-screen selection:bg-primary/30 transition-colors duration-500 text-foreground overflow-x-hidden">
         <div 
           suppressHydrationWarning
           className={cn(
-            "landing-bg",
+            "landing-bg fixed inset-0 pointer-events-none",
             `gradient-${gradientTheme}`
           )} 
         />
@@ -898,207 +905,321 @@ function AppContent() {
         <motion.main
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 pt-24 pb-12"
+          className="relative z-10 flex flex-col items-center pt-32 pb-24"
         >
-          <div className="max-w-4xl w-full text-center space-y-8">
+          {/* Hero Section */}
+          <div className="max-w-6xl w-full px-6 text-center space-y-12">
+            <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 dark:bg-white/5 text-primary dark:text-primary/80 text-[13px] font-bold border border-primary/10 dark:border-white/10 cursor-pointer hover:bg-primary/10 dark:hover:bg-white/10 transition-all group"
+                onClick={() => window.location.hash = '#/changelog'}
+              >
+                <span>Aether v2.0 is now live</span>
+                <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-1 transition-transform" />
+              </motion.div>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-6xl md:text-[112px] font-black tracking-tighter text-[var(--t)] leading-[0.88] max-w-5xl mx-auto"
+              >
+                Build anything <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-500 animate-gradient-x">just by asking.</span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-[18px] md:text-[22px] font-medium text-[var(--t2)]/80 max-w-2xl mx-auto tracking-tight leading-relaxed"
+              >
+                Aether is an autonomous platform for building production-ready software. Vision to reality, instantly.
+              </motion.p>
+            </div>
+
+            {/* Prompt Input Area */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--bg3)] dark:bg-white/5 text-[var(--t2)] dark:text-slate-400 text-[13px] font-semibold border border-[var(--bdr)] dark:border-white/5 cursor-pointer hover:bg-[var(--bg2)] dark:hover:bg-white/10 transition-colors"
-              onClick={() => window.location.hash = '#/docs'}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
+              className="max-w-4xl mx-auto w-full"
             >
-              Aether is now in public preview →
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-6xl md:text-[84px] font-bold tracking-tighter text-[var(--t)] leading-[1.05] mb-6"
-            >
-              Build the future <br />
-              <span className="text-[var(--t2)]">with Aether</span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-[18px] md:text-[22px] font-normal text-[var(--t2)] max-w-2xl mx-auto tracking-normal leading-relaxed mb-4"
-            >
-              The first autonomous platform that transforms your vision into production-ready software. Fast, free, and infinite.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="max-w-3xl mx-auto mt-10"
-            >
-              <form onSubmit={handleStartProject} className="relative flex flex-col liquid-glass rounded-[32px] p-4 sm:p-6 shadow-2xl bg-[var(--bg)]/50 dark:bg-white/[0.04] border-[var(--bdr)] dark:border-white/[0.08] backdrop-blur-3xl group transition-all duration-500 hover:bg-[var(--bg)]/70 hover:dark:bg-white/[0.06] hover:dark:border-white/[0.12]">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Describe the application you want to build..."
-                  className="w-full h-28 sm:h-36 bg-transparent border-none focus:ring-0 text-lg sm:text-[20px] font-medium resize-none placeholder:text-[var(--t3)]/50 outline-none text-[var(--t)] leading-relaxed"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handleStartProject()
-                    }
-                  }}
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center gap-4">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button 
-                        type="button" 
-                        disabled={busy}
-                        className="text-[var(--t3)] dark:text-white/40 p-2 rounded-full cursor-pointer hover:bg-[var(--bg3)] dark:hover:bg-white/10 transition-colors disabled:opacity-50"
-                      >
-                        <Plus className="w-6 h-6" />
-                      </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-2 bg-[var(--bg)] dark:bg-[#1a1a1a]/90 border-[var(--bdr)] dark:border-white/10 rounded-2xl shadow-xl backdrop-blur-3xl liquid-glass" align="start">
-                        <div className="flex flex-col gap-1">
-                          <button className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left group cursor-pointer hover:bg-[var(--bg3)] dark:hover:bg-white/5 transition-colors">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <Upload className="w-4 h-4 text-primary" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-semibold text-[var(--t)] dark:text-white">Upload Files</div>
-                              <div className="text-[11px] text-[var(--t3)] dark:text-slate-400">Add context to your project</div>
-                            </div>
-                          </button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="flex items-center gap-8">
-                    {/* Gradient Picker (Hidden by default, set display: flex to show) */}
-                    <div className="hidden items-center gap-8">
-                      <div className="flex bg-slate-100/80 dark:bg-white/5 p-1 rounded-xl border border-slate-200/50 dark:border-white/5 backdrop-blur-sm gap-0.5">
-                      {(['blue', 'pink', 'emerald', 'sunset', 'sea', 'purple', 'midnight', 'amber'] as const).map((theme) => (
+              <form 
+                onSubmit={handleStartProject} 
+                className="relative group"
+              >
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-purple-500/20 to-orange-500/20 rounded-[40px] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700" />
+                <div className="relative liquid-glass rounded-[38px] p-2 bg-[var(--bg)]/40 dark:bg-black/20 border-[var(--bdr)] dark:border-white/10 backdrop-blur-3xl shadow-2xl transition-all duration-500 group-focus-within:border-primary/30 group-focus-within:bg-[var(--bg)]/60">
+                  <div className="p-4 sm:p-6 space-y-4">
+                    <textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="What would you like to build today?"
+                      className="w-full h-32 sm:h-40 bg-transparent border-none focus:ring-0 text-xl sm:text-[26px] font-bold resize-none placeholder:text-[var(--t3)]/30 outline-none text-[var(--t)] leading-tight tracking-tight"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          handleStartProject()
+                        }
+                      }}
+                    />
+                    <div className="flex items-center justify-between pt-2 border-t border-[var(--bdr)] dark:border-white/5">
+                      <div className="flex items-center gap-2">
                         <button
-                          key={theme}
                           type="button"
-                          onClick={() => handleGradientChange(theme)}
+                          onClick={() => setShowImageGenerator(true)}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--bg3)] dark:bg-white/5 text-sm font-medium text-[var(--t)] hover:bg-[var(--bg2)] dark:hover:bg-white/10 transition-all cursor-pointer border border-[var(--bdr)] dark:border-white/5"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          Generate Image
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowAgentMode(true)}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 dark:from-blue-500/10 dark:to-purple-500/10 text-sm font-medium text-blue-600 dark:text-blue-400 hover:from-blue-500/30 hover:to-purple-500/30 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 transition-all cursor-pointer border border-blue-500/30 dark:border-blue-500/20"
+                          disabled={!input.trim() || busy}
+                        >
+                          <Brain className="w-4 h-4" />
+                          Agent Mode
+                        </button>
+                        
+                        <button 
+                          type="submit" 
+                          disabled={!input.trim() || busy}
                           className={cn(
-                            "w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer",
-                            gradientTheme === theme 
-                              ? "bg-white dark:bg-white/10 shadow-sm ring-1 ring-slate-200 dark:ring-white/20" 
-                              : "opacity-40 hover:opacity-100"
+                            "flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-500 shadow-xl cursor-pointer",
+                            input.trim() && !busy 
+                              ? "bg-primary text-primary-foreground hover:scale-[1.02] hover:shadow-primary/25" 
+                              : "bg-[var(--bg3)] text-[var(--t3)] opacity-50 cursor-not-allowed"
                           )}
                         >
-                          <div className={cn("w-3.5 h-3.5 rounded-full bg-gradient-to-br", 
-                            theme === 'blue' ? 'from-blue-400 to-purple-500' :
-                            theme === 'pink' ? 'from-pink-400 to-orange-400' :
-                            theme === 'emerald' ? 'from-emerald-400 to-teal-500' :
-                            theme === 'sunset' ? 'from-orange-500 to-rose-500' :
-                            theme === 'sea' ? 'from-cyan-400 to-blue-600' :
-                            theme === 'purple' ? 'from-violet-500 to-fuchsia-500' :
-                            theme === 'midnight' ? 'from-slate-700 to-slate-900' :
-                            'from-amber-400 to-yellow-600'
-                          )} />
+                          {busy ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <ArrowUp className="w-6 h-6" />
+                          )}
                         </button>
-                      ))}
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <button 
-                        type="submit" 
-                        className={cn(
-                          "bg-[var(--bg3)] text-[var(--t3)] rounded-full w-11 h-11 flex items-center justify-center hover:bg-[var(--t)] hover:text-[var(--bg)] transition-all cursor-pointer",
-                          (input.trim() || busy) && "bg-[var(--t)] text-[var(--bg)]"
-                        )}
-                        disabled={!input.trim() || busy}
-                      >
-                        {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowUp className="w-5 h-5" />}
-                      </button>
                     </div>
                   </div>
                 </div>
               </form>
+            </motion.div>
 
-                  {recentProjects.length > 0 && (
-                    <div className="mt-12 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold text-[var(--t)]">Recent projects</h3>
-                        {allProjects.length > 3 && (
-                          <button 
-                            onClick={() => window.location.hash = '#/projects'}
-                            className="text-sm font-bold text-[var(--t)] hover:text-primary cursor-pointer transition-colors"
-                          >
-                            View All
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {recentProjects.map((p) => (
-                          <motion.button
-                            key={p.id}
-                            whileHover={{ y: -5, scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => window.location.hash = `#/editor/${p.id}`}
-                            className="flex flex-col items-start p-6 bento-card text-left group border border-slate-200/50 dark:border-white/5 hover:border-primary/30 transition-all cursor-pointer overflow-hidden"
-                          >
-                            <div className="text-lg font-bold truncate w-full mb-1 group-hover:text-primary transition-colors">{p.name}</div>
-                            <div className="text-xs text-slate-500">{new Date(p.lastModified).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                          </motion.button>
-                        ))}
+          </div>
+
+          {/* Recent Projects Section */}
+          {recentProjects.length > 0 && (
+            <div className="max-w-6xl w-full px-6 mt-32 space-y-8">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-3xl font-black tracking-tight text-[var(--t)]">Continue building</h2>
+                  <p className="text-sm font-medium text-[var(--t3)]">Pick up where you left off</p>
+                </div>
+                <button 
+                  onClick={() => window.location.hash = '#/projects'}
+                  className="px-6 py-2.5 rounded-2xl bg-[var(--bg3)] dark:bg-white/5 text-sm font-bold text-[var(--t)] hover:bg-[var(--bg2)] dark:hover:bg-white/10 transition-all cursor-pointer border border-[var(--bdr)] dark:border-white/5"
+                >
+                  View All Projects
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {recentProjects.map((p, idx) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * idx }}
+                    onClick={() => window.location.hash = `#/editor/${p.id}`}
+                    className="group relative p-8 liquid-glass rounded-[40px] border border-[var(--bdr)] dark:border-white/5 cursor-pointer overflow-hidden flex flex-col justify-between h-48 hover:border-primary/30 transition-all"
+                  >
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <h3 className="text-xl font-bold text-[var(--t)] truncate pr-8">{p.name}</h3>
+                        <p className="text-xs font-medium text-[var(--t3)]">Last modified {new Date(p.updatedAt).toLocaleDateString()}</p>
                       </div>
                     </div>
-                  )}
+                    <div className="flex items-center justify-between">
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Features Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="max-w-6xl w-full px-6 mt-48 space-y-16"
+          >
+            <div className="text-center space-y-4">
+              <h2 className="text-4xl md:text-6xl font-black tracking-tight text-[var(--t)]">Engineered for speed.</h2>
+              <p className="text-xl text-[var(--t2)] max-w-2xl mx-auto">Everything you need to go from idea to production in record time.</p>
+            </div>
 
-              {/* Features Section */}
-              <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-                <div 
-                  className="flex flex-col space-y-4 p-6 rounded-[32px] liquid-glass border border-slate-200/50 dark:border-white/5 overflow-hidden text-left"
-                >
-                      <div className="w-12 h-12 rounded-2xl bg-slate-500/10 flex items-center justify-center">
-                    <Rocket className="w-6 h-6 text-slate-500 dark:text-slate-400" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                { 
+                  title: "Autonomous Engine", 
+                  desc: "Our AI understands your entire project architecture and manages dependencies automatically.",
+                  icon: <IconSystem type="cpu" />
+                },
+                { 
+                  title: "Instant Previews", 
+                  desc: "See your changes in real-time with integrated WebContainer technology. No local setup required.",
+                  icon: <IconSystem type="zap" />
+                },
+                { 
+                  title: "Visual Inspector", 
+                  desc: "Click any element in your preview to instantly locate and edit its code.",
+                  icon: <IconSystem type="mouse-pointer" />
+                },
+                { 
+                  title: "GitHub Sync", 
+                  desc: "Seamlessly push your generated code to GitHub. Your code, your repository, your control.",
+                  icon: <IconSystem type="code" />
+                },
+                { 
+                  title: "Multi-File Editing", 
+                  desc: "The AI can modify multiple files simultaneously, ensuring consistent updates across your entire application.",
+                  icon: <IconSystem type="layers" />
+                },
+                { 
+                  title: "Secure by Design", 
+                  desc: "Integrated Firebase support with automatically generated security rules and authentication patterns.",
+                  icon: <IconSystem type="shield" />
+                }
+              ].map((feature, idx) => (
+                <div key={idx} className="p-8 liquid-glass rounded-[40px] border border-[var(--bdr)] dark:border-white/5 space-y-4 group hover:border-primary/30 transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                    {feature.icon}
                   </div>
-                  <h3 className="text-xl font-bold text-[var(--t)] transition-colors">Instant Deployment</h3>
-                  <p className="text-sm text-[var(--t2)] leading-relaxed">
-                    Watch your ideas come to life in seconds. Deploy very fast and completely free.
-                  </p>
+                  <h3 className="text-2xl font-bold text-[var(--t)]">{feature.title}</h3>
+                  <p className="text-[var(--t2)] leading-relaxed text-sm">{feature.desc}</p>
                 </div>
-                <div 
-                  className="flex flex-col space-y-4 p-6 rounded-[32px] liquid-glass border border-slate-200/50 dark:border-white/5 overflow-hidden text-left"
+              ))}
+            </div>
+          </motion.div>
+
+          {/* CTA Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-6xl w-full px-6 mt-48"
+          >
+            <div className="p-16 md:p-24 liquid-glass rounded-[60px] border border-[var(--bdr)] dark:border-white/5 text-center space-y-12 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10" />
+              <div className="relative z-10 space-y-6">
+                <h2 className="text-5xl md:text-8xl font-black tracking-tighter text-[var(--t)] leading-none">Ready to build?</h2>
+                <p className="text-xl md:text-2xl text-[var(--t2)] max-w-2xl mx-auto">Join the future of software development today. No credit card required.</p>
+              </div>
+              <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-6">
+                <Button 
+                  size="lg" 
+                  className="rounded-full px-12 py-8 text-xl font-black shadow-2xl shadow-primary/20 hover:scale-105 transition-transform"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 >
-                      <div className="w-12 h-12 rounded-2xl bg-slate-500/10 flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-slate-500 dark:text-slate-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-[var(--t)] transition-colors">Real-time Previews</h3>
-                  <p className="text-sm text-[var(--t2)] leading-relaxed">
-                    Instantly see previews of your app as Aether builds everything for you. Just chat and watch it happen.
-                  </p>
+                  Get Started Free
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="rounded-full px-12 py-8 text-xl font-black border-2"
+                  onClick={() => window.location.hash = '#/community'}
+                >
+                  View Gallery
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Footer */}
+          <footer className="max-w-6xl w-full px-6 mt-48 py-24 border-t border-[var(--bdr)] dark:border-white/5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
+              <div className="col-span-2 space-y-6">
+                <div className="flex items-center gap-2">
+                  <Rocket className="w-8 h-8 text-primary" />
+                  <span className="text-2xl font-black tracking-tighter">AETHER</span>
                 </div>
-                <div 
-                  className="flex flex-col space-y-4 p-6 rounded-[32px] liquid-glass border border-slate-200/50 dark:border-white/5 overflow-hidden text-left"
-                >
-                      <div className="w-12 h-12 rounded-2xl bg-slate-500/10 flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-slate-500 dark:text-slate-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-[var(--t)] transition-colors">Advanced Models</h3>
-                  <p className="text-sm text-[var(--t2)] leading-relaxed">
-                    Access the world's most powerful AI models to build complex logic and designs effortlessly.
-                  </p>
+                <p className="text-[var(--t2)] max-w-xs">An autonomous platform for building production-ready software.</p>
+                <div className="flex items-center gap-4">
+                  <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+                  <span className="text-sm font-bold text-[var(--t3)]">Built with passion by DUB5.</span>
                 </div>
               </div>
-            </motion.div>
-          </div>
+              <div className="space-y-6">
+                <h4 className="font-black uppercase tracking-widest text-xs text-[var(--t3)]">Product</h4>
+                <ul className="space-y-4 text-sm font-bold text-[var(--t2)]">
+                  <li><a href="#/projects" className="hover:text-primary transition-colors">All Projects</a></li>
+                  <li><a href="#/templates" className="hover:text-primary transition-colors">Templates</a></li>
+                  <li><a href="#/community" className="hover:text-primary transition-colors">Community</a></li>
+                  <li><a href="#/pricing" className="hover:text-primary transition-colors">Pricing</a></li>
+                </ul>
+              </div>
+              <div className="space-y-6">
+                <h4 className="font-black uppercase tracking-widest text-xs text-[var(--t3)]">Resources</h4>
+                <ul className="space-y-4 text-sm font-bold text-[var(--t2)]">
+                  <li><a href="#/docs" className="hover:text-primary transition-colors">Documentation</a></li>
+                  <li><a href="#/changelog" className="hover:text-primary transition-colors">Changelog</a></li>
+                  <li><a href="https://github.com/DUB55/aether" target="_blank" className="hover:text-primary transition-colors">GitHub</a></li>
+                  <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
+                </ul>
+              </div>
+            </div>
+            <div className="mt-24 pt-12 border-t border-[var(--bdr)] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+              <p className="text-sm font-bold text-[var(--t3)]">© 2026 DUB5. All rights reserved.</p>
+              <div className="flex items-center gap-8 text-sm font-bold text-[var(--t3)]">
+                <a href="#" className="hover:text-[var(--t)] transition-colors">Twitter</a>
+                <a href="#" className="hover:text-[var(--t)] transition-colors">Discord</a>
+                <a href="#" className="hover:text-[var(--t)] transition-colors">LinkedIn</a>
+              </div>
+            </div>
+          </footer>
         </motion.main>
 
-        <Toaster position="bottom-center" richColors />
         <LoginModal 
           open={isLoginModalOpen} 
           onClose={() => setIsLoginModalOpen(false)} 
           onLogin={signIn} 
         />
+
+        {/* Image Generator Dialog */}
+        <AnimatePresence>
+          {showImageGenerator && (
+            <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+              >
+                <div className="relative">
+                  <button
+                    onClick={() => setShowImageGenerator(false)}
+                    className="absolute -top-4 -right-4 w-10 h-10 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-all z-10"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <ImageGenerator 
+                    onImageSelect={(imageUrl) => {
+                      setSelectedImage(imageUrl)
+                      setShowImageGenerator(false)
+                      toast.success('Image selected! You can now use this in your project.')
+                    }}
+                    className="w-full"
+                  />
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Delete Confirmation Overlay */}
         <AnimatePresence>
@@ -1140,6 +1261,7 @@ function AppContent() {
             </div>
           )}
         </AnimatePresence>
+        <Toaster position="bottom-center" richColors />
       </div>
     </ThemeProvider>
   )

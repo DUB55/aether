@@ -14,7 +14,7 @@ export const TEMPLATES: Template[] = [
     id: 'react-tailwind-starter',
     name: 'React + Tailwind',
     description: 'A clean starter with React 18, Tailwind CSS 4, and Lucide icons.',
-    icon: 'react',
+    icon: '⚛️',
     category: 'Frontend',
     files: {
       'index.html': `<!DOCTYPE html>
@@ -90,7 +90,7 @@ export default function App() {
     id: 'landing-page-bento',
     name: 'Bento Landing Page',
     description: 'A modern landing page with a bento grid layout and smooth animations.',
-    icon: 'bento',
+    icon: '🍱',
     category: 'Marketing',
     files: {
       'index.html': `<!DOCTYPE html>
@@ -184,7 +184,7 @@ export default function App() {
     id: 'dashboard-saas',
     name: 'SaaS Dashboard',
     description: 'A comprehensive admin dashboard with charts, data tables, and sidebar navigation.',
-    icon: 'dashboard',
+    icon: '📊',
     category: 'Application',
     files: {
       'index.html': `<!DOCTYPE html>

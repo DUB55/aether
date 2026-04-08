@@ -178,7 +178,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
 
   const getDiscountedPrice = (price: number) => {
     if (billingCycle === 'yearly') {
-      return Math.round(price * 10 * 0.8) / 10) // 20% discount for yearly
+      return Math.round(price * 10 * 0.8) / 10 // 20% discount for yearly
     }
     return price
   }
