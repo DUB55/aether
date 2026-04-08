@@ -6,10 +6,33 @@ import FallbackIcon from '@/components/FallbackIcon'
 import { 
   ChevronDown,
   ArrowUp,
+  ArrowLeft,
   Loader2,
   Rocket,
   Heart,
   AlertTriangle,
+  Plus,
+  Search,
+  Settings2,
+  Brain,
+  Trash2,
+  Layout,
+  Users,
+  Lock,
+  Calendar,
+  Clock,
+  Library,
+  Sparkles,
+  ZapOff,
+  Terminal,
+  Share2,
+  Globe,
+  Cpu,
+  Zap,
+  MousePointer2,
+  Code2,
+  Layers,
+  Shield,
 } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
@@ -32,6 +55,7 @@ import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import TermsOfService from '@/pages/TermsOfService'
 import { CONFIG } from '@/config'
 import { type Template, TEMPLATES } from '@/lib/templates'
+import { IconSystem } from '@/components/IconSystem'
 
 export default function App() {
   return (
@@ -1066,32 +1090,32 @@ function AppContent() {
                 { 
                   title: "Autonomous Engine", 
                   desc: "Our AI understands your entire project architecture and manages dependencies automatically.",
-                  icon: <FallbackIcon type="cpu" />
+                  icon: <IconSystem type="cpu" />
                 },
                 { 
                   title: "Instant Previews", 
                   desc: "See your changes in real-time with integrated WebContainer technology. No local setup required.",
-                  icon: <FallbackIcon type="zap" />
+                  icon: <IconSystem type="zap" />
                 },
                 { 
                   title: "Visual Inspector", 
                   desc: "Click any element in your preview to instantly locate and edit its code.",
-                  icon: <FallbackIcon type="mouse-pointer" />
+                  icon: <IconSystem type="mouse-pointer" />
                 },
                 { 
                   title: "GitHub Sync", 
                   desc: "Seamlessly push your generated code to GitHub. Your code, your repository, your control.",
-                  icon: <FallbackIcon type="code" />
+                  icon: <IconSystem type="code" />
                 },
                 { 
                   title: "Multi-File Editing", 
                   desc: "The AI can modify multiple files simultaneously, ensuring consistent updates across your entire application.",
-                  icon: <FallbackIcon type="layers" />
+                  icon: <IconSystem type="layers" />
                 },
                 { 
                   title: "Secure by Design", 
                   desc: "Integrated Firebase support with automatically generated security rules and authentication patterns.",
-                  icon: <FallbackIcon type="shield" />
+                  icon: <IconSystem type="shield" />
                 }
               ].map((feature, idx) => (
                 <div key={idx} className="p-8 liquid-glass rounded-[40px] border border-[var(--bdr)] dark:border-white/5 space-y-4 group hover:border-primary/30 transition-all">
