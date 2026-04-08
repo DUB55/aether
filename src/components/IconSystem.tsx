@@ -14,6 +14,15 @@ export function IconSystem({
   variant = 'default' 
 }: IconSystemProps) {
 
+  const emojis = {
+    cpu: '⚙️',
+    zap: '⚡',
+    mousePointer: '👆',
+    code: '💻',
+    layers: '📚',
+    shield: '🛡️'
+  }
+
   const renderIcon = () => {
     const baseClasses = "flex items-center justify-center transition-all duration-200"
     
@@ -33,14 +42,6 @@ export function IconSystem({
         )
       
       case 'emoji':
-        const emojis = {
-          cpu: '⚙️',
-          zap: '⚡',
-          mousePointer: '👆',
-          code: '💻',
-          layers: '📚',
-          shield: '🛡️'
-        }
         return (
           <div className={`${baseClasses} ${className}`} style={{ width: size, height: size, fontSize: size * 0.5 }}>
             {emojis[type]}
