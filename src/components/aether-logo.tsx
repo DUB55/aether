@@ -7,7 +7,7 @@ interface AetherLogoProps {
 }
 
 export function AetherLogo({ size = 32, className = '', showText = true }: AetherLogoProps) {
-  console.log('AetherLogo: Rendering with logo.png', { size, className, showText })
+  console.log('AetherLogo: Rendering with logo.png from public directory', { size, className, showText })
   
   return (
     <div className={`flex items-center gap-2 ${className}`}>
