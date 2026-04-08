@@ -21,8 +21,7 @@ export function AetherLogo({ size = 32, className = '', showText = true }: Aethe
         style={{ width: size, height: size }}
         onLoad={() => console.log('AetherLogo: logo.png loaded successfully')}
         onError={(e) => {
-          console.error('AetherLogo: logo.png failed to load', e)
-          console.log('AetherLogo: Current src', (e.target as HTMLImageElement).src)
+          console.error('AetherLogo: logo.png failed to load')
         }}
       />
       
