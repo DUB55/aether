@@ -1,11 +1,12 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { LogIn, Cpu, Shield, Rocket } from 'lucide-react'
 import { AetherLogo } from './aether-logo'
+import { useFirebase } from './FirebaseProvider'
 
 interface LoginModalProps {
   open: boolean
@@ -14,6 +15,14 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
+  const { user } = useFirebase()
+
+  // Close modal when user successfully authenticates
+  useEffect(() => {
+    if (user && open) {
+      onClose()
+    }
+  }, [user, open, onClose])
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden border-none bg-transparent shadow-none">
@@ -59,8 +68,13 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
 
                 <Button 
                   onClick={async () => {
-                    await onLogin()
-                    onClose()
+                    try {
+                      await onLogin()
+                      // Modal will close automatically when user state updates via useEffect
+                    } catch (error) {
+                      console.error('Login failed:', error)
+                      // Don't close modal on login failure
+                    }
                   }}
                   className="w-full rounded-2xl bg-[var(--t)] text-[var(--bg)] font-bold py-6 hover:scale-[1.02] transition-all shadow-xl shadow-[var(--shadow-sm)]"
                 >
