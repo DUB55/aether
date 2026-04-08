@@ -58,8 +58,8 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
                 </div>
 
                 <Button 
-                  onClick={() => {
-                    onLogin()
+                  onClick={async () => {
+                    await onLogin()
                     onClose()
                   }}
                   className="w-full rounded-2xl bg-[var(--t)] text-[var(--bg)] font-bold py-6 hover:scale-[1.02] transition-all shadow-xl shadow-[var(--shadow-sm)]"

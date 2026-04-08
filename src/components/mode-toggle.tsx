@@ -21,7 +21,7 @@ export function ModeToggle() {
       className="rounded-full w-9 h-9"
       onClick={toggleTheme}
     >
-      {theme === "light" && <Sun className="h-[1.2rem] w-[1.2rem]" />}
+      {(!theme || theme === "light") && <Sun className="h-[1.2rem] w-[1.2rem]" />}
       {theme === "dark" && <Moon className="h-[1.2rem] w-[1.2rem]" />}
       {theme === "black" && <Zap className="h-[1.2rem] w-[1.2rem] text-white" />}
       <span className="sr-only">Toggle theme</span>

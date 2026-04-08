@@ -33,6 +33,9 @@ import {
   Code2,
   Layers,
   Shield,
+  MessageSquare,
+  MoreHorizontal,
+  ImageIcon,
 } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
@@ -56,6 +59,10 @@ import TermsOfService from '@/pages/TermsOfService'
 import { CONFIG } from '@/config'
 import { type Template, TEMPLATES } from '@/lib/templates'
 import { IconSystem } from '@/components/IconSystem'
+import { ImageGenerator } from '@/components/ImageGenerator'
+import { AgentMode } from '@/components/AgentMode'
+import { Pricing } from '@/components/Pricing'
+import { Ads } from '@/components/Ads'
 
 export default function App() {
   return (
@@ -101,6 +108,9 @@ function AppContent() {
   const [activeDoc, setActiveDoc] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [showImageGenerator, setShowImageGenerator] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [showAgentMode, setShowAgentMode] = useState(false)
 
   const sortedProjects = [...allProjects].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   const recentProjects = sortedProjects.slice(0, 3)
@@ -177,6 +187,21 @@ function AppContent() {
         setActiveProjectId(null)
       } else if (hash === '#/pricing') {
         setCurrentRoute('pricing')
+        setActiveProjectId(null)
+      } else if (hash === '#/ads') {
+        setCurrentRoute('ads')
+        setActiveProjectId(null)
+      } else if (currentRoute === 'pricing') {
+        setCurrentRoute('pricing')
+        setActiveProjectId(null)
+      } else if (hash === '#/ads') {
+        setCurrentRoute('ads')
+        setActiveProjectId(null)
+      } else if (currentRoute === 'ads') {
+        setCurrentRoute('ads')
+        setActiveProjectId(null)
+      } else if (hash === '#/privacy-policy') {
+        setCurrentRoute('ads')
         setActiveProjectId(null)
       } else if (hash === '#/privacy-policy') {
         setCurrentRoute('privacy-policy')
@@ -313,7 +338,7 @@ function AppContent() {
     )
   }
 
-  if (currentRoute === 'docs' || currentRoute === 'community' || currentRoute === 'changelog' || currentRoute === 'projects' || currentRoute === 'templates' || currentRoute === 'pricing') {
+  if (currentRoute === 'docs' || currentRoute === 'community' || currentRoute === 'changelog' || currentRoute === 'projects' || currentRoute === 'templates' || currentRoute === 'pricing' || currentRoute === 'ads') {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
         <div className={cn(
@@ -365,11 +390,11 @@ function AppContent() {
               </div>
 
               {currentRoute === 'pricing' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {[
-                    { 
-                      name: 'Starter', 
-                      price: '0', 
+                <Pricing />
+              )}
+
+              {currentRoute === 'ads' && (
+                <Ads />
                       description: 'Perfect for exploring Aether and building your first apps.',
                       features: ['Unlimited Projects', 'Access to Basic Models', 'Instant Preview', 'Community Support', 'Free Deployment'],
                       highlight: false
@@ -1006,9 +1031,24 @@ function AppContent() {
                     />
                     <div className="flex items-center justify-between pt-2 border-t border-[var(--bdr)] dark:border-white/5">
                       <div className="flex items-center gap-2">
-                      </div>
-                      
-                      <div className="flex items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={() => setShowImageGenerator(true)}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--bg3)] dark:bg-white/5 text-sm font-medium text-[var(--t)] hover:bg-[var(--bg2)] dark:hover:bg-white/10 transition-all cursor-pointer border border-[var(--bdr)] dark:border-white/5"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                          Generate Image
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowAgentMode(true)}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 dark:from-blue-500/10 dark:to-purple-500/10 text-sm font-medium text-blue-600 dark:text-blue-400 hover:from-blue-500/30 hover:to-purple-500/30 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 transition-all cursor-pointer border border-blue-500/30 dark:border-blue-500/20"
+                          disabled={!input.trim() || busy}
+                        >
+                          <Brain className="w-4 h-4" />
+                          Agent Mode
+                        </button>
+                        
                         <button 
                           type="submit" 
                           disabled={!input.trim() || busy}
@@ -1211,6 +1251,37 @@ function AppContent() {
           onClose={() => setIsLoginModalOpen(false)} 
           onLogin={signIn} 
         />
+
+        {/* Image Generator Dialog */}
+        <AnimatePresence>
+          {showImageGenerator && (
+            <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+              >
+                <div className="relative">
+                  <button
+                    onClick={() => setShowImageGenerator(false)}
+                    className="absolute -top-4 -right-4 w-10 h-10 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-all z-10"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <ImageGenerator 
+                    onImageSelect={(imageUrl) => {
+                      setSelectedImage(imageUrl)
+                      setShowImageGenerator(false)
+                      toast.success('Image selected! You can now use this in your project.')
+                    }}
+                    className="w-full"
+                  />
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Delete Confirmation Overlay */}
         <AnimatePresence>
