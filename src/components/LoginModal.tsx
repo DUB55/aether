@@ -24,7 +24,7 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
     }
   }, [user, open, onClose])
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden border-none bg-transparent shadow-none">
         <motion.div 
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
