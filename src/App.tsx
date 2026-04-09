@@ -192,6 +192,12 @@ function AppContent() {
       } else if (pathname === '/ads') {
         setCurrentRoute('ads')
         setActiveProjectId(null)
+      } else if (pathname === '/privacy-policy' || pathname === '/privacy') {
+        setCurrentRoute('privacy-policy')
+        setActiveProjectId(null)
+      } else if (pathname === '/terms-of-service' || pathname === '/terms') {
+        setCurrentRoute('terms-of-service')
+        setActiveProjectId(null)
       } else if (currentRoute === 'pricing') {
         setCurrentRoute('pricing')
         setActiveProjectId(null)
