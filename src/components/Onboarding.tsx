@@ -45,16 +45,16 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const step = STEPS[currentStep];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--bg)]/60 backdrop-blur-xl">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-zinc-900/40 border border-white/10 rounded-[40px] overflow-hidden backdrop-blur-2xl shadow-2xl"
+        className="w-full max-w-md bg-[var(--bg3)]/40 border border-[var(--bdr)] rounded-[40px] overflow-hidden backdrop-blur-2xl shadow-2xl"
       >
         <div className="p-12 text-center">
           <div className="flex justify-center mb-10">
-            <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center border border-white/10">
-              <step.icon className="w-8 h-8 text-white" />
+            <div className="w-20 h-20 rounded-3xl bg-[var(--bg3)]/50 flex items-center justify-center border border-[var(--bdr)]">
+              <step.icon className="w-8 h-8 text-[var(--t)]" />
             </div>
           </div>
           
@@ -68,10 +68,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 transition={{ duration: 0.3 }}
                 className="space-y-4"
               >
-                <h2 className="text-3xl font-bold text-white tracking-tight">
+                <h2 className="text-3xl font-bold text-[var(--t)] tracking-tight">
                   {step.title}
                 </h2>
-                <p className="text-zinc-400 text-lg leading-relaxed">
+                <p className="text-[var(--t2)] text-lg leading-relaxed">
                   {step.description}
                 </p>
               </motion.div>
@@ -84,7 +84,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 key={i}
                 className={cn(
                   "h-1 rounded-full transition-all duration-500",
-                  i === currentStep ? "w-10 bg-white" : "w-2 bg-white/10"
+                  i === currentStep ? "w-10 bg-[var(--t)]" : "w-2 bg-[var(--t)]/10"
                 )}
               />
             ))}
@@ -92,7 +92,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
           <Button 
             onClick={nextStep}
-            className="w-full h-14 rounded-2xl bg-white hover:bg-zinc-200 text-black font-bold text-lg transition-all active:scale-[0.98]"
+            className="w-full h-14 rounded-2xl bg-[var(--t)] hover:bg-primary text-[var(--bg)] font-bold text-lg transition-all active:scale-[0.98]"
           >
             {currentStep === STEPS.length - 1 ? "Start Building" : "Next"}
           </Button>

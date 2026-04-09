@@ -2,21 +2,36 @@ import React from 'react';
 import { AetherLogo } from '@/components/aether-logo';
 
 export default function PrivacyPolicy() {
+  const handleBackToHome = () => {
+    window.history.pushState({}, '', '/');
+    window.dispatchEvent(new Event('routechange'));
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--t)]">
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-[var(--bg3)] flex items-center justify-center">
-            <AetherLogo size={24} />
+        <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-xl bg-[var(--bg3)] flex items-center justify-center">
+              <AetherLogo size={40} />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-4xl font-bold">Privacy Policy</h1>
+              <p className="text-[var(--t3)] text-sm">Last Updated: {new Date().toLocaleDateString()}</p>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold">Privacy Policy</h1>
+          <button
+            onClick={handleBackToHome}
+            className="px-6 py-3 bg-[var(--bg3)] hover:bg-[var(--bg2)] rounded-xl font-semibold transition-colors"
+          >
+            Back to Home
+          </button>
         </div>
 
         {/* Content */}
         <div className="space-y-8 text-[var(--t2)]">
           <section>
-            <h2 className="text-xl font-semibold text-[var(--t)] mb-4">Last Updated: {new Date().toLocaleDateString()}</h2>
             <p className="leading-relaxed">
               Aether ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our AI development platform.
             </p>

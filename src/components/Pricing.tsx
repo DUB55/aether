@@ -237,7 +237,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                 }`}
               >
                 Yearly
-                <span className="ml-2 bg-green-500/10 text-green-500 text-xs px-2 py-1 rounded-full">
+                <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
                   Save 20%
                 </span>
               </button>
@@ -256,7 +256,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
               >
                 {plan.popular && (
                   <div className="absolute -top-4 right-4">
-                    <Badge className="bg-orange-500 text-white">
+                    <Badge className="bg-primary text-primary-foreground">
                       Most Popular
                     </Badge>
                   </div>
@@ -283,7 +283,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                           </span>
                         </div>
                         {billingCycle === 'yearly' && (
-                          <div className="text-sm text-green-500 mb-2">
+                          <div className="text-sm text-primary mb-2">
                             Save ${getYearlySavings(plan.price)}/year
                           </div>
                         )}
@@ -295,7 +295,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                     <ul className="space-y-3">
                       {plan.features.map((feature, featureIndex) => (
                         <li key={featureIndex} className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                           <span className="text-[var(--t2)]">{feature}</span>
                         </li>
                       ))}
@@ -352,61 +352,61 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
               <h3 className="text-xl font-bold text-[var(--t)] mb-2">All Plans Include</h3>
               <ul className="space-y-3 text-left text-[var(--t2)]">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>Unlimited Projects</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>AI-Powered Development</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>Real-time Preview</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>Free Deployment</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>Community Support</span>
                 </li>
               </ul>
             </div>
 
             <div className="text-center p-8 liquid-glass rounded-xl border border-[var(--bdr)]">
-              <Shield className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
               <h3 className="text-xl font-bold text-[var(--t)] mb-2">Enterprise Security</h3>
               <ul className="space-y-3 text-left text-[var(--t2)]">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>Advanced Security</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>24/7 Monitoring</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>SLA Guarantee</span>
                 </li>
               </ul>
             </div>
 
             <div className="text-center p-8 liquid-glass rounded-xl border border-[var(--bdr)]">
-              <Users className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <Users className="w-12 h-12 text-primary mx-auto mb-4" />
               <h3 className="text-xl font-bold text-[var(--t)] mb-2">Premium Support</h3>
               <ul className="space-y-3 text-left text-[var(--t2)]">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>Priority Support</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>Custom Integrations</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                   <span>Advanced Analytics</span>
                 </li>
               </ul>

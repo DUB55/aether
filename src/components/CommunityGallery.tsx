@@ -224,10 +224,10 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
       ) : (
         <div className="text-center py-32 space-y-4">
           <div className="w-20 h-20 bg-[var(--bg3)] rounded-full flex items-center justify-center mx-auto">
-            <Search className="w-8 h-8 text-[var(--t3)]" />
+            <Rocket className="w-8 h-8 text-[var(--t3)]" />
           </div>
           <h3 className="text-xl font-bold">No projects found</h3>
-          <p className="text-[var(--t3)]">Try adjusting your search or filters.</p>
+          <p className="text-[var(--t3)]">The community gallery is empty. Be the first to share your project!</p>
         </div>
       )}
 
