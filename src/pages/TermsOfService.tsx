@@ -1,5 +1,6 @@
 import React from 'react';
 import { AetherLogo } from '@/components/aether-logo';
+import { Footer } from '@/components/Footer';
 
 export default function TermsOfService() {
   const handleBackToHome = () => {
@@ -129,6 +130,7 @@ export default function TermsOfService() {
           </section>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { AetherLogo } from '@/components/aether-logo';
+import { Footer } from '@/components/Footer';
 
 export default function PrivacyPolicy() {
   const handleBackToHome = () => {
@@ -99,6 +100,7 @@ export default function PrivacyPolicy() {
           </section>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
