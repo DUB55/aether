@@ -1,40 +1,20 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, getDocFromServer, Timestamp } from 'firebase/firestore';
-// Firebase configuration from environment variables
+// Firebase configuration from environment variables or fallback to config file
 const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY,
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-  appId: process.env.VITE_FIREBASE_APP_ID,
-  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID,
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-  firestoreDatabaseId: process.env.VITE_FIREBASE_DATABASE_ID
+  apiKey: process.env.VITE_FIREBASE_API_KEY || 'AIzaSyC8xWbyNYkBSSGadvydOBK6zctkidxkpSI',
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || 'aether-89251.firebaseapp.com',
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'aether-89251',
+  appId: process.env.VITE_FIREBASE_APP_ID || '1:335186915642:web:6542c45e0278a844aa2003',
+  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-V5KFXSC1KJ',
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '335186915642',
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || 'aether-89251.firebasestorage.app',
+  firestoreDatabaseId: process.env.VITE_FIREBASE_DATABASE_ID || 'aether-89251-default-rtdb'
 };
 
 // Initialize Firebase SDK with proper configuration
-let app: ReturnType<typeof initializeApp>;
-
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.appId) {
-  console.error('Firebase is not properly configured. Please check your environment variables.');
-  console.error('Required variables: VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID');
-  // Create a fallback configuration to prevent complete failure
-  const fallbackConfig = {
-    apiKey: 'demo-key',
-    authDomain: 'demo.firebaseapp.com',
-    projectId: 'demo-project',
-    appId: 'demo-app-id',
-    measurementId: 'demo-measurement-id',
-    messagingSenderId: 'demo-sender-id',
-    storageBucket: 'demo-project.appspot.com',
-    firestoreDatabaseId: 'demo-database'
-  };
-  app = initializeApp(fallbackConfig);
-} else {
-  // Initialize Firebase SDK with real configuration
-  app = initializeApp(firebaseConfig);
-}
+const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
