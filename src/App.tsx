@@ -1194,15 +1194,16 @@ function AppContent() {
                   <li><a href="/changelog" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/changelog'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Changelog</a></li>
                   <li><a href="https://github.com/DUB55/aether" target="_blank" className="hover:text-primary transition-colors cursor-pointer">GitHub</a></li>
                   <li><a href="/privacy-policy" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/privacy-policy'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Privacy Policy</a></li>
+                  <li><a href="/terms-of-service" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/terms-of-service'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Terms of Service</a></li>
                 </ul>
               </div>
             </div>
             <div className="mt-24 pt-12 border-t border-[var(--bdr)] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
               <p className="text-sm font-bold text-[var(--t3)]">© 2026 DUB5. All rights reserved.</p>
               <div className="flex items-center gap-8 text-sm font-bold text-[var(--t3)]">
-                <a href="#" className="hover:text-[var(--t)] transition-colors">Twitter</a>
-                <a href="#" className="hover:text-[var(--t)] transition-colors">Discord</a>
-                <a href="#" className="hover:text-[var(--t)] transition-colors">LinkedIn</a>
+                <a href="https://twitter.com/aether" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--t)] transition-colors">Twitter</a>
+                <a href="https://discord.gg/aether" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--t)] transition-colors">Discord</a>
+                <a href="https://linkedin.com/company/aether" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--t)] transition-colors">LinkedIn</a>
               </div>
             </div>
           </footer>
