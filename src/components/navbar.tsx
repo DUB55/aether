@@ -45,7 +45,7 @@ export function Navbar() {
       )}
     >
       <div className="flex items-center gap-8">
-        <a href="/" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/') }} className="flex items-center gap-2 group cursor-pointer">
+        <a href="/" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/'); window.dispatchEvent(new Event('routechange')) }} className="flex items-center gap-2 group cursor-pointer">
           <div className="p-1 rounded-lg group-hover:scale-110 transition-transform duration-300">
              <AetherLogo size={24} showText={false} className="text-foreground" />
           </div>
@@ -115,7 +115,7 @@ export function Navbar() {
               <DropdownMenuSeparator className="bg-border/50" />
               <DropdownMenuItem 
                 className="rounded-xl cursor-pointer gap-3 py-2.5"
-                onClick={() => window.location.pathname = '/projects'}
+                onClick={() => { window.history.pushState({}, '', '/projects'); window.dispatchEvent(new Event('routechange')) }}
               >
                 <LayoutGrid className="w-4 h-4" />
                 <span>My Projects</span>
@@ -194,6 +194,7 @@ function NavItem({ label, href = "#", target }: { label: string; href?: string; 
       window.open(href, '_blank', 'noopener,noreferrer')
     } else {
       window.history.pushState({}, '', href)
+      window.dispatchEvent(new Event('routechange'))
     }
   }
 
@@ -214,6 +215,7 @@ function MobileNavItem({ label, href = "#", onClick }: { label: string; href?: s
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
     window.history.pushState({}, '', href)
+    window.dispatchEvent(new Event('routechange'))
     onClick()
   }
 

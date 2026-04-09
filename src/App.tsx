@@ -142,6 +142,7 @@ function AppContent() {
     }
     await saveProject(newProject)
     window.history.pushState({}, '', `/editor/${newProject.id}`)
+    window.dispatchEvent(new Event('routechange'))
   }
 
   useEffect(() => {
@@ -208,9 +209,13 @@ function AppContent() {
 
     // Listen for popstate events (back/forward navigation)
     window.addEventListener('popstate', handleRouteChange)
+    
+    // Listen for custom route change events
+    window.addEventListener('routechange', handleRouteChange)
 
     return () => {
       window.removeEventListener('popstate', handleRouteChange)
+      window.removeEventListener('routechange', handleRouteChange)
       setActiveDoc(null)
     }
   }, [])
@@ -291,6 +296,7 @@ function AppContent() {
       await saveProject(newProject)
       toast.success("Project created!")
       window.history.pushState({}, '', `/editor/${id}`)
+      window.dispatchEvent(new Event('routechange'))
       setInput("")
     } catch (error) {
       console.error("Project creation error:", error)
@@ -345,7 +351,7 @@ function AppContent() {
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
         <Editor 
           projectId={activeProjectId!} 
-          onBack={() => window.history.pushState({}, '', isSharedView ? '/' : '/projects')} 
+          onBack={() => { window.history.pushState({}, '', isSharedView ? '/' : '/projects'); window.dispatchEvent(new Event('routechange')) }} 
           isSharedView={isSharedView}
         />
         <Toaster position="bottom-center" richColors />
@@ -681,6 +687,7 @@ function AppContent() {
                         className="w-full sm:w-auto rounded-2xl px-8 font-bold"
                         onClick={() => {
                           window.history.pushState({}, '', '/')
+                          window.dispatchEvent(new Event('routechange'))
                           setActiveDoc(null)
                         }}
                       >
@@ -722,7 +729,7 @@ function AppContent() {
                       animate={{ opacity: 1, y: 0 }}
                       whileHover={{ y: -5 }}
                       className="group relative bento-card border border-slate-200/50 dark:border-white/5 hover:border-primary/30 transition-all duration-500 cursor-pointer"
-                      onClick={() => window.history.pushState({}, '', `/editor/${p.id}`)}
+                      onClick={() => { window.history.pushState({}, '', `/editor/${p.id}`); window.dispatchEvent(new Event('routechange')) }}
                     >
                       <div className="aspect-video bg-muted relative overflow-hidden">
                         <ProjectPreview project={p} />
@@ -784,7 +791,7 @@ function AppContent() {
                       <Button 
                         size="lg"
                         className="rounded-full px-8 font-bold"
-                        onClick={() => window.history.pushState({}, '', '/')}
+                        onClick={() => { window.history.pushState({}, '', '/'); window.dispatchEvent(new Event('routechange')) }}
                       >
                         Create New Project
                       </Button>
@@ -946,7 +953,7 @@ function AppContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 dark:bg-white/5 text-primary dark:text-primary/80 text-[13px] font-bold border border-primary/10 dark:border-white/10 cursor-pointer hover:bg-primary/10 dark:hover:bg-white/10 transition-all group"
-                onClick={() => window.history.pushState({}, '', '/changelog')}
+                onClick={() => { window.history.pushState({}, '', '/changelog'); window.dispatchEvent(new Event('routechange')) }}
               >
                 <span>Aether v2.0 is now live</span>
                 <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-1 transition-transform" />
@@ -1032,7 +1039,7 @@ function AppContent() {
                   <p className="text-sm font-medium text-[var(--t3)]">Pick up where you left off</p>
                 </div>
                 <button 
-                  onClick={() => window.history.pushState({}, '', '/projects')}
+                  onClick={() => { window.history.pushState({}, '', '/projects'); window.dispatchEvent(new Event('routechange')) }}
                   className="px-6 py-2.5 rounded-2xl bg-[var(--bg3)] dark:bg-white/5 text-sm font-bold text-[var(--t)] hover:bg-[var(--bg2)] dark:hover:bg-white/10 transition-all cursor-pointer border border-[var(--bdr)] dark:border-white/5"
                 >
                   View All Projects
@@ -1045,7 +1052,7 @@ function AppContent() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 * idx }}
-                    onClick={() => window.history.pushState({}, '', `/editor/${p.id}`)}
+                    onClick={() => { window.history.pushState({}, '', `/editor/${p.id}`); window.dispatchEvent(new Event('routechange')) }}
                     className="group relative p-8 liquid-glass rounded-[40px] border border-[var(--bdr)] dark:border-white/5 cursor-pointer overflow-hidden flex flex-col justify-between h-48 hover:border-primary/30 transition-all"
                   >
                     <div className="space-y-4">
@@ -1168,17 +1175,17 @@ function AppContent() {
               <div className="space-y-6">
                 <h4 className="font-black uppercase tracking-widest text-xs text-[var(--t3)]">Product</h4>
                 <ul className="space-y-4 text-sm font-bold text-[var(--t2)]">
-                  <li><a href="/projects" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/projects') }} className="hover:text-primary transition-colors cursor-pointer">All Projects</a></li>
-                  <li><a href="/templates" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/templates') }} className="hover:text-primary transition-colors cursor-pointer">Templates</a></li>
-                  <li><a href="/community" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/community') }} className="hover:text-primary transition-colors cursor-pointer">Community</a></li>
-                  <li><a href="/pricing" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/pricing') }} className="hover:text-primary transition-colors cursor-pointer">Pricing</a></li>
+                  <li><a href="/projects" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/projects'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">All Projects</a></li>
+                  <li><a href="/templates" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/templates'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Templates</a></li>
+                  <li><a href="/community" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/community'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Community</a></li>
+                  <li><a href="/pricing" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/pricing'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Pricing</a></li>
                 </ul>
               </div>
               <div className="space-y-6">
                 <h4 className="font-black uppercase tracking-widest text-xs text-[var(--t3)]">Resources</h4>
                 <ul className="space-y-4 text-sm font-bold text-[var(--t2)]">
-                  <li><a href="/docs" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/docs') }} className="hover:text-primary transition-colors cursor-pointer">Documentation</a></li>
-                  <li><a href="/changelog" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/changelog') }} className="hover:text-primary transition-colors cursor-pointer">Changelog</a></li>
+                  <li><a href="/docs" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/docs'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Documentation</a></li>
+                  <li><a href="/changelog" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/changelog'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Changelog</a></li>
                   <li><a href="https://github.com/DUB55/aether" target="_blank" className="hover:text-primary transition-colors cursor-pointer">GitHub</a></li>
                   <li><a href="#" className="hover:text-primary transition-colors cursor-pointer">Privacy Policy</a></li>
                 </ul>
