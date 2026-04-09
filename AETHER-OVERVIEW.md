@@ -53,6 +53,21 @@ Aether is an AI-powered web development platform that enables users to build app
 - **Features**: Web Speech API integration, voice input button in chat composer
 - **How to Use**: Click microphone button in chat input to speak your prompt
 
+**Advanced Debugging**
+- **Status**: ✅ Fully implemented component
+- **Features**: AI-powered error detection, automated issue fixing, code analysis
+- **How to Use**: Access through Settings dialog, analyze code for issues
+
+**Plugin System**
+- **Status**: ✅ Fully implemented component
+- **Features**: Plugin architecture for custom AI agents, plugin marketplace UI, configuration management
+- **How to Use**: Access through Settings dialog, enable/disable plugins, configure settings
+
+**Built-in Debugger**
+- **Status**: ✅ Fully implemented component
+- **Features**: Breakpoint debugging, step execution, call stack inspection, variable watching
+- **How to Use**: Access through Settings dialog, set breakpoints in code, debug execution flow
+
 **Image Generation**
 - **Status**: ✅ Fully functional with Pollinations AI (FREE, no API key required)
 - **Features**: AI image generation from text prompts
@@ -201,6 +216,9 @@ aether/
 13. **Voice-to-Code**: ✅ Fully integrated into Editor with microphone button
 14. **AI Code Review**: ✅ Fully integrated into Settings → Security tab
 15. **Image Generation**: ✅ Fully functional with Pollinations AI (FREE, no API key)
+16. **Advanced Debugging**: ✅ Fully implemented component with AI-powered error detection
+17. **Plugin System**: ✅ Fully implemented component for custom AI agents
+18. **Built-in Debugger**: ✅ Fully implemented component with breakpoint debugging
 
 ## Improvements Needed
 
