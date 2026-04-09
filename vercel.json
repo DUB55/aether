@@ -3,7 +3,10 @@
   "outputDirectory": "dist",
   "functions": {
     "api/server.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
+    },
+    "api/**/*.ts": {
+      "maxDuration": 60
     }
   },
   "routes": [

@@ -135,8 +135,13 @@ async function startServer() {
     }
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
       if (!response.ok) {
+        console.error('[Proxy] Image fetch failed with status:', response.status, 'for URL:', url);
         return res.status(response.status).send('Failed to fetch image');
       }
 
@@ -146,9 +151,10 @@ async function startServer() {
       res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('Access-Control-Allow-Origin', '*');
       res.send(Buffer.from(imageBuffer));
     } catch (error) {
-      console.error('[Proxy] Error fetching image:', error);
+      console.error('[Proxy] Error fetching image:', error, 'for URL:', url);
       res.status(500).send('Failed to proxy image');
     }
   });
@@ -159,6 +165,15 @@ async function startServer() {
 
     if (!input) {
       return res.status(400).json({ error: "Input is required" });
+    }
+
+    console.log('[AI Chat] Request received:', { input: input.substring(0, 50), hasHistory: !!history, provider, model });
+
+    // Check if Gemini API keys are configured
+    if (!geminiService || geminiKeys.length === 0) {
+      console.warn('[AI Chat] No Gemini API keys configured, forcing DUB5 fallback');
+      // Force DUB5 fallback
+      req.body.provider = 'dub5';
     }
 
     try {
@@ -186,6 +201,7 @@ async function startServer() {
         files,
         image,
         onProvider: (provider, model) => {
+          console.log('[AI Chat] Using provider:', provider, 'model:', model);
           res.write(`data: ${JSON.stringify({ provider, model })}\n\n`);
         },
         onChunk: (chunk) => {
@@ -197,13 +213,14 @@ async function startServer() {
       res.write("data: [DONE]\n\n");
       res.end();
     } catch (error: any) {
-      console.error("AI Service Error:", error);
+      console.error("[AI Chat] Error:", error);
+      console.error("[AI Chat] Error stack:", error.stack);
       // If we haven't sent headers yet, send a JSON error
       if (!res.headersSent) {
-        res.status(500).json({ error: error.message || "Internal Server Error" });
+        res.status(500).json({ error: error.message || "Internal Server Error", details: String(error) });
       } else {
         // Otherwise send an error event in the stream
-        res.write(`data: ${JSON.stringify({ error: error.message || "Internal Server Error" })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: error.message || "Internal Server Error", details: String(error) })}\n\n`);
         res.end();
       }
     }
