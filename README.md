@@ -2,6 +2,8 @@
 
 Aether is a modern web-based AI development platform that enables developers to build, iterate, and deploy applications using natural language and advanced AI models.
 
+<!-- Updated routing configuration for privacy policy and terms of service pages -->
+
 ---
 
 ## Features
