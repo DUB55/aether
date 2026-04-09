@@ -949,7 +949,6 @@ body.viewer-mode .prev-empty{display:none!important}
   border-radius: 50%;
   opacity: calc(var(--landing-gradient-opacity) + 0.1);
   filter: blur(140px) saturate(180%);
-  transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Theme-specific gradients - More vibrant and smooth */
