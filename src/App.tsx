@@ -913,9 +913,9 @@ function AppContent() {
               )}
             </div>
           </motion.main>
-          <Footer />
-          <Toaster position="bottom-center" richColors />
         </div>
+        <Footer />
+        <Toaster position="bottom-center" richColors />
       </ThemeProvider>
     )
   }  return (
