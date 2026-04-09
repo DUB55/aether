@@ -8,7 +8,7 @@ export function Footer() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
         <div className="col-span-2 space-y-6">
           <div className="flex items-center gap-2">
-            <AetherLogo size={32} />
+            <AetherLogo size={32} showText={false} />
             <span className="text-2xl font-black tracking-tighter">Aether</span>
           </div>
           <p className="text-[var(--t2)] max-w-xs">An autonomous platform for building production-ready software.</p>

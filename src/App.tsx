@@ -1005,7 +1005,7 @@ function AppContent() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
-              className="max-w-4xl mx-auto w-full mb-8"
+              className="max-w-4xl mx-auto w-full"
             >
               <form 
                 onSubmit={handleStartProject} 
@@ -1018,7 +1018,7 @@ function AppContent() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="What would you like to build today?"
-                      className="w-full h-32 sm:h-40 bg-transparent border-none focus:ring-0 text-xl sm:text-[26px] font-bold resize-none placeholder:text-[var(--t3)]/30 outline-none text-[var(--t)] leading-tight tracking-tight"
+                      className="w-full min-h-[120px] max-h-[200px] sm:min-h-[160px] sm:max-h-[250px] bg-transparent border-none focus:ring-0 text-xl sm:text-[26px] font-bold resize-none placeholder:text-[var(--t3)]/30 outline-none text-[var(--t)] leading-tight tracking-tight"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault()

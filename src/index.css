@@ -502,6 +502,10 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
+.composer-box {
+  animation: none !important;
+}
+
 .pinput {
   width: 100%;
   background: transparent;
