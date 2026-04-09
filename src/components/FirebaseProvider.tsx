@@ -27,10 +27,16 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
+    console.log('[FirebaseProvider] Setting up auth state listener');
     testConnection();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('[FirebaseProvider] Auth state changed - firebaseUser:', firebaseUser ? 'authenticated' : 'null');
+      if (firebaseUser) {
+        console.log('[FirebaseProvider] User authenticated - uid:', firebaseUser.uid, 'email:', firebaseUser.email);
+      }
       setUser(firebaseUser);
       setIsAuthReady(true);
+      console.log('[FirebaseProvider] isAuthReady set to true');
 
       if (firebaseUser) {
         // Sync user profile
@@ -38,6 +44,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         try {
           const userDoc = await getDoc(userRef);
           if (!userDoc.exists()) {
+            console.log('[FirebaseProvider] Creating new user profile');
             await setDoc(userRef, {
               uid: firebaseUser.uid,
               email: firebaseUser.email,
@@ -45,16 +52,22 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
               photoURL: firebaseUser.photoURL,
               role: 'user'
             });
+          } else {
+            console.log('[FirebaseProvider] User profile already exists');
           }
         } catch (error) {
           handleFirestoreError(error, OperationType.WRITE, `users/${firebaseUser.uid}`);
         }
       } else {
+        console.log('[FirebaseProvider] User signed out - clearing projects');
         setProjects([]);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log('[FirebaseProvider] Cleaning up auth state listener');
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

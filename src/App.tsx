@@ -112,6 +112,11 @@ function AppContent() {
   const [activeDoc, setActiveDoc] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+
+  useEffect(() => {
+    console.log('[App] isLoginModalOpen changed:', isLoginModalOpen, 'user:', user ? 'authenticated' : 'null')
+  }, [isLoginModalOpen, user])
+
   const [showImageGenerator, setShowImageGenerator] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [showAgentMode, setShowAgentMode] = useState(false)
@@ -246,6 +251,7 @@ function AppContent() {
     if (!trimmed) return
     
     if (!user) {
+      console.log('[App] handleStartProject - User not authenticated, opening login modal')
       setIsLoginModalOpen(true)
       return
     }
@@ -1153,7 +1159,10 @@ function AppContent() {
 
         <LoginModal 
           open={isLoginModalOpen} 
-          onClose={() => setIsLoginModalOpen(false)} 
+          onClose={() => {
+            console.log('[App] LoginModal onClose called - closing modal')
+            setIsLoginModalOpen(false)
+          }} 
           onLogin={signIn} 
         />
 

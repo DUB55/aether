@@ -17,14 +17,22 @@ interface LoginModalProps {
 export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
   const { user } = useFirebase()
 
+  console.log('[LoginModal] Render - open:', open, 'user:', user ? 'authenticated' : 'null')
+
   // Close modal when user successfully authenticates
   useEffect(() => {
+    console.log('[LoginModal] useEffect triggered - user:', user ? 'authenticated' : 'null', 'open:', open)
     if (user && open) {
+      console.log('[LoginModal] User authenticated and modal open - scheduling close in 500ms')
       // Add a small delay to ensure the modal doesn't close immediately
       const timer = setTimeout(() => {
+        console.log('[LoginModal] Timer triggered - calling onClose')
         onClose()
       }, 500)
-      return () => clearTimeout(timer)
+      return () => {
+        console.log('[LoginModal] Cleanup - clearing timer')
+        clearTimeout(timer)
+      }
     }
   }, [user, open, onClose])
   return (
