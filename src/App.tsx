@@ -1193,7 +1193,7 @@ function AppContent() {
                   <li><a href="/docs" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/docs'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Documentation</a></li>
                   <li><a href="/changelog" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/changelog'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Changelog</a></li>
                   <li><a href="https://github.com/DUB55/aether" target="_blank" className="hover:text-primary transition-colors cursor-pointer">GitHub</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors cursor-pointer">Privacy Policy</a></li>
+                  <li><a href="/privacy-policy" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/privacy-policy'); window.dispatchEvent(new Event('routechange')) }} className="hover:text-primary transition-colors cursor-pointer">Privacy Policy</a></li>
                 </ul>
               </div>
             </div>

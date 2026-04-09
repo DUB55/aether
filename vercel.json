@@ -12,14 +12,6 @@
       "dest": "/api/server.ts"
     },
     {
-      "src": "/privacy-policy.html",
-      "dest": "/privacy-policy.html"
-    },
-    {
-      "src": "/terms-of-service.html",
-      "dest": "/terms-of-service.html"
-    },
-    {
       "src": "/icons/(.*)",
       "dest": "/icons/$1"
     },
