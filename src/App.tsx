@@ -58,6 +58,7 @@ import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import TermsOfService from '@/pages/TermsOfService'
 import { CONFIG } from '@/config'
 import { type Template, TEMPLATES } from '@/lib/templates'
+import { type Message } from '@/types'
 import { IconSystem } from '@/components/IconSystem'
 import { ImageGenerator } from '@/components/ImageGenerator'
 import { AgentMode } from '@/components/AgentMode'
@@ -249,7 +250,7 @@ function AppContent() {
     // Check if user is asking for images and auto-generate
     const containsImageKeywords = /\b(image|picture|photo|pic|visual|art|graphic|illustration|design|draw|paint|create.*image|generate.*image|make.*image)\b/i.test(trimmed)
     
-    let messages = [{ role: "user", content: trimmed }]
+    let messages: Message[] = [{ role: "user", content: trimmed }]
     
     if (containsImageKeywords) {
       // Auto-generate an image based on the prompt
@@ -270,11 +271,12 @@ function AppContent() {
         if (response.ok) {
           const imageResult = await response.json()
           if (imageResult.imageUrl) {
-            messages.push({
+            const imageMessage: Message = {
               role: "assistant", 
               content: `I've generated an image based on your request: ${imagePrompt}`,
               image: imageResult.imageUrl
-            })
+            }
+            messages.push(imageMessage)
             toast.success("Image generated automatically!")
           }
         }
