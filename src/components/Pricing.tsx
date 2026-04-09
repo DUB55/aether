@@ -198,7 +198,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 ${className}`}>
+    <div className={`min-h-screen bg-[var(--bg)] ${className}`}>
       <div className="container mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -207,23 +207,23 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
         >
           {/* Header */}
           <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-6xl font-bold text-slate-900 mb-4">
+            <h1 className="text-4xl md:text-6xl font-bold text-[var(--t)] mb-4">
               Simple, Transparent Pricing
             </h1>
-            <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-[var(--t2)] mb-8 max-w-2xl mx-auto">
               Choose the perfect plan for your needs. All plans include core features, with no hidden fees.
             </p>
           </div>
 
           {/* Billing Cycle Toggle */}
           <div className="flex justify-center mb-8">
-            <div className="bg-white rounded-lg p-1 shadow-sm border border-slate-200">
+            <div className="bg-[var(--bg3)] rounded-lg p-1 shadow-sm border border-[var(--bdr)]">
               <button
                 onClick={() => handleBillingCycleChange('monthly')}
                 className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                   billingCycle === 'monthly'
-                    ? 'bg-primary text-white'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-[var(--t2)] hover:text-[var(--t)]'
                 }`}
               >
                 Monthly
@@ -232,12 +232,12 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                 onClick={() => handleBillingCycleChange('yearly')}
                 className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                   billingCycle === 'yearly'
-                    ? 'bg-primary text-white'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-[var(--t2)] hover:text-[var(--t)]'
                 }`}
               >
                 Yearly
-                <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                <span className="ml-2 bg-green-500/10 text-green-500 text-xs px-2 py-1 rounded-full">
                   Save 20%
                 </span>
               </button>
@@ -262,28 +262,28 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                   </div>
                 )}
                 
-                <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105 ${
+                <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105 liquid-glass border border-[var(--bdr)] ${
                   selectedPlan === plan.id ? 'ring-2 ring-primary shadow-xl' : ''
                 }`}>
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-2xl font-bold text-slate-900">
+                        <CardTitle className="text-2xl font-bold text-[var(--t)]">
                           {plan.name}
                         </CardTitle>
-                        <p className="text-slate-600 text-sm mt-1">
+                        <p className="text-[var(--t2)] text-sm mt-1">
                           {plan.description}
                         </p>
                       </div>
                       <div className="text-right">
-                        <div className="text-3xl font-bold text-slate-900 mb-2">
+                        <div className="text-3xl font-bold text-[var(--t)] mb-2">
                           ${getDiscountedPrice(plan.price)}
-                          <span className="text-lg text-slate-600 font-normal">
+                          <span className="text-lg text-[var(--t2)] font-normal">
                             /{billingCycle === 'yearly' ? 'year' : 'month'}
                           </span>
                         </div>
                         {billingCycle === 'yearly' && (
-                          <div className="text-sm text-green-600 mb-2">
+                          <div className="text-sm text-green-500 mb-2">
                             Save ${getYearlySavings(plan.price)}/year
                           </div>
                         )}
@@ -296,15 +296,15 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                       {plan.features.map((feature, featureIndex) => (
                         <li key={featureIndex} className="flex items-start gap-3">
                           <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span className="text-slate-700">{feature}</span>
+                          <span className="text-[var(--t2)]">{feature}</span>
                         </li>
                       ))}
                     </ul>
 
                     {plan.limits && (
-                      <div className="mt-6 pt-6 border-t border-slate-200">
-                        <h4 className="font-semibold text-slate-900 mb-4">Limits</h4>
-                        <div className="space-y-2 text-sm text-slate-600">
+                      <div className="mt-6 pt-6 border-t border-[var(--bdr)]">
+                        <h4 className="font-semibold text-[var(--t)] mb-4">Limits</h4>
+                        <div className="space-y-2 text-sm text-[var(--t2)]">
                           {plan.limits.aiRequests && (
                             <div className="flex justify-between">
                               <span>AI Requests</span>
@@ -334,8 +334,8 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                     onClick={() => handlePlanSelect(plan)}
                     className={`w-full py-3 text-lg font-semibold transition-colors ${
                       selectedPlan === plan.id
-                        ? 'bg-primary text-white'
-                        : 'bg-slate-900 text-white hover:bg-slate-800'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-[var(--t)] text-[var(--bg)] hover:bg-primary/90'
                     }`}
                   >
                     {selectedPlan === plan.id ? 'Selected' : `Get Started`}
@@ -347,10 +347,10 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
 
           {/* Features Comparison */}
           <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-8 bg-white rounded-xl border border-slate-200">
+            <div className="text-center p-8 liquid-glass rounded-xl border border-[var(--bdr)]">
               <Zap className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-900 mb-2">All Plans Include</h3>
-              <ul className="space-y-3 text-left text-slate-700">
+              <h3 className="text-xl font-bold text-[var(--t)] mb-2">All Plans Include</h3>
+              <ul className="space-y-3 text-left text-[var(--t2)]">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
                   <span>Unlimited Projects</span>
@@ -374,10 +374,10 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
               </ul>
             </div>
 
-            <div className="text-center p-8 bg-white rounded-xl border border-slate-200">
-              <Shield className="w-12 h-12 text-green-600 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Enterprise Security</h3>
-              <ul className="space-y-3 text-left text-slate-700">
+            <div className="text-center p-8 liquid-glass rounded-xl border border-[var(--bdr)]">
+              <Shield className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-[var(--t)] mb-2">Enterprise Security</h3>
+              <ul className="space-y-3 text-left text-[var(--t2)]">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
                   <span>Advanced Security</span>
@@ -393,10 +393,10 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
               </ul>
             </div>
 
-            <div className="text-center p-8 bg-white rounded-xl border border-slate-200">
-              <Users className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Premium Support</h3>
-              <ul className="space-y-3 text-left text-slate-700">
+            <div className="text-center p-8 liquid-glass rounded-xl border border-[var(--bdr)]">
+              <Users className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-[var(--t)] mb-2">Premium Support</h3>
+              <ul className="space-y-3 text-left text-[var(--t2)]">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
                   <span>Priority Support</span>
@@ -414,10 +414,10 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
           </div>
 
           {/* Money Back Guarantee */}
-          <div className="mt-20 text-center p-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl">
+          <div className="mt-20 text-center p-8 liquid-glass rounded-2xl border border-[var(--bdr)]">
             <div className="max-w-2xl mx-auto">
-              <h3 className="text-2xl font-bold text-green-800 mb-4">30-Day Money Back Guarantee</h3>
-              <p className="text-green-700">
+              <h3 className="text-2xl font-bold text-[var(--t)] mb-4">30-Day Money Back Guarantee</h3>
+              <p className="text-[var(--t2)]">
                 Not satisfied with Aether? Get a full refund within 30 days, no questions asked.
               </p>
             </div>
