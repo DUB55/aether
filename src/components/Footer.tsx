@@ -1,5 +1,6 @@
 import React from 'react';
-import { Rocket, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
+import { AetherLogo } from './aether-logo';
 
 export function Footer() {
   return (
@@ -7,8 +8,8 @@ export function Footer() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
         <div className="col-span-2 space-y-6">
           <div className="flex items-center gap-2">
-            <Rocket className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-black tracking-tighter">AETHER</span>
+            <AetherLogo size={32} />
+            <span className="text-2xl font-black tracking-tighter">Aether</span>
           </div>
           <p className="text-[var(--t2)] max-w-xs">An autonomous platform for building production-ready software.</p>
           <div className="flex items-center gap-4">

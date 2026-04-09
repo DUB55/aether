@@ -36,9 +36,9 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
     onClose()
   }
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden border-none bg-transparent shadow-none">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           className="relative bg-[var(--bg)] rounded-[32px] border border-[var(--bdr)] shadow-2xl overflow-hidden"
@@ -54,8 +54,8 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
               <EmailVerification userId={user.uid} email={user.email || ''} onVerified={handleVerificationComplete} />
             ) : (
               <div className="flex flex-col items-center text-center space-y-6">
-                <div className="w-16 h-16 rounded-2xl bg-[var(--bg3)] flex items-center justify-center mb-2">
-                  <AetherLogo size={32} />
+                <div className="w-24 h-16 rounded-2xl bg-[var(--bg3)] flex items-center justify-center mb-2">
+                  <AetherLogo size={40} />
                 </div>
                 
                 <div className="space-y-2">

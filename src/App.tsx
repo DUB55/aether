@@ -1005,7 +1005,7 @@ function AppContent() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
-              className="max-w-4xl mx-auto w-full"
+              className="max-w-4xl mx-auto w-full mb-8"
             >
               <form 
                 onSubmit={handleStartProject} 
@@ -1162,7 +1162,7 @@ function AppContent() {
               <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-6">
                 <Button 
                   size="lg" 
-                  className="rounded-full px-12 py-8 text-xl font-black shadow-2xl shadow-primary/20 hover:scale-105 transition-transform"
+                  className="rounded-full px-12 py-8 text-xl font-black shadow-2xl shadow-primary/20 hover:scale-105 hover:shadow-primary/30 transition-all"
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 >
                   Get Started Free
@@ -1170,7 +1170,7 @@ function AppContent() {
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="rounded-full px-12 py-8 text-xl font-black border-2"
+                  className="rounded-full px-12 py-8 text-xl font-black border-2 hover:scale-105 hover:bg-primary/10 transition-all"
                   onClick={() => window.location.pathname = '/community'}
                 >
                   View Gallery
