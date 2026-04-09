@@ -54,7 +54,96 @@ interface PricingProps {
 }
 
 export function Pricing({ onPlanSelect, className }: PricingProps) {
-  const [config, setConfig] = useState<PricingConfig | null>(null)
+  const [config, setConfig] = useState<PricingConfig>({
+    ads: {
+      enabled: false,
+      placement: 'sidebar',
+      provider: 'google-adsense',
+      publisherId: 'ca-pub-12345678901234567890',
+      adSlot: 'aether-sidebar-ad'
+    },
+    pricing: {
+      enabled: true,
+      currency: 'USD',
+      plans: [
+        {
+          id: 'starter',
+          name: 'Starter',
+          description: 'Perfect for exploring Aether and building your first apps',
+          price: 0,
+          billingCycle: 'monthly',
+          features: [
+            'Unlimited Projects',
+            'Access to Basic AI Models',
+            'Instant Preview',
+            'Community Support',
+            'Free Deployment',
+            'Basic Templates'
+          ],
+          limits: {
+            aiRequests: 1000,
+            projects: 10,
+            storage: '1GB'
+          },
+          popular: true
+        },
+        {
+          id: 'pro',
+          name: 'Pro',
+          description: 'Advanced features for power users who want more control',
+          price: 29,
+          billingCycle: 'monthly',
+          features: [
+            'Everything in Starter',
+            'Advanced AI Models',
+            'Priority Support',
+            'Custom Domains',
+            'Advanced Analytics',
+            'Premium Templates',
+            'Agent Mode Access'
+          ],
+          limits: {
+            aiRequests: 10000,
+            projects: 100,
+            storage: '10GB'
+          },
+          popular: false
+        },
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          description: 'Maximum power and security for large-scale applications',
+          price: 99,
+          billingCycle: 'monthly',
+          features: [
+            'Everything in Pro',
+            'Dedicated AI Resources',
+            '24/7 Support',
+            'SLA Guarantees',
+            'Custom Integrations',
+            'Advanced Security',
+            'Unlimited Everything'
+          ],
+          limits: {
+            aiRequests: 999999,
+            projects: 999999,
+            storage: 'unlimited'
+          },
+          popular: false
+        }
+      ]
+    },
+    stripe: {
+      publishableKey: 'pk_test_51234567890abcdef',
+      secretKey: 'sk_test_51234567890abcdef',
+      webhookSecret: 'whsec_test_51234567890abcdef'
+    },
+    ui: {
+      showPricing: true,
+      showAds: false,
+      forceAdDisplay: false
+    }
+  })
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
 
@@ -187,14 +276,6 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
     const yearlyPrice = getDiscountedPrice(monthlyPrice)
     const savings = monthlyPrice * 12 - yearlyPrice
     return Math.round(savings)
-  }
-
-  if (!config) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    )
   }
 
   return (
