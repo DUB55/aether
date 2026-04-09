@@ -49,10 +49,10 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
     const fetchProjects = async () => {
       setLoading(true);
       try {
-        // Fetch all projects from Firestore
-        // The user requested to show ALL projects ever made
+        // Fetch projects from Firestore with a limit to prevent slow loading
         const projectsRef = collection(db, 'projects');
-        const snapshot = await getDocs(projectsRef);
+        const projectsQuery = query(projectsRef, orderBy('updatedAt', 'desc'), limit(50));
+        const snapshot = await getDocs(projectsQuery);
         
         const projectData = snapshot.docs.map(doc => {
           const data = doc.data();
@@ -76,9 +76,6 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
             createdAt: parseDate(data.createdAt),
           } as CommunityProject;
         });
-        
-        // Sort by updatedAt descending locally
-        projectData.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
         
         setProjects(projectData);
       } catch (error) {
