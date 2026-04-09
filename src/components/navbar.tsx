@@ -55,11 +55,11 @@ export function Navbar() {
         </a>
         
         <div className="hidden md:flex items-center gap-1">
-          <NavItem label="All Projects" href="#/projects" />
-          <NavItem label="Community" href="#/community" />
-          <NavItem label="Templates" href="#/templates" />
-          <NavItem label="Pricing" href="#/pricing" />
-          <NavItem label="Docs" href="#/docs" />
+          <NavItem label="All Projects" href="/projects" />
+          <NavItem label="Community" href="/community" />
+          <NavItem label="Templates" href="/templates" />
+          <NavItem label="Pricing" href="/pricing" />
+          <NavItem label="Docs" href="/docs" />
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export function Navbar() {
               <DropdownMenuSeparator className="bg-border/50" />
               <DropdownMenuItem 
                 className="rounded-xl cursor-pointer gap-3 py-2.5"
-                onClick={() => window.location.hash = '#/projects'}
+                onClick={() => window.location.pathname = '/projects'}
               >
                 <LayoutGrid className="w-4 h-4" />
                 <span>My Projects</span>
@@ -157,11 +157,11 @@ export function Navbar() {
             className="md:hidden absolute top-full left-0 right-0 p-4 bg-[var(--bg)]/95 dark:bg-[#0c0c0e]/95 backdrop-blur-2xl border-b border-border z-40 shadow-2xl"
           >
             <div className="flex flex-col gap-2">
-              <MobileNavItem label="All Projects" href="#/projects" onClick={() => setIsMobileMenuOpen(false)} />
-              <MobileNavItem label="Community" href="#/community" onClick={() => setIsMobileMenuOpen(false)} />
-              <MobileNavItem label="Templates" href="#/templates" onClick={() => setIsMobileMenuOpen(false)} />
-              <MobileNavItem label="Pricing" href="#/pricing" onClick={() => setIsMobileMenuOpen(false)} />
-              <MobileNavItem label="Docs" href="#/docs" onClick={() => setIsMobileMenuOpen(false)} />
+              <MobileNavItem label="All Projects" href="/projects" onClick={() => setIsMobileMenuOpen(false)} />
+              <MobileNavItem label="Community" href="/community" onClick={() => setIsMobileMenuOpen(false)} />
+              <MobileNavItem label="Templates" href="/templates" onClick={() => setIsMobileMenuOpen(false)} />
+              <MobileNavItem label="Pricing" href="/pricing" onClick={() => setIsMobileMenuOpen(false)} />
+              <MobileNavItem label="Docs" href="/docs" onClick={() => setIsMobileMenuOpen(false)} />
               {!user && (
                 <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border">
                   <Button 
@@ -188,12 +188,22 @@ export function Navbar() {
 }
 
 function NavItem({ label, href = "#", target }: { label: string; href?: string; target?: string }) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (target === "_blank") {
+      window.open(href, '_blank', 'noopener,noreferrer')
+    } else {
+      window.history.pushState({}, '', href)
+    }
+  }
+
   return (
     <a 
       href={href}
+      onClick={handleClick}
       target={target}
       rel={target === "_blank" ? "noopener noreferrer" : undefined}
-      className="px-4 py-1.5 rounded-full text-sm font-medium text-[var(--t2)] hover:text-[var(--t)] hover:bg-[var(--bg3)] transition-all duration-200 cursor-pointer"
+      className="px-4 py-2.5 rounded-xl text-sm font-medium text-[var(--t2)] hover:text-[var(--t)] hover:bg-[var(--bg3)] transition-all duration-200 cursor-pointer"
     >
       {label}
     </a>
@@ -201,10 +211,16 @@ function NavItem({ label, href = "#", target }: { label: string; href?: string; 
 }
 
 function MobileNavItem({ label, href = "#", onClick }: { label: string; href?: string; onClick: () => void }) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    window.history.pushState({}, '', href)
+    onClick()
+  }
+
   return (
     <a 
       href={href}
-      onClick={onClick}
+      onClick={handleClick}
       className="px-4 py-3 rounded-xl text-sm font-medium text-[var(--t2)] hover:text-[var(--t)] hover:bg-[var(--bg3)] transition-all duration-200 cursor-pointer"
     >
       {label}

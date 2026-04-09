@@ -141,16 +141,16 @@ function AppContent() {
       updatedAt: new Date().toISOString()
     }
     await saveProject(newProject)
-    window.location.hash = `#/editor/${newProject.id}`
+    window.history.pushState({}, '', `/editor/${newProject.id}`)
   }
 
   useEffect(() => {
-    // Simple hash-based routing
-    const handleHashChange = () => {
+    // Simple pathname-based routing
+    const handleRouteChange = () => {
       const searchParams = new URLSearchParams(window.location.search)
       const src = searchParams.get('src')
       const mode = searchParams.get('mode')
-      const hash = window.location.hash
+      const pathname = window.location.pathname
       
       if (src) {
         setActiveProjectId('shared-url')
@@ -159,55 +159,43 @@ function AppContent() {
         return
       }
 
-      if (hash.startsWith('#/editor/')) {
-        setActiveProjectId(hash.replace('#/editor/', ''))
+      if (pathname.startsWith('/editor/')) {
+        setActiveProjectId(pathname.replace('/editor/', ''))
         setCurrentRoute('editor')
         setIsSharedView(false)
-      } else if (hash.startsWith('#/shared/')) {
-        setActiveProjectId(hash.replace('#/shared/', ''))
+      } else if (pathname.startsWith('/shared/')) {
+        setActiveProjectId(pathname.replace('/shared/', ''))
         setCurrentRoute('shared')
         setIsSharedView(true)
-      } else if (hash === '#/docs') {
+      } else if (pathname === '/docs') {
         setCurrentRoute('docs')
         setActiveProjectId(null)
-      } else if (hash === '#/community') {
+      } else if (pathname === '/community') {
         setCurrentRoute('community')
         setActiveProjectId(null)
-      } else if (hash === '#/changelog') {
+      } else if (pathname === '/changelog') {
         setCurrentRoute('changelog')
         setActiveProjectId(null)
-      } else if (hash === '#/projects') {
+      } else if (pathname === '/projects') {
         setCurrentRoute('projects')
         setActiveProjectId(null)
-      } else if (hash === '#/templates') {
+      } else if (pathname === '/templates') {
         setCurrentRoute('templates')
         setActiveProjectId(null)
-      } else if (hash === '#/marketplace') {
+      } else if (pathname === '/marketplace') {
         setCurrentRoute('marketplace')
         setActiveProjectId(null)
-      } else if (hash === '#/pricing') {
+      } else if (pathname === '/pricing') {
         setCurrentRoute('pricing')
         setActiveProjectId(null)
-      } else if (hash === '#/ads') {
+      } else if (pathname === '/ads') {
         setCurrentRoute('ads')
         setActiveProjectId(null)
       } else if (currentRoute === 'pricing') {
         setCurrentRoute('pricing')
         setActiveProjectId(null)
-      } else if (hash === '#/ads') {
+      } else if (pathname === '/ads') {
         setCurrentRoute('ads')
-        setActiveProjectId(null)
-      } else if (currentRoute === 'ads') {
-        setCurrentRoute('ads')
-        setActiveProjectId(null)
-      } else if (hash === '#/privacy-policy') {
-        setCurrentRoute('ads')
-        setActiveProjectId(null)
-      } else if (hash === '#/privacy-policy') {
-        setCurrentRoute('privacy-policy')
-        setActiveProjectId(null)
-      } else if (hash === '#/terms-of-service') {
-        setCurrentRoute('terms-of-service')
         setActiveProjectId(null)
       } else {
         setActiveProjectId(null)
@@ -215,13 +203,17 @@ function AppContent() {
       }
     }
 
-      window.addEventListener('hashchange', handleHashChange)
-      handleHashChange()
-      return () => {
-        window.removeEventListener('hashchange', handleHashChange)
-        setActiveDoc(null)
-      }
-    }, [])
+    // Initial check
+    handleRouteChange()
+
+    // Listen for popstate events (back/forward navigation)
+    window.addEventListener('popstate', handleRouteChange)
+
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange)
+      setActiveDoc(null)
+    }
+  }, [])
 
   const handleGradientChange = (theme: typeof gradientTheme) => {
     setGradientTheme(theme)
@@ -242,6 +234,45 @@ function AppContent() {
 
     setBusy(true)
     const id = Math.random().toString(36).substring(7)
+    
+    // Check if user is asking for images and auto-generate
+    const containsImageKeywords = /\b(image|picture|photo|pic|visual|art|graphic|illustration|design|draw|paint|create.*image|generate.*image|make.*image)\b/i.test(trimmed)
+    
+    let messages = [{ role: "user", content: trimmed }]
+    
+    if (containsImageKeywords) {
+      // Auto-generate an image based on the prompt
+      try {
+        const imagePrompt = trimmed.length > 100 ? trimmed.substring(0, 100) : trimmed
+        const response = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt: imagePrompt,
+            size: '1024x1024',
+            quality: 'standard'
+          })
+        })
+        
+        if (response.ok) {
+          const imageResult = await response.json()
+          if (imageResult.imageUrl) {
+            messages.push({
+              role: "assistant", 
+              content: `I've generated an image based on your request: ${imagePrompt}`,
+              image: imageResult.imageUrl
+            })
+            toast.success("Image generated automatically!")
+          }
+        }
+      } catch (error) {
+        console.error("Auto image generation failed:", error)
+        // Continue without image if generation fails
+      }
+    }
+    
     const newProject: Project = {
       id,
       name: "New Project",
@@ -253,13 +284,13 @@ function AppContent() {
       files: {
         'index.html': ''
       },
-      messages: [{ role: "user", content: trimmed }]
+      messages
     }
     
     try {
       await saveProject(newProject)
       toast.success("Project created!")
-      window.location.hash = `#/editor/${id}`
+      window.history.pushState({}, '', `/editor/${id}`)
       setInput("")
     } catch (error) {
       console.error("Project creation error:", error)
@@ -314,7 +345,7 @@ function AppContent() {
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
         <Editor 
           projectId={activeProjectId!} 
-          onBack={() => window.location.hash = isSharedView ? '' : '#/projects'} 
+          onBack={() => window.history.pushState({}, '', isSharedView ? '/' : '/projects')} 
           isSharedView={isSharedView}
         />
         <Toaster position="bottom-center" richColors />
@@ -649,7 +680,7 @@ function AppContent() {
                         size="lg" 
                         className="w-full sm:w-auto rounded-2xl px-8 font-bold"
                         onClick={() => {
-                          window.location.hash = ''
+                          window.history.pushState({}, '', '/')
                           setActiveDoc(null)
                         }}
                       >
@@ -691,7 +722,7 @@ function AppContent() {
                       animate={{ opacity: 1, y: 0 }}
                       whileHover={{ y: -5 }}
                       className="group relative bento-card border border-slate-200/50 dark:border-white/5 hover:border-primary/30 transition-all duration-500 cursor-pointer"
-                      onClick={() => window.location.hash = `#/editor/${p.id}`}
+                      onClick={() => window.history.pushState({}, '', `/editor/${p.id}`)}
                     >
                       <div className="aspect-video bg-muted relative overflow-hidden">
                         <ProjectPreview project={p} />
@@ -710,7 +741,7 @@ function AppContent() {
                                 className="rounded-xl cursor-pointer focus:bg-[var(--bg3)]"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  window.location.hash = `#/editor/${p.id}`
+                                  window.location.pathname = `/editor/${p.id}`
                                 }}
                               >
                                 <Code2 className="w-4 h-4 mr-2" />
@@ -753,7 +784,7 @@ function AppContent() {
                       <Button 
                         size="lg"
                         className="rounded-full px-8 font-bold"
-                        onClick={() => window.location.hash = ''}
+                        onClick={() => window.history.pushState({}, '', '/')}
                       >
                         Create New Project
                       </Button>
@@ -915,7 +946,7 @@ function AppContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 dark:bg-white/5 text-primary dark:text-primary/80 text-[13px] font-bold border border-primary/10 dark:border-white/10 cursor-pointer hover:bg-primary/10 dark:hover:bg-white/10 transition-all group"
-                onClick={() => window.location.hash = '#/changelog'}
+                onClick={() => window.history.pushState({}, '', '/changelog')}
               >
                 <span>Aether v2.0 is now live</span>
                 <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-1 transition-transform" />
@@ -967,43 +998,23 @@ function AppContent() {
                         }
                       }}
                     />
-                    <div className="flex items-center justify-between pt-2 border-t border-[var(--bdr)] dark:border-white/5">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowImageGenerator(true)}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--bg3)] dark:bg-white/5 text-sm font-medium text-[var(--t)] hover:bg-[var(--bg2)] dark:hover:bg-white/10 transition-all cursor-pointer border border-[var(--bdr)] dark:border-white/5"
-                        >
-                          <ImageIcon className="w-4 h-4" />
-                          Generate Image
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowAgentMode(true)}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 dark:from-blue-500/10 dark:to-purple-500/10 text-sm font-medium text-blue-600 dark:text-blue-400 hover:from-blue-500/30 hover:to-purple-500/30 dark:hover:from-blue-500/20 dark:hover:to-purple-500/20 transition-all cursor-pointer border border-blue-500/30 dark:border-blue-500/20"
-                          disabled={!input.trim() || busy}
-                        >
-                          <Brain className="w-4 h-4" />
-                          Agent Mode
-                        </button>
-                        
-                        <button 
-                          type="submit" 
-                          disabled={!input.trim() || busy}
-                          className={cn(
-                            "flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-500 shadow-xl cursor-pointer",
-                            input.trim() && !busy 
-                              ? "bg-primary text-primary-foreground hover:scale-[1.02] hover:shadow-primary/25" 
-                              : "bg-[var(--bg3)] text-[var(--t3)] opacity-50 cursor-not-allowed"
-                          )}
-                        >
-                          {busy ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <ArrowUp className="w-6 h-6" />
-                          )}
-                        </button>
-                      </div>
+                    <div className="relative">
+                      <button 
+                        type="submit" 
+                        disabled={!input.trim() || busy}
+                        className={cn(
+                          "absolute right-2 bottom-2 flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-500 shadow-xl cursor-pointer",
+                          input.trim() && !busy 
+                            ? "bg-primary text-primary-foreground hover:scale-[1.02] hover:shadow-primary/25" 
+                            : "bg-[var(--bg3)] text-[var(--t3)] opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        {busy ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <ArrowUp className="w-6 h-6" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1021,7 +1032,7 @@ function AppContent() {
                   <p className="text-sm font-medium text-[var(--t3)]">Pick up where you left off</p>
                 </div>
                 <button 
-                  onClick={() => window.location.hash = '#/projects'}
+                  onClick={() => window.history.pushState({}, '', '/projects')}
                   className="px-6 py-2.5 rounded-2xl bg-[var(--bg3)] dark:bg-white/5 text-sm font-bold text-[var(--t)] hover:bg-[var(--bg2)] dark:hover:bg-white/10 transition-all cursor-pointer border border-[var(--bdr)] dark:border-white/5"
                 >
                   View All Projects
@@ -1034,7 +1045,7 @@ function AppContent() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 * idx }}
-                    onClick={() => window.location.hash = `#/editor/${p.id}`}
+                    onClick={() => window.history.pushState({}, '', `/editor/${p.id}`)}
                     className="group relative p-8 liquid-glass rounded-[40px] border border-[var(--bdr)] dark:border-white/5 cursor-pointer overflow-hidden flex flex-col justify-between h-48 hover:border-primary/30 transition-all"
                   >
                     <div className="space-y-4">
@@ -1132,7 +1143,7 @@ function AppContent() {
                   variant="outline" 
                   size="lg" 
                   className="rounded-full px-12 py-8 text-xl font-black border-2"
-                  onClick={() => window.location.hash = '#/community'}
+                  onClick={() => window.location.pathname = '/community'}
                 >
                   View Gallery
                 </Button>
@@ -1157,19 +1168,19 @@ function AppContent() {
               <div className="space-y-6">
                 <h4 className="font-black uppercase tracking-widest text-xs text-[var(--t3)]">Product</h4>
                 <ul className="space-y-4 text-sm font-bold text-[var(--t2)]">
-                  <li><a href="#/projects" className="hover:text-primary transition-colors">All Projects</a></li>
-                  <li><a href="#/templates" className="hover:text-primary transition-colors">Templates</a></li>
-                  <li><a href="#/community" className="hover:text-primary transition-colors">Community</a></li>
-                  <li><a href="#/pricing" className="hover:text-primary transition-colors">Pricing</a></li>
+                  <li><a href="/projects" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/projects') }} className="hover:text-primary transition-colors cursor-pointer">All Projects</a></li>
+                  <li><a href="/templates" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/templates') }} className="hover:text-primary transition-colors cursor-pointer">Templates</a></li>
+                  <li><a href="/community" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/community') }} className="hover:text-primary transition-colors cursor-pointer">Community</a></li>
+                  <li><a href="/pricing" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/pricing') }} className="hover:text-primary transition-colors cursor-pointer">Pricing</a></li>
                 </ul>
               </div>
               <div className="space-y-6">
                 <h4 className="font-black uppercase tracking-widest text-xs text-[var(--t3)]">Resources</h4>
                 <ul className="space-y-4 text-sm font-bold text-[var(--t2)]">
-                  <li><a href="#/docs" className="hover:text-primary transition-colors">Documentation</a></li>
-                  <li><a href="#/changelog" className="hover:text-primary transition-colors">Changelog</a></li>
-                  <li><a href="https://github.com/DUB55/aether" target="_blank" className="hover:text-primary transition-colors">GitHub</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
+                  <li><a href="/docs" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/docs') }} className="hover:text-primary transition-colors cursor-pointer">Documentation</a></li>
+                  <li><a href="/changelog" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/changelog') }} className="hover:text-primary transition-colors cursor-pointer">Changelog</a></li>
+                  <li><a href="https://github.com/DUB55/aether" target="_blank" className="hover:text-primary transition-colors cursor-pointer">GitHub</a></li>
+                  <li><a href="#" className="hover:text-primary transition-colors cursor-pointer">Privacy Policy</a></li>
                 </ul>
               </div>
             </div>
@@ -1218,6 +1229,20 @@ function AppContent() {
                 </div>
               </motion.div>
             </div>
+          )}
+        </AnimatePresence>
+
+        {/* Agent Mode Dialog */}
+        <AnimatePresence>
+          {showAgentMode && (
+            <AgentMode 
+              isOpen={showAgentMode}
+              onClose={() => setShowAgentMode(false)}
+              onProjectComplete={(project) => {
+                // Handle agent mode completion
+                console.log('Agent project completed:', project)
+              }}
+            />
           )}
         </AnimatePresence>
 

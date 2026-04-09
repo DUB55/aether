@@ -20,7 +20,11 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
   // Close modal when user successfully authenticates
   useEffect(() => {
     if (user && open) {
-      onClose()
+      // Add a small delay to ensure the modal doesn't close immediately
+      const timer = setTimeout(() => {
+        onClose()
+      }, 500)
+      return () => clearTimeout(timer)
     }
   }, [user, open, onClose])
   return (
