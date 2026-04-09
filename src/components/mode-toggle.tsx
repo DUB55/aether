@@ -25,7 +25,7 @@ export function ModeToggle() {
       <Button
         variant="ghost"
         size="icon"
-        className="rounded-full w-9 h-9"
+        className="rounded-full w-9 h-9 text-foreground"
         disabled
       >
         <Sun className="h-[1.2rem] w-[1.2rem]" />
@@ -38,12 +38,12 @@ export function ModeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      className="rounded-full w-9 h-9"
+      className="rounded-full w-9 h-9 text-foreground"
       onClick={toggleTheme}
     >
       {(!theme || theme === "light") && <Sun className="h-[1.2rem] w-[1.2rem]" />}
       {theme === "dark" && <Moon className="h-[1.2rem] w-[1.2rem]" />}
-      {theme === "black" && <Zap className="h-[1.2rem] w-[1.2rem] text-white" />}
+      {theme === "black" && <Zap className="h-[1.2rem] w-[1.2rem]" />}
       <span className="sr-only">Toggle theme</span>
     </Button>
   )

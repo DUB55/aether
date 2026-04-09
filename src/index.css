@@ -495,7 +495,11 @@
 }
 
 .composer-box:focus-within {
-  background: var(--bg2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+  background-size: 200% 200%;
+  animation: gradient-x 5s ease infinite;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .pinput {
