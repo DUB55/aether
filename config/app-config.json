@@ -1,0 +1,24 @@
+{
+  "ads": {
+    "enabled": false,
+    "placement": "sidebar",
+    "provider": "google-adsense",
+    "publisherId": "ca-pub-12345678901234567890",
+    "adSlot": "aether-sidebar-ad"
+  },
+  "pricing": {
+    "enabled": true,
+    "stripeTestMode": true,
+    "currency": "USD"
+  },
+  "features": {
+    "aiImageGeneration": true,
+    "agentMode": true,
+    "webBrowsing": false,
+    "deepResearch": false,
+    "visualEdit": false,
+    "multiScreenPreview": false,
+    "reasoningMode": false,
+    "planMode": false
+  }
+}

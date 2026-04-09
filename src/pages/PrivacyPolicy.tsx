@@ -98,6 +98,13 @@ export default function PrivacyPolicy() {
               If you have questions about this Privacy Policy or our data practices, please contact us at privacy@aether.dev
             </p>
           </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-[var(--t)] mb-4">License</h2>
+            <p className="leading-relaxed">
+              Aether is open source software licensed under the MIT License. You are free to use, modify, and distribute this software in accordance with the MIT License terms.
+            </p>
+          </section>
         </div>
       </div>
       <Footer />

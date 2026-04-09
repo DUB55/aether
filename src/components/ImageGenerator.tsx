@@ -30,14 +30,21 @@ export function ImageGenerator({ onImageSelect, className }: ImageGeneratorProps
     }
 
     try {
-      // Using a mock image generation service for now
-      // In production, this would integrate with services like DALL-E, Midjourney, or Stable Diffusion
-      const response = await fetch('https://picsum.photos/512/512', {
-        method: 'GET',
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          size: '1024x1024',
+          quality: 'standard'
+        })
       })
       
       if (response.ok) {
-        const imageUrl = response.url
+        const data = await response.json()
+        const imageUrl = data.imageUrl
         const newImage: GeneratedImage = {
           url: imageUrl,
           prompt: prompt,

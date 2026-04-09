@@ -128,6 +128,13 @@ export default function TermsOfService() {
               If you have questions about these Terms, please contact us at legal@aether.dev
             </p>
           </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-[var(--t)] mb-4">12. License</h2>
+            <p className="leading-relaxed">
+              Aether is open source software licensed under the MIT License. You are free to use, modify, and distribute this software in accordance with the MIT License terms.
+            </p>
+          </section>
         </div>
       </div>
       <Footer />

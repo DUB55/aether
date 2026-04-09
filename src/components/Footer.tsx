@@ -37,7 +37,10 @@ export function Footer() {
         </div>
       </div>
       <div className="mt-24 pt-12 border-t border-[var(--bdr)] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
-        <p className="text-sm font-bold text-[var(--t3)]">© 2026 DUB5. All rights reserved.</p>
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-bold text-[var(--t3)]">© 2026 DUB5. All rights reserved.</p>
+          <p className="text-xs font-bold text-[var(--t3)]">Licensed under MIT License. Open source and free to use.</p>
+        </div>
         <div className="flex items-center gap-8 text-sm font-bold text-[var(--t3)]">
           <a href="https://twitter.com/aether" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--t)] transition-colors">Twitter</a>
           <a href="https://discord.gg/aether" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--t)] transition-colors">Discord</a>
