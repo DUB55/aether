@@ -5,6 +5,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, qu
 const firebaseConfig = {
   apiKey: process.env.VITE_FIREBASE_API_KEY || 'AIzaSyC8xWbyNYkBSSGadvydOBK6zctkidxkpSI',
   authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || 'aether-89251.firebaseapp.com',
+  databaseURL: process.env.VITE_FIREBASE_DATABASE_URL || 'https://aether-89251-default-rtdb.europe-west1.firebasedatabase.app',
   projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'aether-89251',
   appId: process.env.VITE_FIREBASE_APP_ID || '1:335186915642:web:6542c45e0278a844aa2003',
   measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-V5KFXSC1KJ',

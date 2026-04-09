@@ -3,6 +3,7 @@
   "appId": "1:335186915642:web:6542c45e0278a844aa2003",
   "apiKey": "AIzaSyC8xWbyNYkBSSGadvydOBK6zctkidxkpSI",
   "authDomain": "aether-89251.firebaseapp.com",
+  "databaseURL": "https://aether-89251-default-rtdb.europe-west1.firebasedatabase.app",
   "firestoreDatabaseId": "aether-89251-default-rtdb",
   "storageBucket": "aether-89251.firebasestorage.app",
   "messagingSenderId": "335186915642",
