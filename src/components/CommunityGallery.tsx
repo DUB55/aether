@@ -5,7 +5,6 @@ import {
   Users, 
   Share2, 
   ExternalLink, 
-  Loader2,
   Rocket,
   Copy,
   Check,
@@ -28,7 +27,6 @@ interface CommunityProject extends Project {
 export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
   const { saveProject } = useFirebase();
   const [projects, setProjects] = useState<CommunityProject[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'trending' | 'recent'>('all');
   const [shareProject, setShareProject] = useState<CommunityProject | null>(null);
@@ -44,7 +42,6 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      setLoading(true);
       try {
         // Fetch projects from GitHub registry
         const { REPO, PATH, BRANCH } = CONFIG.GITHUB_REGISTRY;
@@ -76,8 +73,6 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
         console.error('Error fetching community projects:', error);
         toast.error('Failed to load community gallery');
         setProjects([]);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -162,12 +157,7 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-32 gap-4">
-          <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          <p className="text-[var(--t3)] font-medium">Loading community projects...</p>
-        </div>
-      ) : filteredProjects.length > 0 ? (
+      {filteredProjects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProjects.map((project, idx) => (
             <motion.div

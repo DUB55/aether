@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { TEMPLATES, type Template } from '@/lib/templates';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ExternalLink, Heart, Loader2, Layout } from 'lucide-react';
+import { ArrowRight, ExternalLink, Heart, Layout } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFirebase } from './FirebaseProvider';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
@@ -266,7 +266,6 @@ function TemplatePreview({ template }: { template: Template }) {
         className="w-[1200px] h-[800px] border-none origin-top-left scale-[0.25] md:scale-[0.3] lg:scale-[0.28]"
         title={template.name}
         sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
       />
       <div className="absolute inset-0 bg-transparent" />
     </div>

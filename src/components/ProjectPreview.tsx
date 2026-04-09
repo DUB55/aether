@@ -123,7 +123,6 @@ export function ProjectPreview({ project }: { project: Project }) {
         className="w-[1200px] h-[800px] border-none origin-top-left scale-[0.25] md:scale-[0.3] lg:scale-[0.28]"
         title={project.name}
         sandbox="allow-scripts"
-        loading="lazy"
       />
       <div className="absolute inset-0 bg-transparent" />
     </div>

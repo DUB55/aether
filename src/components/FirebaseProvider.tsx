@@ -7,7 +7,6 @@ import { deleteProjectFromGithubRegistry, addProjectToGithubRegistry } from '@/l
 
 interface FirebaseContextType {
   user: FirebaseUser | null;
-  loading: boolean;
   signIn: () => Promise<void>;
   logout: () => Promise<void>;
   isAuthReady: boolean;
@@ -24,7 +23,6 @@ const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined
 
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -33,7 +31,6 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       setIsAuthReady(true);
-      setLoading(false);
 
       if (firebaseUser) {
         // Sync user profile
@@ -211,7 +208,6 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   return (
     <FirebaseContext.Provider value={{ 
       user, 
-      loading, 
       signIn, 
       logout, 
       isAuthReady, 

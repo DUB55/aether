@@ -8,7 +8,6 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { 
   Brain, 
-  Loader2, 
   CheckCircle2, 
   Clock, 
   Zap, 
@@ -563,7 +562,6 @@ export function AgentMode({ isOpen, onClose, onProjectComplete }: AgentModeProps
                   {currentStep && (
                     <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                       <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
                         <span className="font-medium">Current: {currentStep}</span>
                       </div>
                     </div>
@@ -579,7 +577,6 @@ export function AgentMode({ isOpen, onClose, onProjectComplete }: AgentModeProps
                           <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2">
                               {phase.status === 'completed' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-                              {phase.status === 'in_progress' && <Loader2 className="w-4 h-4 animate-spin" />}
                               {phase.status === 'pending' && <AlertCircle className="w-4 h-4 text-muted-foreground" />}
                               {phase.name}
                             </CardTitle>
@@ -597,7 +594,6 @@ export function AgentMode({ isOpen, onClose, onProjectComplete }: AgentModeProps
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {task.status === 'completed' && <CheckCircle2 className="w-3 h-3 text-green-500" />}
-                                  {task.status === 'in_progress' && <Loader2 className="w-3 h-3 animate-spin" />}
                                   <span className="text-xs text-muted-foreground w-8">{task.progress}%</span>
                                 </div>
                               </div>

@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Download, Wand2, Image as ImageIcon } from 'lucide-react'
+import { Download, Wand2, Image as ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface GeneratedImage {
@@ -20,7 +20,6 @@ interface ImageGeneratorProps {
 
 export function ImageGenerator({ onImageSelect, className }: ImageGeneratorProps) {
   const [prompt, setPrompt] = useState('')
-  const [loading, setLoading] = useState(false)
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([])
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
@@ -30,7 +29,6 @@ export function ImageGenerator({ onImageSelect, className }: ImageGeneratorProps
       return
     }
 
-    setLoading(true)
     try {
       // Using a mock image generation service for now
       // In production, this would integrate with services like DALL-E, Midjourney, or Stable Diffusion
@@ -54,8 +52,6 @@ export function ImageGenerator({ onImageSelect, className }: ImageGeneratorProps
     } catch (error) {
       console.error('Image generation error:', error)
       toast.error('Failed to generate image. Please try again.')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -99,19 +95,15 @@ export function ImageGenerator({ onImageSelect, className }: ImageGeneratorProps
             placeholder="Describe the image you want to generate..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !loading && generateImage()}
+            onKeyPress={(e) => e.key === 'Enter' && generateImage()}
             className="flex-1"
           />
           <Button 
             onClick={generateImage} 
-            disabled={loading || !prompt.trim()}
+            disabled={!prompt.trim()}
             size="sm"
           >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ImageIcon className="h-4 w-4" />
-            )}
+            <ImageIcon className="h-4 w-4" />
             Generate
           </Button>
         </div>

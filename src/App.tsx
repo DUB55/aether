@@ -74,7 +74,7 @@ export default function App() {
 }
 
 function AppContent() {
-  const { user, loading, signIn, logout, projects: allProjects, saveProject, deleteProject } = useFirebase()
+  const { user, signIn, logout, projects: allProjects, saveProject, deleteProject } = useFirebase()
 
   useEffect(() => {
     // Suppress WebSocket/Vite errors that are expected in sandboxed environments
@@ -330,31 +330,6 @@ function AppContent() {
       setIsDeleting(false)
       setProjectToDelete(null)
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center gap-6">
-        <div className="flex gap-1.5">
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              animate={{ 
-                scale: [1, 1.5, 1],
-                opacity: [0.3, 1, 0.3] 
-              }}
-              transition={{ 
-                duration: 1, 
-                repeat: Infinity, 
-                delay: i * 0.2,
-                ease: "easeInOut" 
-              }}
-              className="w-2.5 h-2.5 bg-[var(--t)] rounded-full"
-            />
-          ))}
-        </div>
-      </div>
-    )
   }
 
   if (activeProjectId || currentRoute === 'shared') {

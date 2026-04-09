@@ -15,7 +15,6 @@ import {
   Type,
   Check,
   ChevronRight,
-  Loader2,
   AlertTriangle,
   Code2,
   ExternalLink,
@@ -400,11 +399,7 @@ export function SettingsDialog({
                               disabled={isExporting}
                               className="w-full bg-white text-black rounded-xl md:rounded-2xl py-3 md:py-4 font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 text-xs md:text-sm"
                             >
-                              {isExporting ? (
-                                <><Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> Exporting...</>
-                              ) : (
-                                <><Github className="w-4 h-4 md:w-5 md:h-5" /> Export to GitHub</>
-                              )}
+                              <Github className="w-4 h-4 md:w-5 md:h-5" /> Export to GitHub
                             </button>
 
                             {exportedUrl && (
