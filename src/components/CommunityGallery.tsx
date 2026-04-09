@@ -20,9 +20,6 @@ import { toast } from 'sonner';
 import { type Project } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-import { collection, getDocs, query, orderBy, limit, Timestamp } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
-
 interface CommunityProject extends Project {
   authorName?: string;
   authorPhoto?: string;
@@ -49,38 +46,36 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
     const fetchProjects = async () => {
       setLoading(true);
       try {
-        // Fetch projects from Firestore with a limit to prevent slow loading
-        const projectsRef = collection(db, 'projects');
-        const projectsQuery = query(projectsRef, orderBy('updatedAt', 'desc'), limit(50));
-        const snapshot = await getDocs(projectsQuery);
+        // Fetch projects from GitHub registry
+        const { REPO, PATH, BRANCH } = CONFIG.GITHUB_REGISTRY;
+        const [owner, repo] = REPO.split('/');
         
-        const projectData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          
-          // Robust date handling for different formats
-          const parseDate = (val: any) => {
-            if (val instanceof Timestamp) return val.toDate().toISOString();
-            if (val?.seconds) return new Timestamp(val.seconds, val.nanoseconds).toDate().toISOString();
-            if (typeof val === 'string') return val;
-            if (typeof val === 'number') return new Date(val).toISOString();
-            return new Date().toISOString();
-          };
-
-          return {
-            ...data,
-            id: doc.id,
-            name: data.name || 'Untitled Project',
-            authorName: data.authorName || 'Anonymous',
-            authorPhoto: data.authorPhoto || 'AETHER_LOGO_COMPONENT',
-            updatedAt: parseDate(data.updatedAt),
-            createdAt: parseDate(data.createdAt),
-          } as CommunityProject;
+        const contentRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${PATH}?ref=${BRANCH}`, {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json'
+          }
         });
-        
-        setProjects(projectData);
+
+        if (contentRes.ok) {
+          const contentData = await contentRes.json();
+          const projectData = JSON.parse(atob(contentData.content));
+          
+          // Sort by updatedAt descending and limit to 50
+          const sortedProjects = projectData
+            .sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+            .slice(0, 50);
+          
+          setProjects(sortedProjects);
+        } else if (contentRes.status === 404) {
+          // Registry file doesn't exist yet
+          setProjects([]);
+        } else {
+          throw new Error(`Failed to fetch registry: ${contentRes.statusText}`);
+        }
       } catch (error) {
         console.error('Error fetching community projects:', error);
         toast.error('Failed to load community gallery');
+        setProjects([]);
       } finally {
         setLoading(false);
       }
