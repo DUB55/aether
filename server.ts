@@ -1,5 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
+import { createServer as createHttpServer } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import path from "path";
 import { fileURLToPath } from "url";
 import { GeminiService } from "./server/gemini-service";
@@ -18,6 +20,98 @@ async function startServer() {
   const app = express();
   const PORT = process.argv.includes('--port') ? 
     parseInt(process.argv[process.argv.indexOf('--port') + 1]) : 3000;
+
+  // Create HTTP server
+  const server = createHttpServer(app);
+
+  // WebSocket server for real-time collaboration
+  const wss = new WebSocketServer({ server, path: '/collab' });
+
+  // Store active connections per project
+  const projectConnections = new Map<string, Set<WebSocket>>();
+  const userConnections = new Map<WebSocket, { projectId: string; userId: string }>();
+
+  wss.on('connection', (ws: WebSocket, req) => {
+    const url = new URL(req.url || '', `http://${req.headers.host}`);
+    const projectId = url.pathname.split('/')[2];
+    const userId = url.searchParams.get('userId');
+
+    if (!projectId || !userId) {
+      ws.close();
+      return;
+    }
+
+    console.log(`[WebSocket] User ${userId} connected to project ${projectId}`);
+
+    // Store connection
+    if (!projectConnections.has(projectId)) {
+      projectConnections.set(projectId, new Set());
+    }
+    projectConnections.get(projectId)!.add(ws);
+    userConnections.set(ws, { projectId, userId });
+
+    // Notify other users
+    broadcastToProject(projectId, ws, {
+      type: 'user_join',
+      userId,
+      projectId,
+      data: { userId, name: `User ${userId.substring(0, 8)}`, color: getRandomColor() },
+      timestamp: Date.now()
+    });
+
+    ws.on('message', (data: string) => {
+      try {
+        const message = JSON.parse(data);
+        // Broadcast to all other users in the project
+        broadcastToProject(projectId, ws, message);
+      } catch (error) {
+        console.error('[WebSocket] Error parsing message:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log(`[WebSocket] User ${userId} disconnected from project ${projectId}`);
+      
+      // Remove from project connections
+      const connections = projectConnections.get(projectId);
+      if (connections) {
+        connections.delete(ws);
+        if (connections.size === 0) {
+          projectConnections.delete(projectId);
+        }
+      }
+      userConnections.delete(ws);
+
+      // Notify other users
+      broadcastToProject(projectId, ws, {
+        type: 'user_leave',
+        userId,
+        projectId,
+        data: {},
+        timestamp: Date.now()
+      });
+    });
+
+    ws.on('error', (error) => {
+      console.error('[WebSocket] Error:', error);
+    });
+  });
+
+  function broadcastToProject(projectId: string, excludeWs: WebSocket, message: any) {
+    const connections = projectConnections.get(projectId);
+    if (connections) {
+      connections.forEach((ws) => {
+        if (ws !== excludeWs && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(message));
+        }
+      });
+    }
+  }
+
+  function getRandomColor() {
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
 
   // WebContainer Security Headers
   app.use((req, res, next) => {
@@ -157,8 +251,9 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`WebSocket server running on ws://localhost:${PORT}/collab`);
   });
 }
 

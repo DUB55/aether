@@ -67,6 +67,7 @@ import { useTheme } from 'next-themes'
 import { AgentMode } from '@/components/AgentMode'
 import { Pricing } from '@/components/Pricing'
 import { Ads } from '@/components/Ads'
+import { UserManagementDashboard } from '@/components/UserManagementDashboard'
 
 export default function App() {
   return (
@@ -203,6 +204,9 @@ function AppContent() {
         setActiveProjectId(null)
       } else if (pathname === '/ads') {
         setCurrentRoute('ads')
+        setActiveProjectId(null)
+      } else if (pathname === '/admin') {
+        setCurrentRoute('admin')
         setActiveProjectId(null)
       } else if (pathname === '/privacy-policy' || pathname === '/privacy') {
         setCurrentRoute('privacy-policy')
@@ -366,6 +370,27 @@ function AppContent() {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
         <TermsOfService />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'admin') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
+        <div className={cn(
+          "relative min-h-screen bg-background text-foreground selection:bg-primary/30 flex flex-col",
+          CONFIG.USE_LIQUID_DESIGN && "liquid-glass"
+        )}>
+          <Navbar />
+          <motion.main
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20 flex-1"
+          >
+            <UserManagementDashboard />
+          </motion.main>
+          <Footer />
+        </div>
       </ThemeProvider>
     )
   }

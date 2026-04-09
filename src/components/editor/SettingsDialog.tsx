@@ -18,13 +18,29 @@ import {
   AlertTriangle,
   Code2,
   ExternalLink,
-  Users
+  Users,
+  FolderTree,
+  History,
+  BarChart3,
+  Rocket,
+  Globe,
+  Key,
+  Lock
 } from 'lucide-react'
 import { exportProjectToGithub } from '@/lib/github-registry'
 import { useFirebase } from '../FirebaseProvider'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { type Project } from '@/types'
+import { WorkspaceManager } from '../WorkspaceManager'
+import { SecurityAudit } from '../SecurityAudit'
+import { VersionHistory } from '../VersionHistory'
+import { AnalyticsDashboard } from '../AnalyticsDashboard'
+import { HostingDeployment } from '../HostingDeployment'
+import { CustomDomains } from '../CustomDomains'
+import { SSOConfig } from '../SSOConfig'
+import { TwoFactorAuth } from '../TwoFactorAuth'
+import { ProjectVisibilityToggle } from '../ProjectVisibilityToggle'
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -35,7 +51,7 @@ interface SettingsDialogProps {
   onDelete: () => Promise<void>;
 }
 
-type SettingsTab = 'general' | 'ai' | 'editor' | 'accessibility' | 'advanced' | 'github' | 'collaboration';
+type SettingsTab = 'general' | 'ai' | 'editor' | 'accessibility' | 'advanced' | 'github' | 'collaboration' | 'workspace' | 'security' | 'version' | 'analytics' | 'hosting' | 'domains' | 'sso' | 'account';
 
 export function SettingsDialog({ 
   isOpen, 
@@ -64,9 +80,17 @@ export function SettingsDialog({
     { id: 'general', label: 'General', icon: Settings },
     { id: 'ai', label: 'AI Engine', icon: Brain },
     { id: 'collaboration', label: 'Collaboration', icon: Users },
+    { id: 'workspace', label: 'Workspace', icon: FolderTree },
     { id: 'github', label: 'GitHub Sync', icon: Github },
     { id: 'editor', label: 'Editor', icon: Layout },
     { id: 'accessibility', label: 'Accessibility', icon: Accessibility },
+    { id: 'security', label: 'Security', icon: Shield },
+    { id: 'version', label: 'Version History', icon: History },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'hosting', label: 'Hosting', icon: Rocket },
+    { id: 'domains', label: 'Domains', icon: Globe },
+    { id: 'sso', label: 'SSO', icon: Key },
+    { id: 'account', label: 'Account', icon: Lock },
     { id: 'advanced', label: 'Advanced', icon: Shield },
   ] as const;
 
@@ -500,6 +524,76 @@ export function SettingsDialog({
                               </div>
                             )}
                           </div>
+                        </section>
+                      </div>
+                    )}
+
+                    {activeTab === 'workspace' && (
+                      <div className="space-y-6">
+                        <WorkspaceManager currentUserId={user?.uid || ''} />
+                      </div>
+                    )}
+
+                    {activeTab === 'security' && (
+                      <div className="space-y-6">
+                        <SecurityAudit projectFiles={project?.files || {}} />
+                      </div>
+                    )}
+
+                    {activeTab === 'version' && (
+                      <div className="space-y-6">
+                        <VersionHistory projectId={project?.id || ''} currentUserId={user?.uid || ''} />
+                      </div>
+                    )}
+
+                    {activeTab === 'analytics' && (
+                      <div className="space-y-6">
+                        <AnalyticsDashboard projectId={project?.id || ''} />
+                      </div>
+                    )}
+
+                    {activeTab === 'hosting' && (
+                      <div className="space-y-6">
+                        <HostingDeployment projectId={project?.id || ''} projectFiles={project?.files || {}} />
+                      </div>
+                    )}
+
+                    {activeTab === 'domains' && (
+                      <div className="space-y-6">
+                        <CustomDomains projectId={project?.id || ''} />
+                      </div>
+                    )}
+
+                    {activeTab === 'sso' && (
+                      <div className="space-y-6">
+                        <SSOConfig workspaceId={project?.id || ''} />
+                      </div>
+                    )}
+
+                    {activeTab === 'account' && (
+                      <div className="space-y-6 md:space-y-8">
+                        <section className="space-y-4">
+                          <h3 className="text-base md:text-lg font-bold flex items-center gap-2">
+                            <Lock className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                            Project Visibility
+                          </h3>
+                          <ProjectVisibilityToggle 
+                            projectId={project?.id || ''} 
+                            currentVisibility={project?.isPublic ? 'public' : 'private'}
+                            onVisibilityChange={(visibility) => {
+                              if (project) {
+                                setProject({ ...project, isPublic: visibility === 'public' })
+                              }
+                            }}
+                          />
+                        </section>
+
+                        <section className="space-y-4">
+                          <h3 className="text-base md:text-lg font-bold flex items-center gap-2">
+                            <Shield className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                            Two-Factor Authentication
+                          </h3>
+                          <TwoFactorAuth userId={user?.uid || ''} email={user?.email || ''} />
                         </section>
                       </div>
                     )}
