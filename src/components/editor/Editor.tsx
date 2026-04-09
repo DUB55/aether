@@ -21,7 +21,6 @@ import {
   History as HistoryIcon, 
   ImagePlus, 
   Layout, 
-  Loader2, 
   LogOut, 
   MessageSquare, 
   MoreHorizontal, 
@@ -1788,7 +1787,6 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
                   )}
                   {(isWebContainerLoading || isInstalling) && (
                     <div className="absolute inset-0 z-10 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center gap-4">
-                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
                       <p className="text-white font-medium">
                         {isWebContainerLoading ? 'Booting WebContainer...' : 'Installing dependencies...'}
                       </p>
@@ -1797,7 +1795,6 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
                   )}
                   {hasStartedDevServer.current && !webContainerUrl && !isInstalling && (
                     <div className="absolute inset-0 z-10 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center gap-4">
-                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
                       <p className="text-white font-medium">Starting dev server...</p>
                       <p className="text-white/50 text-xs">This may take a minute for React apps</p>
                     </div>
@@ -2041,7 +2038,6 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
                   <div className="flex items-center gap-2">
                     {isWebContainerLoading ? (
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-[10px] font-bold">
-                        <Loader2 className="w-3 h-3 animate-spin" />
                         BOOTING ENGINE...
                       </div>
                     ) : null}
@@ -2225,7 +2221,6 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
 
                 {(publishStatus === 'packing' || publishStatus === 'publishing') && (
                   <div className="py-12 text-center space-y-4">
-                    <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
                     <p className="text-lg font-bold capitalize">{publishStatus}...</p>
                     <p className="text-sm text-white/50">
                       {publishStatus === 'packing' ? 'Encrypting project files...' : 'Uploading to secure storage...'}
@@ -2379,7 +2374,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
                       onClick={handleSyncToGithub}
                       className="w-full h-14 rounded-2xl bg-white text-black font-bold flex items-center justify-center gap-3 hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl shadow-white/5"
                     >
-                      {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                      <RefreshCw className="w-5 h-5" />
                       {isSyncing ? 'Synchronizing...' : 'Sync Now'}
                     </button>
                   </div>
@@ -2435,7 +2430,6 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
 
                 {(publishStatus === 'packing' || publishStatus === 'publishing') && (
                   <div className="py-12 text-center space-y-4">
-                    <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
                     <p className="text-lg font-bold capitalize">{publishStatus}...</p>
                   </div>
                 )}
