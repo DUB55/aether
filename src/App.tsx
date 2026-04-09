@@ -368,7 +368,7 @@ function AppContent() {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
         <div className={cn(
-          "relative min-h-screen bg-background text-foreground selection:bg-primary/30",
+          "relative min-h-screen bg-background text-foreground selection:bg-primary/30 flex flex-col",
           CONFIG.USE_LIQUID_DESIGN && "liquid-glass"
         )}>
           <AnimatePresence>
@@ -385,7 +385,7 @@ function AppContent() {
           <motion.main
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative z-10 max-w-5xl mx-auto px-6 pt-32 pb-20"
+            className="relative z-10 max-w-5xl mx-auto px-6 pt-32 pb-20 flex-1"
           >
             <div className="space-y-12">
               <div className="space-y-4 text-center">
@@ -920,7 +920,7 @@ function AppContent() {
     )
   }  return (
     <ThemeProvider attribute="class" defaultTheme="system" themes={["light", "dark", "black"]}>
-      <div className="relative min-h-screen selection:bg-primary/30 transition-colors duration-500 text-foreground overflow-x-hidden">
+      <div className="relative min-h-screen selection:bg-primary/30 transition-colors duration-500 text-foreground overflow-x-hidden flex flex-col">
         <div 
           suppressHydrationWarning
           className={cn(
@@ -933,7 +933,7 @@ function AppContent() {
         <motion.main
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="relative z-10 flex flex-col items-center pt-32 pb-24"
+          className="relative z-10 flex flex-col items-center pt-32 pb-24 flex-1"
         >
           {/* Hero Section */}
           <div className="max-w-6xl w-full px-6 text-center space-y-12">

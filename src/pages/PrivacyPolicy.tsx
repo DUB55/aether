@@ -9,8 +9,8 @@ export default function PrivacyPolicy() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--t)]">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--t)] flex flex-col">
+      <div className="max-w-4xl mx-auto px-6 py-12 flex-1">
         {/* Header */}
         <div className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-4">

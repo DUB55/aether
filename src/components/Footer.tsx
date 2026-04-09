@@ -3,7 +3,7 @@ import { Rocket, Heart } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="max-w-6xl w-full px-6 mt-48 py-24 border-t border-[var(--bdr)] dark:border-white/5">
+    <footer className="max-w-6xl w-full px-6 py-24 border-t border-[var(--bdr)] dark:border-white/5 mt-auto">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
         <div className="col-span-2 space-y-6">
           <div className="flex items-center gap-2">
