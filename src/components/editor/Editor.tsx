@@ -62,6 +62,7 @@ import { TypingIndicator } from '../TypingIndicator'
 import { SettingsDialog } from './SettingsDialog'
 import { Terminal } from './Terminal'
 import { TemplateMarketplace } from './TemplateMarketplace'
+import { VoiceInput } from './VoiceInput'
 import { getWebContainer, mountFiles } from '@/lib/webcontainer'
 import { type Terminal as XTerm } from 'xterm'
 
@@ -1592,6 +1593,10 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
                 />
                 <div className="pfoot">
                   <div className="flex items-center gap-1">
+                    <VoiceInput 
+                      onTranscript={(transcript) => setInput(prev => prev + ' ' + transcript)}
+                      disabled={isGenerating}
+                    />
                     <button 
                       onClick={() => {
                         const input = document.createElement('input');

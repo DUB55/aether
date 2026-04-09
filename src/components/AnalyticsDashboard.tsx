@@ -65,27 +65,27 @@ export function AnalyticsDashboard({ projectId, className }: AnalyticsDashboardP
     setTimeout(() => {
       const mockData: AnalyticsData = {
         visitors: {
-          total: 1247,
-          unique: 892,
+          total: 12847,
+          unique: 8234,
           returning: 355
         },
         sources: [
-          { source: 'Direct', visitors: 523, percentage: 42 },
-          { source: 'Google', visitors: 312, percentage: 25 },
-          { source: 'Twitter', visitors: 187, percentage: 15 },
-          { source: 'GitHub', visitors: 124, percentage: 10 },
-          { source: 'Other', visitors: 101, percentage: 8 }
+          { source: 'Organic Search', visitors: 523, percentage: 42 },
+          { source: 'Direct', visitors: 312, percentage: 28 },
+          { source: 'Social Media', visitors: 187, percentage: 15 },
+          { source: 'Referral', visitors: 124, percentage: 10 },
+          { source: 'Email', visitors: 101, percentage: 5 }
         ],
         locations: [
-          { country: 'United States', visitors: 423, percentage: 34 },
+          { country: 'United States', visitors: 4567, percentage: 34 },
           { country: 'United Kingdom', visitors: 187, percentage: 15 },
           { country: 'Germany', visitors: 156, percentage: 13 },
-          { country: 'France', visitors: 124, percentage: 10 },
           { country: 'Canada', visitors: 112, percentage: 9 },
+          { country: 'Australia', visitors: 987, percentage: 8 },
           { country: 'Other', visitors: 245, percentage: 19 }
         ],
         pageViews: {
-          total: 3842,
+          total: 45678,
           average: 3.1,
           topPages: [
             { path: '/', views: 1247 },

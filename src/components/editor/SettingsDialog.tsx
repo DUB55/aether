@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils'
 import { type Project } from '@/types'
 import { WorkspaceManager } from '../WorkspaceManager'
 import { SecurityAudit } from '../SecurityAudit'
+import { CodeReviewPanel } from '../CodeReviewPanel'
 import { VersionHistory } from '../VersionHistory'
 import { AnalyticsDashboard } from '../AnalyticsDashboard'
 import { HostingDeployment } from '../HostingDeployment'
@@ -537,6 +538,7 @@ export function SettingsDialog({
                     {activeTab === 'security' && (
                       <div className="space-y-6">
                         <SecurityAudit projectFiles={project?.files || {}} />
+                        <CodeReviewPanel projectFiles={project?.files || {}} />
                       </div>
                     )}
 

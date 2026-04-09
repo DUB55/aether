@@ -178,6 +178,28 @@ async function startServer() {
     }
   });
 
+  // Free Image Generation using Pollinations AI (no API key required)
+  app.post("/api/generate-image", async (req, res) => {
+    const { prompt, size = "1024x1024" } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    try {
+      // Use Pollinations AI - completely free, no API key needed
+      // URL format: https://image.pollinations.ai/prompt/{prompt}?width={width}&height={height}&nologo=true
+      const encodedPrompt = encodeURIComponent(prompt);
+      const [width, height] = size.split('x');
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&nologo=true&seed=${Date.now()}`;
+
+      res.json({ imageUrl, prompt });
+    } catch (error: any) {
+      console.error("Image generation error:", error);
+      res.status(500).json({ error: error.message || "Failed to generate image" });
+    }
+  });
+
   // GitHub OAuth Routes
   app.get("/api/auth/github/url", (req, res) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
