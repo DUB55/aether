@@ -20,22 +20,6 @@
       "dest": "/logo.png"
     },
     {
-      "src": "/privacy-policy",
-      "dest": "/dist/index.html"
-    },
-    {
-      "src": "/privacy",
-      "dest": "/dist/index.html"
-    },
-    {
-      "src": "/terms-of-service",
-      "dest": "/dist/index.html"
-    },
-    {
-      "src": "/terms",
-      "dest": "/dist/index.html"
-    },
-    {
       "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
       "dest": "/dist/$1"
     },
