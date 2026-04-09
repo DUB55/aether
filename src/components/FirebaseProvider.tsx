@@ -4,6 +4,7 @@ import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, collection, query, where, Timestamp, deleteDoc, updateDoc, getDocFromServer, getDocs, orderBy } from 'firebase/firestore';
 import { type Project } from '@/types';
 import { deleteProjectFromGithubRegistry, addProjectToGithubRegistry } from '@/lib/github-registry';
+import { storage as indexedDBStorage } from '@/lib/storage';
 
 interface FirebaseContextType {
   user: FirebaseUser | null;
@@ -81,8 +82,17 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           createdAt: (doc.data().createdAt as Timestamp).toDate().toISOString(),
         } as Project));
         setProjects(projectsData);
-      }, (error) => {
+      }, async (error) => {
         handleFirestoreError(error, OperationType.LIST, 'projects');
+        // Fallback to IndexedDB
+        console.log('[FirebaseProvider] Firestore list failed, falling back to IndexedDB');
+        try {
+          const localProjects = await indexedDBStorage.getAllProjects();
+          setProjects(localProjects);
+        } catch (indexedDBError) {
+          console.error('[FirebaseProvider] IndexedDB list also failed:', indexedDBError);
+          setProjects([]);
+        }
       });
 
       return () => unsubscribe();
@@ -134,6 +144,13 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `projects/${project.id}`);
+      // Fallback to IndexedDB
+      console.log('[FirebaseProvider] Firestore save failed, falling back to IndexedDB');
+      try {
+        await indexedDBStorage.saveProject(project);
+      } catch (indexedDBError) {
+        console.error('[FirebaseProvider] IndexedDB save also failed:', indexedDBError);
+      }
     }
   };
 
@@ -154,6 +171,13 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `projects/${projectId}`);
+      // Fallback to IndexedDB
+      console.log('[FirebaseProvider] Firestore delete failed, falling back to IndexedDB');
+      try {
+        await indexedDBStorage.deleteProject(projectId);
+      } catch (indexedDBError) {
+        console.error('[FirebaseProvider] IndexedDB delete also failed:', indexedDBError);
+      }
     }
   };
 

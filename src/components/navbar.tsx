@@ -91,10 +91,9 @@ export function Navbar() {
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-[var(--bdr)]">
                   {user.photoURL ? (
                     <img 
-                      src={pfpErrorCount > 0 ? `${user.photoURL}?retry=${pfpErrorCount}` : user.photoURL} 
+                      src={`/api/proxy/image?url=${encodeURIComponent(user.photoURL)}`} 
                       alt={user.displayName || 'User'} 
                       className="w-full h-full object-cover" 
-                      referrerPolicy="no-referrer"
                       onError={() => {
                         if (pfpErrorCount < 3) {
                           setTimeout(() => setPfpErrorCount(prev => prev + 1), 1000);

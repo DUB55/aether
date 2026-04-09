@@ -33,6 +33,32 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Proxy endpoint for Google profile images to bypass COEP blocking
+  app.get("/api/proxy/image", async (req, res) => {
+    const { url } = req.query;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).send('URL parameter is required');
+    }
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        return res.status(response.status).send('Failed to fetch image');
+      }
+
+      const imageBuffer = await response.arrayBuffer();
+      const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.send(Buffer.from(imageBuffer));
+    } catch (error) {
+      console.error('[Proxy] Error fetching image:', error);
+      res.status(500).send('Failed to proxy image');
+    }
+  });
+
   // AI Proxy Route with Key Pool & Failover
   app.post("/api/ai/chat", async (req, res) => {
     const { input, history, personality, thinking_mode, provider, model, gemini_api_key, files, image } = req.body;

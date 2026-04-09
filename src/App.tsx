@@ -317,16 +317,23 @@ function AppContent() {
     }
     
     try {
-      await saveProject(newProject)
-      toast.success("Project created!")
+      // Wait a bit for smooth animation on landing page
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      // Navigate to editor immediately
       window.history.pushState({}, '', `/editor/${id}`)
       window.dispatchEvent(new Event('routechange'))
       setInput("")
+      
+      // Save project in background after navigation
+      await saveProject(newProject)
+      toast.success("Project created!")
     } catch (error) {
       console.error("Project creation error:", error)
       toast.error("Failed to create project")
     } finally {
-      setBusy(false)
+      // Keep busy state for a bit longer to show loading in editor
+      setTimeout(() => setBusy(false), 1500)
     }
   }
 
