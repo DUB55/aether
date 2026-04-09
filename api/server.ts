@@ -12,6 +12,11 @@ const __dirname = path.dirname(__filename);
 
 // Initialize Gemini Pool
 const geminiKeys = (process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || "").split(",").map(k => k.trim()).filter(Boolean);
+
+if (geminiKeys.length === 0) {
+  console.warn("WARNING: No Gemini API keys configured. AI service will not work. Please set GEMINI_API_KEY or GEMINI_API_KEYS environment variable.");
+}
+
 const geminiService = new GeminiService(geminiKeys);
 
 async function startServer() {
