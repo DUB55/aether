@@ -222,7 +222,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                 onClick={() => handleBillingCycleChange('monthly')}
                 className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                   billingCycle === 'monthly'
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-primary text-[var(--bg)]'
                     : 'text-[var(--t2)] hover:text-[var(--t)]'
                 }`}
               >
@@ -232,7 +232,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                 onClick={() => handleBillingCycleChange('yearly')}
                 className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                   billingCycle === 'yearly'
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-primary text-[var(--bg)]'
                     : 'text-[var(--t2)] hover:text-[var(--t)]'
                 }`}
               >
@@ -256,7 +256,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
               >
                 {plan.popular && (
                   <div className="absolute -top-4 right-4">
-                    <Badge className="bg-primary text-primary-foreground">
+                    <Badge className="bg-primary text-[var(--bg)]">
                       Most Popular
                     </Badge>
                   </div>
@@ -334,7 +334,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                     onClick={() => handlePlanSelect(plan)}
                     className={`w-full py-3 text-lg font-semibold transition-colors ${
                       selectedPlan === plan.id
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'bg-primary text-[var(--bg)]'
                         : 'bg-[var(--t)] text-[var(--bg)] hover:bg-primary/90'
                     }`}
                   >

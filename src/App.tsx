@@ -154,6 +154,9 @@ function AppContent() {
       const mode = searchParams.get('mode')
       const pathname = window.location.pathname
       
+      // Scroll to top when navigating between pages
+      window.scrollTo(0, 0)
+      
       if (src) {
         setActiveProjectId('shared-url')
         setCurrentRoute(mode === 'viewer' ? 'shared' : 'editor')

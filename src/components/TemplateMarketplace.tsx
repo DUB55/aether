@@ -218,8 +218,9 @@ function TemplatePreview({ template }: { template: Template }) {
       <html>
         <head>
           <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
-            body { margin: 0; padding: 0; font-family: sans-serif; }
+            body { margin: 0; padding: 0; font-family: sans-serif; background: #ffffff; min-height: 100vh; }
             ${css}
           </style>
           <script src="https://cdn.tailwindcss.com"></script>
@@ -259,12 +260,12 @@ function TemplatePreview({ template }: { template: Template }) {
   }
 
   return (
-    <div className="w-full h-full relative overflow-hidden pointer-events-none select-none">
+    <div className="w-full h-full relative overflow-hidden pointer-events-none select-none bg-[var(--bg3)]">
       <iframe
         srcDoc={srcDoc}
         className="w-[1200px] h-[800px] border-none origin-top-left scale-[0.25] md:scale-[0.3] lg:scale-[0.28]"
         title={template.name}
-        sandbox="allow-scripts"
+        sandbox="allow-scripts allow-same-origin"
         loading="lazy"
       />
       <div className="absolute inset-0 bg-transparent" />
