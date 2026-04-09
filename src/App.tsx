@@ -996,7 +996,7 @@ function AppContent() {
                 onSubmit={handleStartProject} 
                 className="relative group"
               >
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-purple-500/20 to-orange-500/20 rounded-[40px] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700" />
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-purple-500/20 rounded-[40px] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700 animate-gradient-x" style={{ backgroundSize: '200% 200%' }} />
                 <div className="relative liquid-glass rounded-[38px] p-2 bg-[var(--bg)]/40 dark:bg-black/20 border-[var(--bdr)] dark:border-white/10 backdrop-blur-3xl shadow-2xl transition-all duration-500 group-focus-within:border-primary/30 group-focus-within:bg-[var(--bg)]/60">
                   <div className="p-4 sm:p-6 space-y-4">
                     <textarea
