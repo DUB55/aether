@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { LogIn, Cpu, Shield, Rocket } from 'lucide-react'
 import { AetherLogo } from './aether-logo'
 import { useFirebase } from './FirebaseProvider'
+import { toast } from 'sonner'
 
 interface LoginModalProps {
   open: boolean
@@ -78,13 +79,21 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
                   </div>
                 </div>
 
-                <Button 
+                <Button
                   onClick={async () => {
                     try {
                       await onLogin()
                       // Modal will close automatically when user state updates via useEffect
-                    } catch (error) {
+                    } catch (error: any) {
                       console.error('Login failed:', error)
+                      // Show error to user
+                      if (error?.code === 'auth/unauthorized-domain') {
+                        toast.error('Domain not authorized for authentication. Please check Firebase Console settings.')
+                      } else if (error?.message) {
+                        toast.error(error.message)
+                      } else {
+                        toast.error('Login failed. Please try again.')
+                      }
                       // Don't close modal on login failure
                     }
                   }}
