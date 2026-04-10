@@ -355,11 +355,14 @@ function AppContent() {
   if (activeProjectId || currentRoute === 'shared') {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
-        <Editor 
-          projectId={activeProjectId!} 
-          onBack={() => { window.history.pushState({}, '', isSharedView ? '/' : '/projects'); window.dispatchEvent(new Event('routechange')) }} 
-          isSharedView={isSharedView}
-        />
+        <div className="relative min-h-screen bg-background text-foreground flex flex-col">
+          <Editor 
+            projectId={activeProjectId!} 
+            onBack={() => { window.history.pushState({}, '', isSharedView ? '/' : '/projects'); window.dispatchEvent(new Event('routechange')) }} 
+            isSharedView={isSharedView}
+          />
+          <Footer />
+        </div>
         <Toaster position="bottom-center" richColors />
       </ThemeProvider>
     )
@@ -966,6 +969,18 @@ function AppContent() {
             `gradient-${gradientTheme}`
           )} 
         />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 1.5, ease: "easeOut" }}
+          className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[800px] pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.4) 0%, rgba(139, 92, 246, 0.3) 30%, rgba(236, 72, 153, 0.2) 60%, transparent 80%)',
+            filter: 'blur(100px)',
+            animation: 'gradient-x 5s ease infinite',
+            backgroundSize: '200% 200%'
+          }}
+        />
         <Navbar />
         
         <motion.main
@@ -974,7 +989,7 @@ function AppContent() {
           className="relative z-10 flex flex-col items-center pt-32 pb-24 flex-1"
         >
           {/* Hero Section */}
-          <div className="max-w-6xl w-full px-6 text-center space-y-12">
+          <div className="max-w-6xl w-full px-6 text-center space-y-12 relative z-10">
             <div className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -1009,7 +1024,7 @@ function AppContent() {
 
             {/* Prompt Input Area */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 1, scale: 1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
               className="max-w-4xl mx-auto w-full"
@@ -1018,14 +1033,14 @@ function AppContent() {
                 onSubmit={handleStartProject} 
                 className="relative group"
               >
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/20 to-purple-500/20 rounded-[40px] blur-2xl opacity-30 group-focus-within:opacity-60 transition-opacity duration-700 animate-gradient-x" style={{ backgroundSize: '200% 200%' }} />
-                <div className="relative liquid-glass rounded-[38px] p-2 bg-[var(--bg)]/40 dark:bg-black/20 border-[var(--bdr)] dark:border-white/10 backdrop-blur-3xl shadow-2xl transition-all duration-500 group-focus-within:border-primary/30 group-focus-within:bg-[var(--bg)]/60">
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/50 to-purple-500/50 rounded-[40px] blur-2xl opacity-60 group-focus-within:opacity-80 transition-opacity duration-700 animate-gradient-x" style={{ backgroundSize: '200% 200%' }} />
+                <div className="relative liquid-glass rounded-[38px] p-2 bg-[var(--bg)]/60 dark:bg-black/40 border-[var(--bdr)] dark:border-white/20 backdrop-blur-3xl shadow-2xl transition-all duration-500 group-focus-within:border-primary/50 group-focus-within:bg-[var(--bg)]/80">
                   <div className="p-4 sm:p-6 space-y-4">
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="What would you like to build today?"
-                      className="w-full min-h-[120px] max-h-[200px] sm:min-h-[160px] sm:max-h-[250px] bg-transparent border-none focus:ring-0 text-xl sm:text-[26px] font-bold resize-none placeholder:text-[var(--t3)]/30 outline-none text-[var(--t)] leading-tight tracking-tight"
+                      className="w-full min-h-[120px] max-h-[200px] sm:min-h-[160px] sm:max-h-[250px] bg-transparent border-none focus:ring-0 text-xl sm:text-[26px] font-bold resize-none placeholder:text-[var(--t3)]/50 outline-none text-[var(--t)] leading-tight tracking-tight"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault()
