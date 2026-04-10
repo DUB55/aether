@@ -212,7 +212,15 @@ export class MultiProviderService {
           this.markKeyExhausted(providerType, keyState.key, errorMessage);
         }
 
-        // Try next provider
+        // First try to get another key from the same provider
+        const nextKeyInSameProvider = this.getNextAvailableKey(providerType);
+        if (nextKeyInSameProvider) {
+          console.log(`[MultiProviderService] Trying next key in ${config.name}`);
+          continue; // Retry with next key in same provider
+        }
+
+        // If no more keys in this provider, try next provider
+        console.log(`[MultiProviderService] All keys exhausted for ${config.name}, trying next provider`);
         const nextProvider = this.getNextProvider();
         if (!nextProvider) {
           throw new Error(`All AI providers failed. Last error: ${errorMessage}`);
