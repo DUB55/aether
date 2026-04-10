@@ -100,13 +100,16 @@ service cloud.firestore {
     //   - id: string (required) - Secret ID
     //   - name: string (required, max length 100) - Secret name
     //   - value: string (required) - Secret value (encrypted in production)
-    //   - type: string (required, enum: ['api_key', 'token', 'password', 'certificate']) - Secret type
-    //   - environment: string (required, enum: ['development', 'staging', 'production']) - Environment
+    //   - type: string (required, enum: ['api_key', 'token', 'password', 'certificate', 'other']) - Secret type
     //   - projectId: string (optional) - Associated project ID
+    //   - workspaceId: string (optional) - Associated workspace ID
     //   - userId: string (required) - User who owns the secret
     //   - createdAt: timestamp (required) - Timestamp
-    //   - lastAccessed: timestamp (required) - Last access timestamp
+    //   - updatedAt: timestamp (required) - Timestamp
+    //   - lastAccessedAt: timestamp (optional) - Last access timestamp
+    //   - expiresAt: timestamp (optional) - Expiration timestamp
     //   - description: string (optional, max length 500) - Description
+    //   - tags: list (optional) - Tags for the secret
     //
     // Collection: scim_configs
     // Document ID: {workspaceId}
@@ -371,18 +374,21 @@ service cloud.firestore {
     }
 
     function isValidSecret(data) {
-      return hasRequiredFields(['id', 'name', 'value', 'type', 'environment', 'userId', 'createdAt', 'lastAccessed']) &&
-             hasOnlyAllowedFields(['id', 'name', 'value', 'type', 'environment', 'projectId', 'userId', 'createdAt', 'lastAccessed', 'description']) &&
+      return hasRequiredFields(['id', 'name', 'value', 'type', 'userId', 'createdAt', 'updatedAt']) &&
+             hasOnlyAllowedFields(['id', 'name', 'value', 'type', 'projectId', 'workspaceId', 'userId', 'createdAt', 'updatedAt', 'lastAccessedAt', 'expiresAt', 'description', 'tags']) &&
              data.id is string && data.id.size() > 0 &&
              data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
              data.value is string && data.value.size() > 0 &&
-             data.type in ['api_key', 'token', 'password', 'certificate'] &&
-             data.environment in ['development', 'staging', 'production'] &&
+             data.type in ['api_key', 'token', 'password', 'certificate', 'other'] &&
              (!('projectId' in data) || (data.projectId is string && data.projectId.size() > 0)) &&
+             (!('workspaceId' in data) || (data.workspaceId is string && data.workspaceId.size() > 0)) &&
              data.userId is string && data.userId == request.auth.uid &&
              data.createdAt is timestamp &&
-             data.lastAccessed is timestamp &&
-             (!('description' in data) || (data.description is string && data.description.size() <= 500));
+             data.updatedAt is timestamp &&
+             (!('lastAccessedAt' in data) || data.lastAccessedAt is timestamp) &&
+             (!('expiresAt' in data) || data.expiresAt is timestamp) &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 500)) &&
+             (!('tags' in data) || data.tags is list);
     }
 
     function isValidSCIMConfig(data) {
