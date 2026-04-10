@@ -191,6 +191,23 @@ service cloud.firestore {
     //   - isEncrypted: boolean (required) - Whether value is encrypted
     //   - description: string (optional, max length 500) - Description
     //
+    // Collection: webhooks
+    // Document ID: {webhookId}
+    // Fields:
+    //   - id: string (required) - Webhook ID
+    //   - name: string (required, max length 100) - Webhook name
+    //   - url: string (required) - Webhook URL
+    //   - events: list (required) - List of events to trigger on
+    //   - secret: string (optional) - Webhook secret for signature verification
+    //   - projectId: string (optional) - Associated project ID
+    //   - workspaceId: string (optional) - Associated workspace ID
+    //   - userId: string (required) - User who owns the webhook
+    //   - active: boolean (required) - Whether webhook is active
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - updatedAt: timestamp (required) - Timestamp
+    //   - lastTriggered: timestamp (optional) - Last time webhook was triggered
+    //   - headers: map (optional) - Custom headers to send with webhook
+    //
     // Collection: verification_requests
     // Document ID: {userId}
     // Fields:
@@ -530,6 +547,24 @@ service cloud.firestore {
              (!('description' in data) || (data.description is string && data.description.size() <= 500));
     }
 
+    function isValidWebhook(data) {
+      return hasRequiredFields(['id', 'name', 'url', 'events', 'userId', 'active', 'createdAt', 'updatedAt']) &&
+             hasOnlyAllowedFields(['id', 'name', 'url', 'events', 'secret', 'projectId', 'workspaceId', 'userId', 'active', 'createdAt', 'updatedAt', 'lastTriggered', 'headers']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.url is string && data.url.size() > 0 &&
+             data.events is list && data.events.size() > 0 &&
+             (!('secret' in data) || (data.secret is string && data.secret.size() > 0)) &&
+             (!('projectId' in data) || (data.projectId is string && data.projectId.size() > 0)) &&
+             (!('workspaceId' in data) || (data.workspaceId is string && data.workspaceId.size() > 0)) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.active is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             (!('lastTriggered' in data) || data.lastTriggered is timestamp) &&
+             (!('headers' in data) || data.headers is map);
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -649,6 +684,13 @@ service cloud.firestore {
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
       allow create: if isAuthenticated() && isValidEnvVar(request.resource.data);
       allow update: if isAuthenticated() && isOwner(resource.data.userId) && isValidEnvVar(request.resource.data);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /webhooks/{webhookId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isValidWebhook(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId) && isValidWebhook(request.resource.data);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
