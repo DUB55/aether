@@ -19,6 +19,8 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_PROJECT_ID: string
   readonly VITE_VERCEL_ACCESS_TOKEN: string
   readonly VITE_VERCEL_TEAM_ID: string
+  readonly VITE_NETLIFY_ACCESS_TOKEN: string
+  readonly VITE_NETLIFY_TEAM_ID: string
 }
 
 interface ImportMeta {
