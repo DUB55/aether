@@ -1,5 +1,9 @@
 // Workspace service for team collaboration
 // Manages shared workspaces, roles, and permissions
+// Now uses Firebase Firestore for persistent storage
+
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, getDocs, addDoc, Timestamp } from 'firebase/firestore';
 
 export interface Workspace {
   id: string
@@ -8,15 +12,15 @@ export interface Workspace {
   ownerId: string
   members: WorkspaceMember[]
   projects: string[]
-  createdAt: number
-  updatedAt: number
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }
 
 export interface WorkspaceMember {
   userId: string
   email: string
   role: 'owner' | 'admin' | 'editor' | 'viewer'
-  joinedAt: number
+  joinedAt: Timestamp
 }
 
 interface WorkspaceRole {
@@ -28,6 +32,8 @@ interface Permission {
   resource: string
   actions: string[]
 }
+
+const WORKSPACES_COLLECTION = 'workspaces';
 
 export const workspaceService = {
   // Role definitions
@@ -71,106 +77,122 @@ export const workspaceService = {
   },
 
   // Create workspace
-  createWorkspace: (name: string, ownerId: string, description?: string): Workspace => {
+  createWorkspace: async (name: string, ownerId: string, description?: string): Promise<Workspace> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    const workspaceId = `workspace_${Date.now()}`;
+    const now = Timestamp.now();
+    
     const workspace: Workspace = {
-      id: `workspace_${Date.now()}`,
+      id: workspaceId,
       name,
       description,
       ownerId,
       members: [
         {
           userId: ownerId,
-          email: '', // Will be filled from user data
+          email: auth.currentUser.email || '',
           role: 'owner',
-          joinedAt: Date.now(),
+          joinedAt: now,
         },
       ],
       projects: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    }
+      createdAt: now,
+      updatedAt: now,
+    };
 
-    // Store in localStorage for now (would be Firebase/Supabase in production)
-    const workspaces = workspaceService.getWorkspaces()
-    workspaces.push(workspace)
-    localStorage.setItem('aether_workspaces', JSON.stringify(workspaces))
+    // Store in Firebase Firestore
+    const workspaceRef = doc(db, WORKSPACES_COLLECTION, workspaceId);
+    await setDoc(workspaceRef, workspace);
 
-    return workspace
+    return workspace;
   },
 
   // Get all workspaces for a user
-  getWorkspaces: (): Workspace[] => {
-    const stored = localStorage.getItem('aether_workspaces')
-    return stored ? JSON.parse(stored) : []
+  getWorkspaces: async (): Promise<Workspace[]> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    const q = query(collection(db, WORKSPACES_COLLECTION), where('ownerId', '==', auth.currentUser.uid));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => doc.data() as Workspace);
   },
 
   // Get workspace by ID
-  getWorkspace: (id: string): Workspace | null => {
-    const workspaces = workspaceService.getWorkspaces()
-    return workspaces.find(w => w.id === id) || null
+  getWorkspace: async (id: string): Promise<Workspace | null> => {
+    const workspaceRef = doc(db, WORKSPACES_COLLECTION, id);
+    const workspaceDoc = await getDoc(workspaceRef);
+    
+    if (workspaceDoc.exists()) {
+      return workspaceDoc.data() as Workspace;
+    }
+    return null;
   },
 
   // Update workspace
-  updateWorkspace: (id: string, updates: Partial<Workspace>): Workspace | null => {
-    const workspaces = workspaceService.getWorkspaces()
-    const index = workspaces.findIndex(w => w.id === id)
+  updateWorkspace: async (id: string, updates: Partial<Workspace>): Promise<Workspace | null> => {
+    const workspaceRef = doc(db, WORKSPACES_COLLECTION, id);
+    const workspaceDoc = await getDoc(workspaceRef);
     
-    if (index === -1) return null
+    if (!workspaceDoc.exists()) return null;
 
-    workspaces[index] = { ...workspaces[index], ...updates, updatedAt: Date.now() }
-    localStorage.setItem('aether_workspaces', JSON.stringify(workspaces))
-
-    return workspaces[index]
+    const updatedData = { ...updates, updatedAt: Timestamp.now() };
+    await updateDoc(workspaceRef, updatedData);
+    
+    const updatedDoc = await getDoc(workspaceRef);
+    return updatedDoc.data() as Workspace;
   },
 
   // Delete workspace
-  deleteWorkspace: (id: string): boolean => {
-    const workspaces = workspaceService.getWorkspaces()
-    const filtered = workspaces.filter(w => w.id !== id)
+  deleteWorkspace: async (id: string): Promise<boolean> => {
+    const workspaceRef = doc(db, WORKSPACES_COLLECTION, id);
+    const workspaceDoc = await getDoc(workspaceRef);
     
-    if (filtered.length === workspaces.length) return false
+    if (!workspaceDoc.exists()) return false;
 
-    localStorage.setItem('aether_workspaces', JSON.stringify(filtered))
-    return true
+    await deleteDoc(workspaceRef);
+    return true;
   },
 
   // Add member to workspace
-  addMember: (workspaceId: string, email: string, role: 'admin' | 'editor' | 'viewer'): boolean => {
-    const workspace = workspaceService.getWorkspace(workspaceId)
+  addMember: async (workspaceId: string, email: string, role: 'admin' | 'editor' | 'viewer'): Promise<boolean> => {
+    const workspace = await workspaceService.getWorkspace(workspaceId)
     if (!workspace) return false
 
     const member: WorkspaceMember = {
       userId: `user_${Date.now()}`, // In production, this would be the actual user ID
       email,
       role,
-      joinedAt: Date.now(),
+      joinedAt: Timestamp.now(),
     }
 
     workspace.members.push(member)
-    workspace.updatedAt = Date.now()
-    workspaceService.updateWorkspace(workspaceId, workspace)
+    await workspaceService.updateWorkspace(workspaceId, workspace)
 
     return true
   },
 
   // Remove member from workspace
-  removeMember: (workspaceId: string, userId: string): boolean => {
-    const workspace = workspaceService.getWorkspace(workspaceId)
+  removeMember: async (workspaceId: string, userId: string): Promise<boolean> => {
+    const workspace = await workspaceService.getWorkspace(workspaceId)
     if (!workspace) return false
 
     // Cannot remove owner
     if (userId === workspace.ownerId) return false
 
     workspace.members = workspace.members.filter(m => m.userId !== userId)
-    workspace.updatedAt = Date.now()
-    workspaceService.updateWorkspace(workspaceId, workspace)
+    await workspaceService.updateWorkspace(workspaceId, workspace)
 
     return true
   },
 
   // Update member role
-  updateMemberRole: (workspaceId: string, userId: string, newRole: 'admin' | 'editor' | 'viewer'): boolean => {
-    const workspace = workspaceService.getWorkspace(workspaceId)
+  updateMemberRole: async (workspaceId: string, userId: string, newRole: 'admin' | 'editor' | 'viewer'): Promise<boolean> => {
+    const workspace = await workspaceService.getWorkspace(workspaceId)
     if (!workspace) return false
 
     // Cannot change owner's role
@@ -180,8 +202,7 @@ export const workspaceService = {
     if (!member) return false
 
     member.role = newRole
-    workspace.updatedAt = Date.now()
-    workspaceService.updateWorkspace(workspaceId, workspace)
+    await workspaceService.updateWorkspace(workspaceId, workspace)
 
     return true
   },
@@ -206,28 +227,47 @@ export const workspaceService = {
   },
 
   // Add project to workspace
-  addProject: (workspaceId: string, projectId: string): boolean => {
-    const workspace = workspaceService.getWorkspace(workspaceId)
+  addProject: async (workspaceId: string, projectId: string): Promise<boolean> => {
+    const workspace = await workspaceService.getWorkspace(workspaceId)
     if (!workspace) return false
 
     if (!workspace.projects.includes(projectId)) {
       workspace.projects.push(projectId)
-      workspace.updatedAt = Date.now()
-      workspaceService.updateWorkspace(workspaceId, workspace)
+      await workspaceService.updateWorkspace(workspaceId, workspace)
     }
 
     return true
   },
 
   // Remove project from workspace
-  removeProject: (workspaceId: string, projectId: string): boolean => {
-    const workspace = workspaceService.getWorkspace(workspaceId)
+  removeProject: async (workspaceId: string, projectId: string): Promise<boolean> => {
+    const workspace = await workspaceService.getWorkspace(workspaceId)
     if (!workspace) return false
 
     workspace.projects = workspace.projects.filter(p => p !== projectId)
-    workspace.updatedAt = Date.now()
-    workspaceService.updateWorkspace(workspaceId, workspace)
+    await workspaceService.updateWorkspace(workspaceId, workspace)
 
     return true
+  },
+
+  // Subscribe to workspace changes (real-time updates)
+  subscribeToWorkspace: (workspaceId: string, callback: (workspace: Workspace | null) => void) => {
+    const workspaceRef = doc(db, WORKSPACES_COLLECTION, workspaceId);
+    return onSnapshot(workspaceRef, (doc) => {
+      if (doc.exists()) {
+        callback(doc.data() as Workspace);
+      } else {
+        callback(null);
+      }
+    });
+  },
+
+  // Subscribe to user's workspaces (real-time updates)
+  subscribeToUserWorkspaces: (userId: string, callback: (workspaces: Workspace[]) => void) => {
+    const q = query(collection(db, WORKSPACES_COLLECTION), where('ownerId', '==', userId));
+    return onSnapshot(q, (snapshot) => {
+      const workspaces = snapshot.docs.map(doc => doc.data() as Workspace);
+      callback(workspaces);
+    });
   },
 }

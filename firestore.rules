@@ -37,6 +37,18 @@ service cloud.firestore {
     //   - note: string (optional, max length 500) - Snapshot note
     //   - createdAt: timestamp (required) - Timestamp
     //
+    // Collection: workspaces
+    // Document ID: {workspaceId}
+    // Fields:
+    //   - id: string (required) - The workspace ID
+    //   - name: string (required, max length 100) - The workspace name
+    //   - description: string (optional, max length 500) - The workspace description
+    //   - ownerId: string (required) - The owner's UID
+    //   - members: list (required) - List of workspace members
+    //   - projects: list (required) - List of project IDs
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - updatedAt: timestamp (required) - Timestamp
+    //
     // ===============================================================
 
     // ===============================================================
@@ -120,6 +132,19 @@ service cloud.firestore {
              data.createdAt is string; // Using string as per component implementation
     }
 
+    function isValidWorkspace(data) {
+      return hasRequiredFields(['id', 'name', 'ownerId', 'members', 'projects', 'createdAt', 'updatedAt']) &&
+             hasOnlyAllowedFields(['id', 'name', 'description', 'ownerId', 'members', 'projects', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 500)) &&
+             data.ownerId is string && data.ownerId == request.auth.uid &&
+             data.members is list &&
+             data.projects is list &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -149,6 +174,13 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
       allow create: if isAuthenticated() && isValidTemplateLike(request.resource.data) && likeId == request.auth.uid + "_" + request.resource.data.templateId;
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /workspaces/{workspaceId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.ownerId) || isAdmin());
+      allow create: if isAuthenticated() && isValidWorkspace(request.resource.data);
+      allow update: if isAuthenticated() && isValidWorkspace(request.resource.data) && (isOwner(resource.data.ownerId) || isAdmin());
+      allow delete: if isAuthenticated() && (isOwner(resource.data.ownerId) || isAdmin());
     }
 
     match /projects/{projectId} {
