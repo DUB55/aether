@@ -108,6 +108,40 @@ service cloud.firestore {
     //   - lastAccessed: timestamp (required) - Last access timestamp
     //   - description: string (optional, max length 500) - Description
     //
+    // Collection: scim_configs
+    // Document ID: {workspaceId}
+    // Fields:
+    //   - enabled: boolean (required) - Whether SCIM is enabled
+    //   - bearerToken: string (required) - Bearer token for authentication
+    //   - endpointUrl: string (required) - SCIM endpoint URL
+    //   - workspaceId: string (required) - Workspace ID
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - updatedAt: timestamp (required) - Timestamp
+    //
+    // Collection: scim_users
+    // Document ID: {userId}
+    // Fields:
+    //   - id: string (required) - User ID
+    //   - userName: string (required) - Username
+    //   - name: map (required) - Name object with givenName and familyName
+    //   - email: string (required) - User email
+    //   - active: boolean (required) - Whether user is active
+    //   - displayName: string (optional) - Display name
+    //   - groups: list (optional) - Group memberships
+    //   - workspaceId: string (required) - Workspace ID
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - updatedAt: timestamp (required) - Timestamp
+    //
+    // Collection: scim_groups
+    // Document ID: {groupId}
+    // Fields:
+    //   - id: string (required) - Group ID
+    //   - displayName: string (required) - Group display name
+    //   - members: list (required) - List of user IDs
+    //   - workspaceId: string (required) - Workspace ID
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - updatedAt: timestamp (required) - Timestamp
+    //
     // ===============================================================
 
     // ===============================================================
@@ -274,6 +308,43 @@ service cloud.firestore {
              (!('description' in data) || (data.description is string && data.description.size() <= 500));
     }
 
+    function isValidSCIMConfig(data) {
+      return hasRequiredFields(['enabled', 'bearerToken', 'endpointUrl', 'workspaceId', 'createdAt', 'updatedAt']) &&
+             hasOnlyAllowedFields(['enabled', 'bearerToken', 'endpointUrl', 'workspaceId', 'createdAt', 'updatedAt']) &&
+             data.enabled is bool &&
+             data.bearerToken is string && data.bearerToken.size() > 0 &&
+             data.endpointUrl is string && data.endpointUrl.size() > 0 &&
+             data.workspaceId is string && data.workspaceId.size() > 0 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    function isValidSCIMUser(data) {
+      return hasRequiredFields(['id', 'userName', 'name', 'email', 'active', 'workspaceId', 'createdAt', 'updatedAt']) &&
+             hasOnlyAllowedFields(['id', 'userName', 'name', 'email', 'active', 'displayName', 'groups', 'workspaceId', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userName is string && data.userName.size() > 0 &&
+             data.name is map &&
+             data.email is string && data.email.size() > 0 &&
+             data.active is bool &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+             (!('groups' in data) || data.groups is list) &&
+             data.workspaceId is string && data.workspaceId.size() > 0 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    function isValidSCIMGroup(data) {
+      return hasRequiredFields(['id', 'displayName', 'members', 'workspaceId', 'createdAt', 'updatedAt']) &&
+             hasOnlyAllowedFields(['id', 'displayName', 'members', 'workspaceId', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100 &&
+             data.members is list &&
+             data.workspaceId is string && data.workspaceId.size() > 0 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -345,6 +416,27 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidSecret(request.resource.data);
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /scim_configs/{workspaceId} {
+      allow read: if isAuthenticated() && (isWorkspaceOwner(workspaceId) || isAdmin());
+      allow create: if isAuthenticated() && isValidSCIMConfig(request.resource.data) && (isWorkspaceOwner(request.resource.data.workspaceId) || isAdmin());
+      allow update: if isAuthenticated() && (isWorkspaceOwner(workspaceId) || isAdmin());
+      allow delete: if isAuthenticated() && (isWorkspaceOwner(workspaceId) || isAdmin());
+    }
+
+    match /scim_users/{userId} {
+      allow read: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+      allow create: if isAuthenticated() && isValidSCIMUser(request.resource.data) && (isWorkspaceOwner(request.resource.data.workspaceId) || isAdmin());
+      allow update: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+      allow delete: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+    }
+
+    match /scim_groups/{groupId} {
+      allow read: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+      allow create: if isAuthenticated() && isValidSCIMGroup(request.resource.data) && (isWorkspaceOwner(request.resource.data.workspaceId) || isAdmin());
+      allow update: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+      allow delete: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
     }
 
     match /projects/{projectId} {

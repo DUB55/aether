@@ -1,5 +1,9 @@
 // SCIM (System for Cross-domain Identity Management) service
 // Handles automated user provisioning for enterprise teams
+// Now uses Firebase Firestore for persistent storage
+
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 
 export interface SCIMUser {
   id: string
@@ -12,144 +16,173 @@ export interface SCIMUser {
   active: boolean
   displayName?: string
   groups?: string[]
+  workspaceId?: string
+  createdAt?: Timestamp
+  updatedAt?: Timestamp
 }
 
 export interface SCIMGroup {
   id: string
   displayName: string
   members: string[]
+  workspaceId: string
+  createdAt?: Timestamp
+  updatedAt?: Timestamp
 }
 
 export interface SCIMConfig {
   enabled: boolean
   bearerToken: string
   endpointUrl: string
+  workspaceId: string
+  createdAt?: Timestamp
+  updatedAt?: Timestamp
 }
+
+const SCIM_CONFIGS_COLLECTION = 'scim_configs';
+const SCIM_USERS_COLLECTION = 'scim_users';
+const SCIM_GROUPS_COLLECTION = 'scim_groups';
 
 export const scimService = {
   // Configure SCIM for workspace
-  configureSCIM: (workspaceId: string, config: SCIMConfig): boolean => {
-    const scimConfigs = JSON.parse(localStorage.getItem('aether_scim_configs') || '{}')
-    scimConfigs[workspaceId] = config
-    localStorage.setItem('aether_scim_configs', JSON.stringify(scimConfigs))
-    return true
+  configureSCIM: async (workspaceId: string, config: SCIMConfig): Promise<boolean> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    const configRef = doc(db, SCIM_CONFIGS_COLLECTION, workspaceId);
+    await setDoc(configRef, {
+      ...config,
+      workspaceId,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
+    });
+    return true;
   },
 
   // Get SCIM configuration
-  getSCIMConfig: (workspaceId: string): SCIMConfig | null => {
-    const scimConfigs = JSON.parse(localStorage.getItem('aether_scim_configs') || '{}')
-    return scimConfigs[workspaceId] || null
+  getSCIMConfig: async (workspaceId: string): Promise<SCIMConfig | null> => {
+    const configRef = doc(db, SCIM_CONFIGS_COLLECTION, workspaceId);
+    const configDoc = await getDoc(configRef);
+    
+    if (configDoc.exists()) {
+      return configDoc.data() as SCIMConfig;
+    }
+    return null;
   },
 
   // Create user via SCIM
-  createUser: (workspaceId: string, user: Omit<SCIMUser, 'id'>): SCIMUser => {
+  createUser: async (workspaceId: string, user: Omit<SCIMUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<SCIMUser> => {
+    const userId = `scim_user_${Date.now()}`;
+    const now = Timestamp.now();
+    
     const newUser: SCIMUser = {
       ...user,
-      id: `scim_user_${Date.now()}`
-    }
+      id: userId,
+      workspaceId,
+      createdAt: now,
+      updatedAt: now
+    };
 
-    // Store user (in production, this would sync with identity provider)
-    const scimUsers = JSON.parse(localStorage.getItem('aether_scim_users') || '{}')
-    if (!scimUsers[workspaceId]) {
-      scimUsers[workspaceId] = []
-    }
-    scimUsers[workspaceId].push(newUser)
-    localStorage.setItem('aether_scim_users', JSON.stringify(scimUsers))
+    const userRef = doc(db, SCIM_USERS_COLLECTION, userId);
+    await setDoc(userRef, newUser);
 
-    return newUser
+    return newUser;
   },
 
   // Get all users
-  getUsers: (workspaceId: string): SCIMUser[] => {
-    const scimUsers = JSON.parse(localStorage.getItem('aether_scim_users') || '{}')
-    return scimUsers[workspaceId] || []
+  getUsers: async (workspaceId: string): Promise<SCIMUser[]> => {
+    const q = query(collection(db, SCIM_USERS_COLLECTION), where('workspaceId', '==', workspaceId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data() as SCIMUser);
   },
 
   // Update user
-  updateUser: (workspaceId: string, userId: string, updates: Partial<SCIMUser>): SCIMUser | null => {
-    const scimUsers = JSON.parse(localStorage.getItem('aether_scim_users') || '{}')
-    const users = scimUsers[workspaceId] || []
-    const index = users.findIndex(u => u.id === userId)
+  updateUser: async (workspaceId: string, userId: string, updates: Partial<SCIMUser>): Promise<SCIMUser | null> => {
+    const userRef = doc(db, SCIM_USERS_COLLECTION, userId);
+    const userDoc = await getDoc(userRef);
 
-    if (index === -1) return null
+    if (!userDoc.exists()) return null;
 
-    users[index] = { ...users[index], ...updates }
-    scimUsers[workspaceId] = users
-    localStorage.setItem('aether_scim_users', JSON.stringify(scimUsers))
-
-    return users[index]
+    await updateDoc(userRef, { ...updates, updatedAt: Timestamp.now() });
+    
+    const updatedDoc = await getDoc(userRef);
+    return updatedDoc.data() as SCIMUser;
   },
 
   // Deactivate user
-  deactivateUser: (workspaceId: string, userId: string): boolean => {
-    const user = scimService.updateUser(workspaceId, userId, { active: false })
-    return user !== null
+  deactivateUser: async (workspaceId: string, userId: string): Promise<boolean> => {
+    const user = await scimService.updateUser(workspaceId, userId, { active: false });
+    return user !== null;
   },
 
   // Create group
-  createGroup: (workspaceId: string, group: Omit<SCIMGroup, 'id'>): SCIMGroup => {
+  createGroup: async (workspaceId: string, group: Omit<SCIMGroup, 'id' | 'createdAt' | 'updatedAt'>): Promise<SCIMGroup> => {
+    const groupId = `scim_group_${Date.now()}`;
+    const now = Timestamp.now();
+    
     const newGroup: SCIMGroup = {
       ...group,
-      id: `scim_group_${Date.now()}`
-    }
+      id: groupId,
+      workspaceId,
+      createdAt: now,
+      updatedAt: now
+    };
 
-    const scimGroups = JSON.parse(localStorage.getItem('aether_scim_groups') || '{}')
-    if (!scimGroups[workspaceId]) {
-      scimGroups[workspaceId] = []
-    }
-    scimGroups[workspaceId].push(newGroup)
-    localStorage.setItem('aether_scim_groups', JSON.stringify(scimGroups))
+    const groupRef = doc(db, SCIM_GROUPS_COLLECTION, groupId);
+    await setDoc(groupRef, newGroup);
 
-    return newGroup
+    return newGroup;
   },
 
   // Get all groups
-  getGroups: (workspaceId: string): SCIMGroup[] => {
-    const scimGroups = JSON.parse(localStorage.getItem('aether_scim_groups') || '{}')
-    return scimGroups[workspaceId] || []
+  getGroups: async (workspaceId: string): Promise<SCIMGroup[]> => {
+    const q = query(collection(db, SCIM_GROUPS_COLLECTION), where('workspaceId', '==', workspaceId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data() as SCIMGroup);
   },
 
   // Add user to group
-  addUserToGroup: (workspaceId: string, groupId: string, userId: string): boolean => {
-    const scimGroups = JSON.parse(localStorage.getItem('aether_scim_groups') || '{}')
-    const groups = scimGroups[workspaceId] || []
-    const group = groups.find(g => g.id === groupId)
+  addUserToGroup: async (workspaceId: string, groupId: string, userId: string): Promise<boolean> => {
+    const groupRef = doc(db, SCIM_GROUPS_COLLECTION, groupId);
+    const groupDoc = await getDoc(groupRef);
 
-    if (!group) return false
+    if (!groupDoc.exists()) return false;
 
+    const group = groupDoc.data() as SCIMGroup;
+    
     if (!group.members.includes(userId)) {
-      group.members.push(userId)
-      scimGroups[workspaceId] = groups
-      localStorage.setItem('aether_scim_groups', JSON.stringify(scimGroups))
+      group.members.push(userId);
+      await updateDoc(groupRef, { members: group.members, updatedAt: Timestamp.now() });
     }
 
-    return true
+    return true;
   },
 
   // Remove user from group
-  removeUserFromGroup: (workspaceId: string, groupId: string, userId: string): boolean => {
-    const scimGroups = JSON.parse(localStorage.getItem('aether_scim_groups') || '{}')
-    const groups = scimGroups[workspaceId] || []
-    const group = groups.find(g => g.id === groupId)
+  removeUserFromGroup: async (workspaceId: string, groupId: string, userId: string): Promise<boolean> => {
+    const groupRef = doc(db, SCIM_GROUPS_COLLECTION, groupId);
+    const groupDoc = await getDoc(groupRef);
 
-    if (!group) return false
+    if (!groupDoc.exists()) return false;
 
-    group.members = group.members.filter(id => id !== userId)
-    scimGroups[workspaceId] = groups
-    localStorage.setItem('aether_scim_groups', JSON.stringify(scimGroups))
+    const group = groupDoc.data() as SCIMGroup;
+    group.members = group.members.filter(id => id !== userId);
+    
+    await updateDoc(groupRef, { members: group.members, updatedAt: Timestamp.now() });
 
-    return true
+    return true;
   },
 
   // Sync with identity provider
   syncWithProvider: async (workspaceId: string): Promise<{ success: boolean; synced: number }> => {
     // In production, this would call the SCIM endpoint of the identity provider
     // For now, we'll simulate a sync
-    const users = scimService.getUsers(workspaceId)
+    const users = await scimService.getUsers(workspaceId);
     
     return {
       success: true,
       synced: users.length
-    }
+    };
   }
 }
