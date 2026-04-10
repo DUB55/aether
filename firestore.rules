@@ -173,6 +173,23 @@ service cloud.firestore {
     //   - userId: string (required) - User who owns the key
     //   - createdAt: timestamp (required) - Timestamp
     //
+    // Collection: verification_requests
+    // Document ID: {userId}
+    // Fields:
+    //   - email: string (required) - User email
+    //   - code: string (required) - Verification code
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - expiresAt: timestamp (required) - Expiration timestamp
+    //   - verified: boolean (required) - Whether verified
+    //   - verifiedAt: timestamp (optional) - Verification timestamp
+    //
+    // Collection: user_verifications
+    // Document ID: {userId}
+    // Fields:
+    //   - email: string (required) - User email
+    //   - verified: boolean (required) - Whether email is verified
+    //   - verifiedAt: timestamp (required) - Verification timestamp
+    //
     // ===============================================================
 
     // ===============================================================
@@ -407,6 +424,24 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    function isValidVerificationRequest(data) {
+      return hasRequiredFields(['email', 'code', 'createdAt', 'expiresAt', 'verified']) &&
+             hasOnlyAllowedFields(['email', 'code', 'createdAt', 'expiresAt', 'verified', 'verifiedAt']) &&
+             data.email is string && data.email.size() > 0 &&
+             data.code is string && data.code.size() > 0 &&
+             data.createdAt is timestamp &&
+             data.expiresAt is timestamp &&
+             data.verified is bool;
+    }
+
+    function isValidUserVerification(data) {
+      return hasRequiredFields(['email', 'verified', 'verifiedAt']) &&
+             hasOnlyAllowedFields(['email', 'verified', 'verifiedAt']) &&
+             data.email is string && data.email.size() > 0 &&
+             data.verified is bool &&
+             data.verifiedAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -520,6 +555,20 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidApiKey(request.resource.data);
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /verification_requests/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isValidVerificationRequest(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+
+    match /user_verifications/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isValidUserVerification(request.resource.data);
+      allow update: if false; // User verifications are immutable
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
 
     match /projects/{projectId} {

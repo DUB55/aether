@@ -1,5 +1,9 @@
 // Email verification service
 // Handles email verification for user signups
+// Now uses Firebase Firestore for persistent storage
+
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 
 export interface EmailVerificationRequest {
   email: string
@@ -12,23 +16,42 @@ export interface EmailVerificationResult {
   verificationCode?: string
 }
 
+interface VerificationRequestData {
+  email: string
+  code: string
+  createdAt: Timestamp
+  expiresAt: Timestamp
+  verified: boolean
+  verifiedAt?: Timestamp
+}
+
+interface UserVerificationData {
+  email: string
+  verified: boolean
+  verifiedAt: Timestamp
+}
+
+const VERIFICATION_REQUESTS_COLLECTION = 'verification_requests';
+const USER_VERIFICATIONS_COLLECTION = 'user_verifications';
+
 export const emailVerificationService = {
   // Send verification email
   sendVerificationEmail: async (email: string, userId: string): Promise<EmailVerificationResult> => {
     try {
       // Generate verification code
       const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+      const now = Timestamp.now();
+      const expiresAt = new Timestamp(now.seconds + 24 * 60 * 60, 0); // 24 hours
       
-      // Store verification request (in production, this would be in Firebase/Supabase)
-      const verificationRequests = JSON.parse(localStorage.getItem('aether_verification_requests') || '{}')
-      verificationRequests[userId] = {
+      // Store verification request in Firebase Firestore
+      const verificationRef = doc(db, VERIFICATION_REQUESTS_COLLECTION, userId);
+      await setDoc(verificationRef, {
         email,
         code: verificationCode,
-        createdAt: Date.now(),
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+        createdAt: now,
+        expiresAt,
         verified: false
-      }
-      localStorage.setItem('aether_verification_requests', JSON.stringify(verificationRequests))
+      });
       
       // In production, this would send an actual email via a service like SendGrid, Resend, or Firebase Auth
       // For now, we'll log the code to console and return it
@@ -51,18 +74,21 @@ export const emailVerificationService = {
   // Verify email code
   verifyEmail: async (userId: string, code: string): Promise<EmailVerificationResult> => {
     try {
-      const verificationRequests = JSON.parse(localStorage.getItem('aether_verification_requests') || '{}')
-      const request = verificationRequests[userId]
+      const verificationRef = doc(db, VERIFICATION_REQUESTS_COLLECTION, userId);
+      const verificationDoc = await getDoc(verificationRef);
       
-      if (!request) {
+      if (!verificationDoc.exists()) {
         return {
           success: false,
           message: 'Verification request not found'
         }
       }
       
+      const request = verificationDoc.data() as VerificationRequestData;
+      const now = Timestamp.now();
+      
       // Check if expired
-      if (Date.now() > request.expiresAt) {
+      if (now.toMillis() > request.expiresAt.toMillis()) {
         return {
           success: false,
           message: 'Verification code has expired'
@@ -86,19 +112,18 @@ export const emailVerificationService = {
       }
       
       // Mark as verified
-      request.verified = true
-      request.verifiedAt = Date.now()
-      verificationRequests[userId] = request
-      localStorage.setItem('aether_verification_requests', JSON.stringify(verificationRequests))
+      await updateDoc(verificationRef, {
+        verified: true,
+        verifiedAt: now
+      });
       
-      // Update user verification status (in production, this would update Firebase/Supabase user)
-      const userVerifications = JSON.parse(localStorage.getItem('aether_user_verifications') || '{}')
-      userVerifications[userId] = {
+      // Update user verification status
+      const userVerificationRef = doc(db, USER_VERIFICATIONS_COLLECTION, userId);
+      await setDoc(userVerificationRef, {
         email: request.email,
         verified: true,
-        verifiedAt: Date.now()
-      }
-      localStorage.setItem('aether_user_verifications', JSON.stringify(userVerifications))
+        verifiedAt: now
+      });
       
       return {
         success: true,
@@ -114,31 +139,43 @@ export const emailVerificationService = {
   },
 
   // Check if email is verified
-  isEmailVerified: (userId: string): boolean => {
-    const userVerifications = JSON.parse(localStorage.getItem('aether_user_verifications') || '{}')
-    return userVerifications[userId]?.verified || false
+  isEmailVerified: async (userId: string): Promise<boolean> => {
+    const userVerificationRef = doc(db, USER_VERIFICATIONS_COLLECTION, userId);
+    const userVerificationDoc = await getDoc(userVerificationRef);
+    
+    if (userVerificationDoc.exists()) {
+      const verification = userVerificationDoc.data() as UserVerificationData;
+      return verification.verified;
+    }
+    
+    return false;
   },
 
   // Resend verification email
   resendVerificationEmail: async (userId: string): Promise<EmailVerificationResult> => {
     try {
-      const verificationRequests = JSON.parse(localStorage.getItem('aether_verification_requests') || '{}')
-      const request = verificationRequests[userId]
+      const verificationRef = doc(db, VERIFICATION_REQUESTS_COLLECTION, userId);
+      const verificationDoc = await getDoc(verificationRef);
       
-      if (!request) {
+      if (!verificationDoc.exists()) {
         return {
           success: false,
           message: 'No verification request found'
         }
       }
       
+      const request = verificationDoc.data() as VerificationRequestData;
+      
       // Generate new code
-      const newCode = Math.random().toString(36).substring(2, 8).toUpperCase()
-      request.code = newCode
-      request.createdAt = Date.now()
-      request.expiresAt = Date.now() + 24 * 60 * 60 * 1000
-      verificationRequests[userId] = request
-      localStorage.setItem('aether_verification_requests', JSON.stringify(verificationRequests))
+      const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const now = Timestamp.now();
+      const expiresAt = new Timestamp(now.seconds + 24 * 60 * 60, 0);
+      
+      await updateDoc(verificationRef, {
+        code: newCode,
+        createdAt: now,
+        expiresAt
+      });
       
       console.log(`[Email Verification] New verification code for ${request.email}: ${newCode}`)
       
@@ -157,14 +194,23 @@ export const emailVerificationService = {
   },
 
   // Get verification status
-  getVerificationStatus: (userId: string) => {
-    const userVerifications = JSON.parse(localStorage.getItem('aether_user_verifications') || '{}')
-    const verification = userVerifications[userId]
+  getVerificationStatus: async (userId: string) => {
+    const userVerificationRef = doc(db, USER_VERIFICATIONS_COLLECTION, userId);
+    const userVerificationDoc = await getDoc(userVerificationRef);
+    
+    if (userVerificationDoc.exists()) {
+      const verification = userVerificationDoc.data() as UserVerificationData;
+      return {
+        verified: verification.verified,
+        email: verification.email,
+        verifiedAt: verification.verifiedAt
+      };
+    }
     
     return {
-      verified: verification?.verified || false,
-      email: verification?.email || null,
-      verifiedAt: verification?.verifiedAt || null
-    }
+      verified: false,
+      email: null,
+      verifiedAt: null
+    };
   }
 }
