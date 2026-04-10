@@ -4,7 +4,7 @@ import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Cpu, Rocket } from 'lucide-react'
+import { Cpu, Rocket, X } from 'lucide-react'
 import { AetherLogo } from './aether-logo'
 import { useFirebase } from './FirebaseProvider'
 
@@ -43,8 +43,16 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
           </div>
 
           <div className="relative z-10 p-8">
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--bg2)] hover:bg-[var(--bg3)] flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4 text-[var(--t3)]" />
+            </button>
+
             <div className="flex flex-col items-center text-center space-y-6">
-                <div className="w-24 h-16 rounded-2xl bg-[var(--bg3)] flex items-center justify-center mb-2">
+                <div className="w-40 h-16 rounded-2xl bg-[var(--bg3)] flex items-center justify-center mb-2">
                   <AetherLogo size={40} />
                 </div>
                 
