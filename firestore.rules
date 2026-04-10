@@ -190,6 +190,35 @@ service cloud.firestore {
     //   - verified: boolean (required) - Whether email is verified
     //   - verifiedAt: timestamp (required) - Verification timestamp
     //
+    // Collection: billing_accounts
+    // Document ID: {accountId}
+    // Fields:
+    //   - id: string (required) - Billing account ID
+    //   - workspaceId: string (required) - Workspace ID
+    //   - name: string (required) - Account name
+    //   - email: string (required) - Account email
+    //   - plan: string (required, enum: ['free', 'pro', 'enterprise']) - Plan type
+    //   - status: string (required, enum: ['active', 'past_due', 'cancelled']) - Account status
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - billingCycle: string (required, enum: ['monthly', 'yearly']) - Billing cycle
+    //   - nextBillingDate: timestamp (optional) - Next billing date
+    //
+    // Collection: usage_data
+    // Document ID: {workspaceId}
+    // Fields:
+    //   - updatedAt: timestamp (required) - Last update timestamp
+    //   - {resource}: number (dynamic) - Usage data for each resource
+    //
+    // Collection: team_controls
+    // Document ID: {workspaceId}
+    // Fields:
+    //   - allowMemberInvite: boolean (optional) - Allow member invite
+    //   - requireApproval: boolean (optional) - Require approval
+    //   - maxMembers: number (optional) - Max members
+    //   - allowProjectCreation: boolean (optional) - Allow project creation
+    //   - allowDeployment: boolean (optional) - Allow deployment
+    //   - updatedAt: timestamp (required) - Last update timestamp
+    //
     // ===============================================================
 
     // ===============================================================
@@ -442,6 +471,28 @@ service cloud.firestore {
              data.verifiedAt is timestamp;
     }
 
+    function isValidBillingAccount(data) {
+      return hasRequiredFields(['id', 'workspaceId', 'name', 'email', 'plan', 'status', 'createdAt', 'billingCycle']) &&
+             hasOnlyAllowedFields(['id', 'workspaceId', 'name', 'email', 'plan', 'status', 'createdAt', 'billingCycle', 'nextBillingDate']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.workspaceId is string && data.workspaceId.size() > 0 &&
+             data.name is string && data.name.size() > 0 &&
+             data.email is string && data.email.size() > 0 &&
+             data.plan in ['free', 'pro', 'enterprise'] &&
+             data.status in ['active', 'past_due', 'cancelled'] &&
+             data.createdAt is timestamp &&
+             data.billingCycle in ['monthly', 'yearly'];
+    }
+
+    function isValidUsageData(data) {
+      return data.updatedAt is timestamp;
+    }
+
+    function isValidTeamControls(data) {
+      return hasOnlyAllowedFields(['allowMemberInvite', 'requireApproval', 'maxMembers', 'allowProjectCreation', 'allowDeployment', 'updatedAt']) &&
+             data.updatedAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -569,6 +620,27 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidUserVerification(request.resource.data);
       allow update: if false; // User verifications are immutable
       allow delete: if isAuthenticated() && isOwner(userId);
+    }
+
+    match /billing_accounts/{accountId} {
+      allow read: if isAuthenticated() && isWorkspaceOwner(resource.data.workspaceId) || isAdmin();
+      allow create: if isAuthenticated() && isValidBillingAccount(request.resource.data) && (isWorkspaceOwner(request.resource.data.workspaceId) || isAdmin());
+      allow update: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+      allow delete: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+    }
+
+    match /usage_data/{workspaceId} {
+      allow read: if isAuthenticated() && isWorkspaceOwner(workspaceId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUsageData(request.resource.data) && (isWorkspaceOwner(workspaceId) || isAdmin());
+      allow update: if isAuthenticated() && (isWorkspaceOwner(workspaceId) || isAdmin());
+      allow delete: if isAuthenticated() && (isWorkspaceOwner(workspaceId) || isAdmin());
+    }
+
+    match /team_controls/{workspaceId} {
+      allow read: if isAuthenticated() && isWorkspaceOwner(workspaceId) || isAdmin();
+      allow create: if isAuthenticated() && isValidTeamControls(request.resource.data) && (isWorkspaceOwner(workspaceId) || isAdmin());
+      allow update: if isAuthenticated() && (isWorkspaceOwner(workspaceId) || isAdmin());
+      allow delete: if isAuthenticated() && (isWorkspaceOwner(workspaceId) || isAdmin());
     }
 
     match /projects/{projectId} {

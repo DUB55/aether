@@ -1,5 +1,9 @@
 // Team controls and centralized billing service
 // Manages team billing and controls
+// Now uses Firebase Firestore for persistent storage
+
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 
 export interface BillingAccount {
   id: string
@@ -8,9 +12,9 @@ export interface BillingAccount {
   email: string
   plan: 'free' | 'pro' | 'enterprise'
   status: 'active' | 'past_due' | 'cancelled'
-  createdAt: number
+  createdAt: Timestamp
   billingCycle: 'monthly' | 'yearly'
-  nextBillingDate?: number
+  nextBillingDate?: Timestamp
 }
 
 export interface UsageLimit {
@@ -20,45 +24,57 @@ export interface UsageLimit {
   unit: string
 }
 
+const BILLING_ACCOUNTS_COLLECTION = 'billing_accounts';
+const USAGE_DATA_COLLECTION = 'usage_data';
+const TEAM_CONTROLS_COLLECTION = 'team_controls';
+
 export const billingService = {
   // Create billing account
-  createBillingAccount: (workspaceId: string, name: string, email: string): BillingAccount => {
+  createBillingAccount: async (workspaceId: string, name: string, email: string): Promise<BillingAccount> => {
+    const accountId = `billing_${Date.now()}`;
+    const now = Timestamp.now();
+    
     const account: BillingAccount = {
-      id: `billing_${Date.now()}`,
+      id: accountId,
       workspaceId,
       name,
       email,
       plan: 'free',
       status: 'active',
-      createdAt: Date.now(),
+      createdAt: now,
       billingCycle: 'monthly'
     }
 
-    const accounts = JSON.parse(localStorage.getItem('aether_billing_accounts') || '{}')
-    accounts[workspaceId] = account
-    localStorage.setItem('aether_billing_accounts', JSON.stringify(accounts))
+    const accountRef = doc(db, BILLING_ACCOUNTS_COLLECTION, accountId);
+    await setDoc(accountRef, account);
 
-    return account
+    return account;
   },
 
   // Get billing account
-  getBillingAccount: (workspaceId: string): BillingAccount | null => {
-    const accounts = JSON.parse(localStorage.getItem('aether_billing_accounts') || '{}')
-    return accounts[workspaceId] || null
+  getBillingAccount: async (workspaceId: string): Promise<BillingAccount | null> => {
+    const q = query(collection(db, BILLING_ACCOUNTS_COLLECTION), where('workspaceId', '==', workspaceId));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      return querySnapshot.docs[0].data() as BillingAccount;
+    }
+    
+    return null;
   },
 
   // Update plan
-  updatePlan: (workspaceId: string, plan: 'free' | 'pro' | 'enterprise'): BillingAccount | null => {
-    const accounts = JSON.parse(localStorage.getItem('aether_billing_accounts') || '{}')
-    const account = accounts[workspaceId]
+  updatePlan: async (workspaceId: string, plan: 'free' | 'pro' | 'enterprise'): Promise<BillingAccount | null> => {
+    const q = query(collection(db, BILLING_ACCOUNTS_COLLECTION), where('workspaceId', '==', workspaceId));
+    const querySnapshot = await getDocs(q);
     
-    if (!account) return null
+    if (querySnapshot.empty) return null;
 
-    account.plan = plan
-    accounts[workspaceId] = account
-    localStorage.setItem('aether_billing_accounts', JSON.stringify(accounts))
-
-    return account
+    const accountRef = querySnapshot.docs[0].ref;
+    await updateDoc(accountRef, { plan });
+    
+    const updatedDoc = await getDoc(accountRef);
+    return updatedDoc.data() as BillingAccount;
   },
 
   // Get usage limits for plan
@@ -87,70 +103,91 @@ export const billingService = {
       ]
     }
 
-    return limits[plan as keyof typeof limits] || limits.free
+    return limits[plan as keyof typeof limits] || limits.free;
   },
 
   // Update usage
-  updateUsage: (workspaceId: string, resource: string, amount: number): void => {
-    const usageData = JSON.parse(localStorage.getItem('aether_usage_data') || '{}')
-    if (!usageData[workspaceId]) {
-      usageData[workspaceId] = {}
-    }
-    usageData[workspaceId][resource] = (usageData[workspaceId][resource] || 0) + amount
-    localStorage.setItem('aether_usage_data', JSON.stringify(usageData))
+  updateUsage: async (workspaceId: string, resource: string, amount: number): Promise<void> => {
+    const usageRef = doc(db, USAGE_DATA_COLLECTION, workspaceId);
+    const usageDoc = await getDoc(usageRef);
+    
+    const currentData = usageDoc.exists() ? usageDoc.data() : {};
+    const currentUsage = (currentData as any)[resource] || 0;
+    
+    await setDoc(usageRef, {
+      ...currentData,
+      [resource]: currentUsage + amount,
+      updatedAt: Timestamp.now()
+    }, { merge: true });
   },
 
   // Get current usage
-  getCurrentUsage: (workspaceId: string): Record<string, number> => {
-    const usageData = JSON.parse(localStorage.getItem('aether_usage_data') || '{}')
-    return usageData[workspaceId] || {}
+  getCurrentUsage: async (workspaceId: string): Promise<Record<string, number>> => {
+    const usageRef = doc(db, USAGE_DATA_COLLECTION, workspaceId);
+    const usageDoc = await getDoc(usageRef);
+    
+    if (usageDoc.exists()) {
+      const data = usageDoc.data();
+      const { updatedAt, ...usage } = data as any;
+      return usage;
+    }
+    
+    return {};
   },
 
   // Check if limit exceeded
-  checkLimitExceeded: (workspaceId: string, resource: string): boolean => {
-    const account = billingService.getBillingAccount(workspaceId)
-    if (!account) return false
+  checkLimitExceeded: async (workspaceId: string, resource: string): Promise<boolean> => {
+    const account = await billingService.getBillingAccount(workspaceId);
+    if (!account) return false;
 
-    const limits = billingService.getUsageLimits(account.plan)
-    const limit = limits.find(l => l.resource === resource)
-    if (!limit) return false
+    const limits = billingService.getUsageLimits(account.plan);
+    const limit = limits.find(l => l.resource === resource);
+    if (!limit) return false;
 
-    const currentUsage = billingService.getCurrentUsage(workspaceId)
-    const used = currentUsage[resource] || 0
+    const currentUsage = await billingService.getCurrentUsage(workspaceId);
+    const used = currentUsage[resource] || 0;
 
-    return limit.limit !== -1 && used >= limit.limit
+    return limit.limit !== -1 && used >= limit.limit;
   },
 
   // Get billing history
-  getBillingHistory: (workspaceId: string): Array<{
+  getBillingHistory: async (workspaceId: string): Promise<Array<{
     id: string
-    date: number
+    date: Timestamp
     amount: number
     status: 'paid' | 'pending' | 'failed'
     description: string
-  }> => {
+  }>> => {
     // In production, this would fetch from payment processor
     return [
       {
         id: 'inv_001',
-        date: Date.now() - 30 * 24 * 60 * 60 * 1000,
+        date: new Timestamp(Date.now() / 1000 - 30 * 24 * 60 * 60, 0),
         amount: 0,
         status: 'paid',
         description: 'Free tier usage'
       }
-    ]
+    ];
   },
 
   // Get team controls
-  getTeamControls: (workspaceId: string): {
+  getTeamControls: async (workspaceId: string): Promise<{
     allowMemberInvite: boolean
     requireApproval: boolean
     maxMembers: number
     allowProjectCreation: boolean
     allowDeployment: boolean
-  } => {
-    const account = billingService.getBillingAccount(workspaceId)
-    const plan = account?.plan || 'free'
+  }> => {
+    const account = await billingService.getBillingAccount(workspaceId);
+    const plan = account?.plan || 'free';
+
+    // Check if custom controls exist
+    const controlsRef = doc(db, TEAM_CONTROLS_COLLECTION, workspaceId);
+    const controlsDoc = await getDoc(controlsRef);
+    
+    if (controlsDoc.exists()) {
+      return controlsDoc.data() as any;
+    }
 
     return {
       allowMemberInvite: plan !== 'free',
@@ -158,21 +195,25 @@ export const billingService = {
       maxMembers: plan === 'free' ? 5 : plan === 'pro' ? 50 : -1,
       allowProjectCreation: true,
       allowDeployment: true
-    }
+    };
   },
 
   // Update team controls
-  updateTeamControls: (workspaceId: string, controls: Partial<{
+  updateTeamControls: async (workspaceId: string, controls: Partial<{
     allowMemberInvite: boolean
     requireApproval: boolean
     allowProjectCreation: boolean
     allowDeployment: boolean
-  }>): void => {
-    const teamControls = JSON.parse(localStorage.getItem('aether_team_controls') || '{}')
-    teamControls[workspaceId] = {
-      ...teamControls[workspaceId],
-      ...controls
-    }
-    localStorage.setItem('aether_team_controls', JSON.stringify(teamControls))
+  }>): Promise<void> => {
+    const controlsRef = doc(db, TEAM_CONTROLS_COLLECTION, workspaceId);
+    const controlsDoc = await getDoc(controlsRef);
+    
+    const currentControls = controlsDoc.exists() ? controlsDoc.data() : {};
+    
+    await setDoc(controlsRef, {
+      ...currentControls,
+      ...controls,
+      updatedAt: Timestamp.now()
+    }, { merge: true });
   }
 }
