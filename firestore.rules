@@ -72,6 +72,28 @@ service cloud.firestore {
     //   - enabledAt: timestamp (optional) - When 2FA was enabled
     //   - disabledAt: timestamp (optional) - When 2FA was disabled
     //
+    // Collection: sso_configs
+    // Document ID: {providerId}
+    // Fields:
+    //   - id: string (required) - Provider ID
+    //   - name: string (required) - Provider name
+    //   - type: string (required, enum: ['oauth2', 'saml']) - Provider type
+    //   - icon: string (required) - Provider icon
+    //   - enabled: boolean (required) - Whether provider is enabled
+    //   - config: map (required) - Provider configuration
+    //   - userId: string (required) - User who configured it
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - updatedAt: timestamp (required) - Timestamp
+    //
+    // Collection: sso_connections
+    // Document ID: {connectionId}
+    // Fields:
+    //   - id: string (required) - Connection ID
+    //   - providerId: string (required) - Provider ID
+    //   - workspaceId: string (required) - Workspace ID
+    //   - enabled: boolean (required) - Whether connection is enabled
+    //   - createdAt: timestamp (required) - Timestamp
+    //
     // ===============================================================
 
     // ===============================================================
@@ -88,6 +110,10 @@ service cloud.firestore {
 
     function isProjectOwner(projectId) {
       return isAuthenticated() && request.auth.uid == get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId;
+    }
+
+    function isWorkspaceOwner(workspaceId) {
+      return isAuthenticated() && request.auth.uid == get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId;
     }
 
     function isAdmin() {
@@ -195,6 +221,30 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    function isValidSSOConfig(data) {
+      return hasRequiredFields(['id', 'name', 'type', 'icon', 'enabled', 'config', 'userId', 'createdAt', 'updatedAt']) &&
+             hasOnlyAllowedFields(['id', 'name', 'type', 'icon', 'enabled', 'config', 'userId', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 &&
+             data.type in ['oauth2', 'saml'] &&
+             data.icon is string &&
+             data.enabled is bool &&
+             data.config is map &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    function isValidSSOConnection(data) {
+      return hasRequiredFields(['id', 'providerId', 'workspaceId', 'enabled', 'createdAt']) &&
+             hasOnlyAllowedFields(['id', 'providerId', 'workspaceId', 'enabled', 'createdAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.providerId is string && data.providerId.size() > 0 &&
+             data.workspaceId is string && data.workspaceId.size() > 0 &&
+             data.enabled is bool &&
+             data.createdAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -245,6 +295,20 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidTwoFactorData(request.resource.data) && isOwner(userId);
       allow update: if isAuthenticated() && isOwner(userId);
       allow delete: if isAuthenticated() && isOwner(userId);
+    }
+
+    match /sso_configs/{providerId} {
+      allow read: if isAuthenticated() && isOwner(request.resource.data.userId);
+      allow create: if isAuthenticated() && isValidSSOConfig(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /sso_connections/{connectionId} {
+      allow read: if isAuthenticated() && isWorkspaceOwner(resource.data.workspaceId) || isAdmin();
+      allow create: if isAuthenticated() && isValidSSOConnection(request.resource.data) && (isWorkspaceOwner(request.resource.data.workspaceId) || isAdmin());
+      allow update: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+      allow delete: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
     }
 
     match /projects/{projectId} {

@@ -1,5 +1,9 @@
 // SSO (Single Sign-On) service
 // Supports OAuth 2.0 and SAML for enterprise authentication
+// Now uses Firebase Firestore for persistent storage
+
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 
 export interface SSOProvider {
   id: string
@@ -21,8 +25,11 @@ export interface SSOConnection {
   providerId: string
   workspaceId: string
   enabled: boolean
-  createdAt: number
+  createdAt: Timestamp
 }
+
+const SSO_CONFIGS_COLLECTION = 'sso_configs';
+const SSO_CONNECTIONS_COLLECTION = 'sso_connections';
 
 export const ssoService = {
   // Available SSO providers
@@ -70,7 +77,11 @@ export const ssoService = {
   },
 
   // Configure SSO provider
-  configureProvider: (providerId: string, config: Record<string, string>): SSOProvider => {
+  configureProvider: async (providerId: string, config: Record<string, string>): Promise<SSOProvider> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
     const provider = ssoService.providers[providerId as keyof typeof ssoService.providers]
     if (!provider) {
       throw new Error('Invalid provider')
@@ -85,50 +96,70 @@ export const ssoService = {
       }
     }
 
-    // Store configuration (in production, this would be in Firebase/Supabase)
-    const ssoConfigs = JSON.parse(localStorage.getItem('aether_sso_configs') || '{}')
-    ssoConfigs[providerId] = updatedProvider
-    localStorage.setItem('aether_sso_configs', JSON.stringify(ssoConfigs))
+    // Store configuration in Firebase Firestore
+    const configRef = doc(db, SSO_CONFIGS_COLLECTION, providerId);
+    await setDoc(configRef, {
+      ...updatedProvider,
+      userId: auth.currentUser.uid,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
+    });
 
     return updatedProvider
   },
 
   // Get configured providers
-  getConfiguredProviders: (): SSOProvider[] => {
-    const ssoConfigs = JSON.parse(localStorage.getItem('aether_sso_configs') || '{}')
-    return Object.values(ssoConfigs)
+  getConfiguredProviders: async (): Promise<SSOProvider[]> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    const q = query(collection(db, SSO_CONFIGS_COLLECTION), where('userId', '==', auth.currentUser.uid));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => doc.data() as SSOProvider);
   },
 
   // Enable SSO for workspace
-  enableSSOForWorkspace: (workspaceId: string, providerId: string): SSOConnection => {
+  enableSSOForWorkspace: async (workspaceId: string, providerId: string): Promise<SSOConnection> => {
+    const connectionId = `sso_${Date.now()}`;
     const connection: SSOConnection = {
-      id: `sso_${Date.now()}`,
+      id: connectionId,
       providerId,
       workspaceId,
       enabled: true,
-      createdAt: Date.now()
+      createdAt: Timestamp.now()
     }
 
-    // Store connection (in production, this would be in Firebase/Supabase)
-    const ssoConnections = JSON.parse(localStorage.getItem('aether_sso_connections') || '{}')
-    ssoConnections[workspaceId] = connection
-    localStorage.setItem('aether_sso_connections', JSON.stringify(ssoConnections))
+    // Store connection in Firebase Firestore
+    const connectionRef = doc(db, SSO_CONNECTIONS_COLLECTION, connectionId);
+    await setDoc(connectionRef, connection);
 
     return connection
   },
 
   // Disable SSO for workspace
-  disableSSOForWorkspace: (workspaceId: string): boolean => {
-    const ssoConnections = JSON.parse(localStorage.getItem('aether_sso_connections') || '{}')
-    delete ssoConnections[workspaceId]
-    localStorage.setItem('aether_sso_connections', JSON.stringify(ssoConnections))
-    return true
+  disableSSOForWorkspace: async (workspaceId: string): Promise<boolean> => {
+    const q = query(collection(db, SSO_CONNECTIONS_COLLECTION), where('workspaceId', '==', workspaceId));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      await deleteDoc(querySnapshot.docs[0].ref);
+    }
+    
+    return true;
   },
 
   // Get SSO connection for workspace
-  getWorkspaceSSOConnection: (workspaceId: string): SSOConnection | null => {
-    const ssoConnections = JSON.parse(localStorage.getItem('aether_sso_connections') || '{}')
-    return ssoConnections[workspaceId] || null
+  getWorkspaceSSOConnection: async (workspaceId: string): Promise<SSOConnection | null> => {
+    const q = query(collection(db, SSO_CONNECTIONS_COLLECTION), where('workspaceId', '==', workspaceId));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      return querySnapshot.docs[0].data() as SSOConnection;
+    }
+    
+    return null;
   },
 
   // Initiate SSO login
@@ -156,10 +187,14 @@ export const ssoService = {
   },
 
   // Remove provider configuration
-  removeProvider: (providerId: string): boolean => {
-    const ssoConfigs = JSON.parse(localStorage.getItem('aether_sso_configs') || '{}')
-    delete ssoConfigs[providerId]
-    localStorage.setItem('aether_sso_configs', JSON.stringify(ssoConfigs))
-    return true
+  removeProvider: async (providerId: string): Promise<boolean> => {
+    const configRef = doc(db, SSO_CONFIGS_COLLECTION, providerId);
+    const configDoc = await getDoc(configRef);
+    
+    if (configDoc.exists()) {
+      await deleteDoc(configRef);
+    }
+    
+    return true;
   }
 }
