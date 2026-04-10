@@ -1,5 +1,9 @@
 // Two-factor authentication service
 // Handles TOTP-based 2FA for enhanced security
+// Now uses Firebase Firestore for persistent storage
+
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 
 export interface TwoFactorSetup {
   secret: string
@@ -12,9 +16,15 @@ export interface TwoFactorVerificationResult {
   message: string
 }
 
+const TWO_FACTOR_COLLECTION = 'two_factor_data';
+
 export const twoFactorAuthService = {
   // Generate secret for 2FA setup
-  generateSecret: (userId: string): string => {
+  generateSecret: async (userId: string): Promise<string> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
     // Generate a random 32-character secret
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
     let secret = ''
@@ -22,17 +32,17 @@ export const twoFactorAuthService = {
       secret += chars.charAt(Math.floor(Math.random() * chars.length))
     }
     
-    // Store secret (in production, this would be encrypted in Firebase/Supabase)
-    const twoFactorData = JSON.parse(localStorage.getItem('aether_2fa_data') || '{}')
-    twoFactorData[userId] = {
+    // Store secret in Firebase Firestore
+    const twoFactorRef = doc(db, TWO_FACTOR_COLLECTION, userId);
+    await setDoc(twoFactorRef, {
+      userId,
       secret,
       enabled: false,
       backupCodes: [],
-      createdAt: Date.now()
-    }
-    localStorage.setItem('aether_2fa_data', JSON.stringify(twoFactorData))
+      createdAt: Timestamp.now()
+    }, { merge: true });
     
-    return secret
+    return secret;
   },
 
   // Generate QR code URL for authenticator apps
@@ -55,17 +65,17 @@ export const twoFactorAuthService = {
   },
 
   // Setup 2FA for user
-  setupTwoFactor: (userId: string, email: string): TwoFactorSetup => {
-    const secret = twoFactorAuthService.generateSecret(userId)
+  setupTwoFactor: async (userId: string, email: string): Promise<TwoFactorSetup> => {
+    const secret = await twoFactorAuthService.generateSecret(userId)
     const qrCodeUrl = twoFactorAuthService.generateQrCodeUrl(email, secret)
     const backupCodes = twoFactorAuthService.generateBackupCodes()
     
-    // Store backup codes
-    const twoFactorData = JSON.parse(localStorage.getItem('aether_2fa_data') || '{}')
-    if (twoFactorData[userId]) {
-      twoFactorData[userId].backupCodes = backupCodes
-      localStorage.setItem('aether_2fa_data', JSON.stringify(twoFactorData))
-    }
+    // Store backup codes in Firebase
+    const twoFactorRef = doc(db, TWO_FACTOR_COLLECTION, userId);
+    await updateDoc(twoFactorRef, {
+      backupCodes,
+      updatedAt: Timestamp.now()
+    });
     
     return {
       secret,
@@ -75,10 +85,19 @@ export const twoFactorAuthService = {
   },
 
   // Verify TOTP code (simplified - in production use a proper TOTP library)
-  verifyCode: (userId: string, code: string): TwoFactorVerificationResult => {
+  verifyCode: async (userId: string, code: string): Promise<TwoFactorVerificationResult> => {
     try {
-      const twoFactorData = JSON.parse(localStorage.getItem('aether_2fa_data') || '{}')
-      const user2fa = twoFactorData[userId]
+      const twoFactorRef = doc(db, TWO_FACTOR_COLLECTION, userId);
+      const twoFactorDoc = await getDoc(twoFactorRef);
+      
+      if (!twoFactorDoc.exists()) {
+        return {
+          success: false,
+          message: '2FA not set up for this user'
+        }
+      }
+
+      const user2fa = twoFactorDoc.data();
       
       if (!user2fa || !user2fa.enabled) {
         return {
@@ -122,19 +141,22 @@ export const twoFactorAuthService = {
   },
 
   // Verify backup code
-  verifyBackupCode: (userId: string, code: string): TwoFactorVerificationResult => {
+  verifyBackupCode: async (userId: string, code: string): Promise<TwoFactorVerificationResult> => {
     try {
-      const twoFactorData = JSON.parse(localStorage.getItem('aether_2fa_data') || '{}')
-      const user2fa = twoFactorData[userId]
+      const twoFactorRef = doc(db, TWO_FACTOR_COLLECTION, userId);
+      const twoFactorDoc = await getDoc(twoFactorRef);
       
-      if (!user2fa) {
+      if (!twoFactorDoc.exists()) {
         return {
           success: false,
           message: '2FA not set up for this user'
         }
       }
 
-      const codeIndex = user2fa.backupCodes.indexOf(code.toUpperCase())
+      const user2fa = twoFactorDoc.data();
+      const backupCodes = user2fa.backupCodes || [];
+
+      const codeIndex = backupCodes.indexOf(code.toUpperCase())
       if (codeIndex === -1) {
         return {
           success: false,
@@ -143,9 +165,11 @@ export const twoFactorAuthService = {
       }
 
       // Remove used backup code
-      user2fa.backupCodes.splice(codeIndex, 1)
-      twoFactorData[userId] = user2fa
-      localStorage.setItem('aether_2fa_data', JSON.stringify(twoFactorData))
+      backupCodes.splice(codeIndex, 1);
+      await updateDoc(twoFactorRef, {
+        backupCodes,
+        updatedAt: Timestamp.now()
+      });
 
       return {
         success: true,
@@ -161,13 +185,16 @@ export const twoFactorAuthService = {
   },
 
   // Enable 2FA after verification
-  enableTwoFactor: (userId: string): boolean => {
+  enableTwoFactor: async (userId: string): Promise<boolean> => {
     try {
-      const twoFactorData = JSON.parse(localStorage.getItem('aether_2fa_data') || '{}')
-      if (twoFactorData[userId]) {
-        twoFactorData[userId].enabled = true
-        twoFactorData[userId].enabledAt = Date.now()
-        localStorage.setItem('aether_2fa_data', JSON.stringify(twoFactorData))
+      const twoFactorRef = doc(db, TWO_FACTOR_COLLECTION, userId);
+      const twoFactorDoc = await getDoc(twoFactorRef);
+      
+      if (twoFactorDoc.exists()) {
+        await updateDoc(twoFactorRef, {
+          enabled: true,
+          enabledAt: Timestamp.now()
+        });
         return true
       }
       return false
@@ -178,13 +205,16 @@ export const twoFactorAuthService = {
   },
 
   // Disable 2FA
-  disableTwoFactor: (userId: string): boolean => {
+  disableTwoFactor: async (userId: string): Promise<boolean> => {
     try {
-      const twoFactorData = JSON.parse(localStorage.getItem('aether_2fa_data') || '{}')
-      if (twoFactorData[userId]) {
-        twoFactorData[userId].enabled = false
-        twoFactorData[userId].disabledAt = Date.now()
-        localStorage.setItem('aether_2fa_data', JSON.stringify(twoFactorData))
+      const twoFactorRef = doc(db, TWO_FACTOR_COLLECTION, userId);
+      const twoFactorDoc = await getDoc(twoFactorRef);
+      
+      if (twoFactorDoc.exists()) {
+        await updateDoc(twoFactorRef, {
+          enabled: false,
+          disabledAt: Timestamp.now()
+        });
         return true
       }
       return false
@@ -195,20 +225,35 @@ export const twoFactorAuthService = {
   },
 
   // Check if 2FA is enabled for user
-  isTwoFactorEnabled: (userId: string): boolean => {
-    const twoFactorData = JSON.parse(localStorage.getItem('aether_2fa_data') || '{}')
-    return twoFactorData[userId]?.enabled || false
+  isTwoFactorEnabled: async (userId: string): Promise<boolean> => {
+    const twoFactorRef = doc(db, TWO_FACTOR_COLLECTION, userId);
+    const twoFactorDoc = await getDoc(twoFactorRef);
+    
+    if (twoFactorDoc.exists()) {
+      const user2fa = twoFactorDoc.data();
+      return user2fa?.enabled || false;
+    }
+    return false;
   },
 
   // Get 2FA status
-  getTwoFactorStatus: (userId: string) => {
-    const twoFactorData = JSON.parse(localStorage.getItem('aether_2fa_data') || '{}')
-    const user2fa = twoFactorData[userId]
+  getTwoFactorStatus: async (userId: string) => {
+    const twoFactorRef = doc(db, TWO_FACTOR_COLLECTION, userId);
+    const twoFactorDoc = await getDoc(twoFactorRef);
+    
+    if (twoFactorDoc.exists()) {
+      const user2fa = twoFactorDoc.data();
+      return {
+        enabled: user2fa?.enabled || false,
+        enabledAt: user2fa?.enabledAt || null,
+        backupCodesRemaining: user2fa?.backupCodes?.length || 0
+      };
+    }
     
     return {
-      enabled: user2fa?.enabled || false,
-      enabledAt: user2fa?.enabledAt || null,
-      backupCodesRemaining: user2fa?.backupCodes?.length || 0
-    }
+      enabled: false,
+      enabledAt: null,
+      backupCodesRemaining: 0
+    };
   }
 }

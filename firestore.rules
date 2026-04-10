@@ -61,6 +61,17 @@ service cloud.firestore {
     //   - createdBy: string (required) - User who created the version
     //   - isCurrent: boolean (required) - Whether this is the current version
     //
+    // Collection: two_factor_data
+    // Document ID: {userId}
+    // Fields:
+    //   - userId: string (required) - The user's UID
+    //   - secret: string (required) - TOTP secret (encrypted in production)
+    //   - enabled: boolean (required) - Whether 2FA is enabled
+    //   - backupCodes: list (required) - Backup codes for recovery
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - enabledAt: timestamp (optional) - When 2FA was enabled
+    //   - disabledAt: timestamp (optional) - When 2FA was disabled
+    //
     // ===============================================================
 
     // ===============================================================
@@ -174,6 +185,16 @@ service cloud.firestore {
              data.isCurrent is bool;
     }
 
+    function isValidTwoFactorData(data) {
+      return hasRequiredFields(['userId', 'secret', 'enabled', 'backupCodes', 'createdAt']) &&
+             hasOnlyAllowedFields(['userId', 'secret', 'enabled', 'backupCodes', 'createdAt', 'enabledAt', 'disabledAt', 'updatedAt']) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.secret is string && data.secret.size() > 0 &&
+             data.enabled is bool &&
+             data.backupCodes is list &&
+             data.createdAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -217,6 +238,13 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidProjectVersion(request.resource.data) && (isProjectOwner(request.resource.data.projectId) || isAdmin());
       allow update: if isAuthenticated() && isValidProjectVersion(request.resource.data) && (isProjectOwner(resource.data.projectId) || isAdmin());
       allow delete: if isAuthenticated() && (isProjectOwner(resource.data.projectId) || isAdmin());
+    }
+
+    match /two_factor_data/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isValidTwoFactorData(request.resource.data) && isOwner(userId);
+      allow update: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
 
     match /projects/{projectId} {
