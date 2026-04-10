@@ -1,13 +1,12 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { LogIn, Cpu, Shield, Rocket } from 'lucide-react'
+import { Cpu, Rocket } from 'lucide-react'
 import { AetherLogo } from './aether-logo'
 import { useFirebase } from './FirebaseProvider'
-import { EmailVerification } from './EmailVerification'
 
 interface LoginModalProps {
   open: boolean
@@ -17,24 +16,18 @@ interface LoginModalProps {
 
 export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
   const { user } = useFirebase()
-  const [showEmailVerification, setShowEmailVerification] = useState(false)
 
   console.log('[LoginModal] Render - open:', open, 'user:', user ? 'authenticated' : 'null')
 
-  // Show email verification after successful login
+  // Auto-close modal when user is authenticated (Google OAuth users are already verified)
   useEffect(() => {
     console.log('[LoginModal] useEffect triggered - user:', user ? 'authenticated' : 'null', 'open:', open)
-    if (user && open && !showEmailVerification) {
-      console.log('[LoginModal] User authenticated - showing email verification')
-      setShowEmailVerification(true)
+    if (user && open) {
+      console.log('[LoginModal] User authenticated - closing modal automatically')
+      // Google OAuth users are already verified, no need for email verification
+      onClose()
     }
-  }, [user, open, showEmailVerification])
-
-  const handleVerificationComplete = () => {
-    console.log('[LoginModal] Verification complete - closing modal')
-    setShowEmailVerification(false)
-    onClose()
-  }
+  }, [user, open, onClose])
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden border-none bg-transparent shadow-none">
@@ -50,10 +43,7 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
           </div>
 
           <div className="relative z-10 p-8">
-            {showEmailVerification && user ? (
-              <EmailVerification userId={user.uid} email={user.email || ''} onVerified={handleVerificationComplete} />
-            ) : (
-              <div className="flex flex-col items-center text-center space-y-6">
+            <div className="flex flex-col items-center text-center space-y-6">
                 <div className="w-24 h-16 rounded-2xl bg-[var(--bg3)] flex items-center justify-center mb-2">
                   <AetherLogo size={40} />
                 </div>
@@ -107,7 +97,6 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
                   </p>
                 </div>
               </div>
-            )}
           </div>
         </motion.div>
       </DialogContent>
