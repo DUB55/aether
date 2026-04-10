@@ -238,6 +238,30 @@ service cloud.firestore {
     //   - createdAt: timestamp (required) - Timestamp
     //   - expiresAt: timestamp (optional) - Expiration timestamp
     //
+    // Collection: team_members
+    // Document ID: {memberId}
+    // Fields:
+    //   - id: string (required) - Member ID
+    //   - userId: string (required) - User ID of the member
+    //   - userEmail: string (required) - Email of the member
+    //   - userName: string (required) - Name of the member
+    //   - role: string (required, enum: ['owner', 'admin', 'editor', 'viewer', 'guest']) - Member role
+    //   - workspaceId: string (required) - Workspace ID
+    //   - joinedAt: timestamp (required) - Timestamp when member joined
+    //   - lastActiveAt: timestamp (optional) - Last active timestamp
+    //
+    // Collection: team_invites
+    // Document ID: {inviteId}
+    // Fields:
+    //   - id: string (required) - Invite ID
+    //   - email: string (required) - Email of invited user
+    //   - workspaceId: string (required) - Workspace ID
+    //   - invitedBy: string (required) - User ID who sent the invite
+    //   - role: string (required, enum: ['owner', 'admin', 'editor', 'viewer', 'guest']) - Role for invited user
+    //   - status: string (required, enum: ['pending', 'accepted', 'declined', 'expired']) - Invite status
+    //   - createdAt: timestamp (required) - Timestamp when invite was created
+    //   - expiresAt: timestamp (required) - Expiration timestamp
+    //
     // Collection: verification_requests
     // Document ID: {userId}
     // Fields:
@@ -626,6 +650,32 @@ service cloud.firestore {
              (!('expiresAt' in data) || data.expiresAt is timestamp);
     }
 
+    function isValidTeamMember(data) {
+      return hasRequiredFields(['id', 'userId', 'userEmail', 'userName', 'role', 'workspaceId', 'joinedAt']) &&
+             hasOnlyAllowedFields(['id', 'userId', 'userEmail', 'userName', 'role', 'workspaceId', 'joinedAt', 'lastActiveAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId.size() > 0 &&
+             data.userEmail is string && data.userEmail.size() > 0 &&
+             data.userName is string && data.userName.size() > 0 &&
+             data.role in ['owner', 'admin', 'editor', 'viewer', 'guest'] &&
+             data.workspaceId is string && data.workspaceId.size() > 0 &&
+             data.joinedAt is timestamp &&
+             (!('lastActiveAt' in data) || data.lastActiveAt is timestamp);
+    }
+
+    function isValidTeamInvite(data) {
+      return hasRequiredFields(['id', 'email', 'workspaceId', 'invitedBy', 'role', 'status', 'createdAt', 'expiresAt']) &&
+             hasOnlyAllowedFields(['id', 'email', 'workspaceId', 'invitedBy', 'role', 'status', 'createdAt', 'expiresAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.email is string && data.email.size() > 0 &&
+             data.workspaceId is string && data.workspaceId.size() > 0 &&
+             data.invitedBy is string && data.invitedBy.size() > 0 &&
+             data.role in ['owner', 'admin', 'editor', 'viewer', 'guest'] &&
+             data.status in ['pending', 'accepted', 'declined', 'expired'] &&
+             data.createdAt is timestamp &&
+             data.expiresAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -767,6 +817,20 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidNotification(request.resource.data) && isOwner(request.resource.data.userId);
       allow update: if isAuthenticated() && isOwner(resource.data.userId) && isValidNotification(request.resource.data);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /team_members/{memberId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isAuthenticated() && isValidTeamMember(request.resource.data);
+      allow update: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin()) && isValidTeamMember(request.resource.data);
+      allow delete: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+    }
+
+    match /team_invites/{inviteId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.invitedBy) || resource.data.email == request.auth.token.email);
+      allow create: if isAuthenticated() && isValidTeamInvite(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.invitedBy) && isValidTeamInvite(request.resource.data);
+      allow delete: if isAuthenticated() && isOwner(resource.data.invitedBy);
     }
 
     match /verification_requests/{userId} {
