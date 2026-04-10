@@ -10,11 +10,30 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Log environment configuration
+console.log('[Server] Environment Configuration:');
+console.log('[Server] NODE_ENV:', process.env.NODE_ENV);
+console.log('[Server] GEMINI_API_KEYS:', process.env.GEMINI_API_KEYS ? `${process.env.GEMINI_API_KEYS.substring(0, 10)}... (length: ${process.env.GEMINI_API_KEYS.length})` : 'NOT SET');
+console.log('[Server] GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? `${process.env.GEMINI_API_KEY.substring(0, 10)}... (length: ${process.env.GEMINI_API_KEY.length})` : 'NOT SET');
+console.log('[Server] GITHUB_CLIENT_ID:', process.env.GITHUB_CLIENT_ID ? 'SET' : 'NOT SET');
+console.log('[Server] APP_URL:', process.env.APP_URL || 'NOT SET');
+
 // Initialize Gemini Pool
 const geminiKeys = (process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || "").split(",").map(k => k.trim()).filter(Boolean);
 
+console.log('[Server] Gemini API Key Pool:');
+console.log('[Server] - Total keys configured:', geminiKeys.length);
+if (geminiKeys.length > 0) {
+  geminiKeys.forEach((key, index) => {
+    console.log(`[Server] - Key ${index + 1}: ${key.substring(0, 10)}... (length: ${key.length})`);
+  });
+}
+
 if (geminiKeys.length === 0) {
   console.warn("WARNING: No Gemini API keys configured. AI service will not work. Please set GEMINI_API_KEYS environment variable (comma-separated, no spaces). GEMINI_API_KEY is also supported as fallback.");
+  console.warn("WARNING: AI will fall back to DUB5 AI service if available.");
+} else {
+  console.log('[Server] Gemini API keys loaded successfully. AI service will use Gemini.');
 }
 
 const geminiService = new GeminiService(geminiKeys);
@@ -32,6 +51,20 @@ async function startServer() {
   });
 
   app.use(express.json());
+
+  // Health check endpoint to verify environment configuration
+  app.get("/api/health", (req, res) => {
+    const health = {
+      status: "ok",
+      environment: process.env.NODE_ENV || "development",
+      geminiConfigured: geminiKeys.length > 0,
+      geminiKeyCount: geminiKeys.length,
+      githubConfigured: !!process.env.GITHUB_CLIENT_ID,
+      appUrl: process.env.APP_URL || "NOT SET",
+      timestamp: new Date().toISOString()
+    };
+    res.json(health);
+  });
 
   // Proxy endpoint for Google profile images to bypass COEP blocking
   app.get("/api/proxy/image", async (req, res) => {
