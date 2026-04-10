@@ -139,7 +139,8 @@ async function startServer() {
 
   // WebContainer Security Headers
   app.use((req, res, next) => {
-    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+    // Use credentialless instead of require-corp to allow Firebase Auth iframes
+    res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
     next();
   });
