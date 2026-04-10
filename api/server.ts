@@ -2,7 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
-import { GeminiService } from "./gemini-service";
+import { MultiProviderService } from "../server/multi-provider-service";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -18,25 +18,23 @@ console.log('[Server] GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? `${process.
 console.log('[Server] GITHUB_CLIENT_ID:', process.env.GITHUB_CLIENT_ID ? 'SET' : 'NOT SET');
 console.log('[Server] APP_URL:', process.env.APP_URL || 'NOT SET');
 
-// Initialize Gemini Pool
-const geminiKeys = (process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || "").split(",").map(k => k.trim()).filter(Boolean);
+// Initialize Multi-Provider Service
+console.log('[Server] Initializing Multi-Provider AI Service...');
+const multiProviderService = new MultiProviderService();
+const providerStatus = multiProviderService.getProviderStatus();
 
-console.log('[Server] Gemini API Key Pool:');
-console.log('[Server] - Total keys configured:', geminiKeys.length);
-if (geminiKeys.length > 0) {
-  geminiKeys.forEach((key, index) => {
-    console.log(`[Server] - Key ${index + 1}: ${key.substring(0, 10)}... (length: ${key.length})`);
-  });
+console.log('[Server] Provider Status:');
+for (const [provider, status] of Object.entries(providerStatus)) {
+  console.log(`[Server] - ${provider}: ${status.availableKeys}/${status.totalKeys} keys available`);
 }
 
-if (geminiKeys.length === 0) {
-  console.warn("WARNING: No Gemini API keys configured. AI service will not work. Please set GEMINI_API_KEYS environment variable (comma-separated, no spaces). GEMINI_API_KEY is also supported as fallback.");
-  console.warn("WARNING: AI will fall back to DUB5 AI service if available.");
+const anyProviderAvailable = Object.values(providerStatus).some(s => s.available);
+if (!anyProviderAvailable) {
+  console.warn("WARNING: No AI provider API keys configured. AI service will not work.");
+  console.warn("Please set at least one provider's API keys in environment variables.");
 } else {
-  console.log('[Server] Gemini API keys loaded successfully. AI service will use Gemini.');
+  console.log('[Server] Multi-Provider AI service initialized successfully.');
 }
-
-const geminiService = new GeminiService(geminiKeys);
 
 async function startServer() {
   const app = express();
@@ -58,8 +56,7 @@ async function startServer() {
     const health = {
       status: "ok",
       environment: process.env.NODE_ENV || "development",
-      geminiConfigured: geminiKeys.length > 0,
-      geminiKeyCount: geminiKeys.length,
+      providers: multiProviderService.getProviderStatus(),
       githubConfigured: !!process.env.GITHUB_CLIENT_ID,
       appUrl: process.env.APP_URL || "NOT SET",
       timestamp: new Date().toISOString()
@@ -99,22 +96,15 @@ async function startServer() {
     }
   });
 
-  // AI Proxy Route with Key Pool & Failover
+  // AI Proxy Route with Multi-Provider Support
   app.post("/api/ai/chat", async (req, res) => {
-    const { input, history, personality, thinking_mode, provider, model, gemini_api_key, files, image } = req.body;
+    const { input, history, personality, thinking_mode, provider, model, custom_api_key, files, image } = req.body;
 
     if (!input) {
       return res.status(400).json({ error: "Input is required" });
     }
 
     console.log('[AI Chat] Request received:', { input: input.substring(0, 50), hasHistory: !!history, provider, model });
-
-    // Check if Gemini API keys are configured
-    if (!geminiService || geminiKeys.length === 0) {
-      console.warn('[AI Chat] No Gemini API keys configured, forcing DUB5 fallback');
-      // Force DUB5 fallback
-      req.body.provider = 'dub5';
-    }
 
     try {
       // Set headers for SSE
@@ -130,19 +120,19 @@ async function startServer() {
         res.write(": heartbeat\n\n");
       }, 15000);
 
-      await geminiService.chat({
+      await multiProviderService.chat({
         input,
         history: history || [],
         personality,
         thinking_mode,
-        forceDub5: provider === "dub5",
+        forceProvider: provider === "dub5" ? undefined : provider,
         model,
-        customApiKey: gemini_api_key,
+        customApiKey: custom_api_key,
         files,
         image,
-        onProvider: (provider, model) => {
-          console.log('[AI Chat] Using provider:', provider, 'model:', model);
-          res.write(`data: ${JSON.stringify({ provider, model })}\n\n`);
+        onProvider: (providerName, model) => {
+          console.log('[AI Chat] Using provider:', providerName, 'model:', model);
+          res.write(`data: ${JSON.stringify({ provider: providerName, model })}\n\n`);
         },
         onChunk: (chunk) => {
           res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
