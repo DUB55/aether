@@ -1,12 +1,16 @@
 // GDPR compliance service
 // Handles data consent, data deletion requests, and privacy compliance
+// Now uses Firebase Firestore for persistent storage
+
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 
 export interface ConsentRecord {
   id: string
   userId: string
   consentType: 'analytics' | 'marketing' | 'essential'
   granted: boolean
-  timestamp: number
+  timestamp: Timestamp
   ipAddress?: string
 }
 
@@ -15,98 +19,110 @@ export interface DataDeletionRequest {
   userId: string
   email: string
   status: 'pending' | 'processing' | 'completed' | 'rejected'
-  requestedAt: number
-  completedAt?: number
+  requestedAt: Timestamp
+  completedAt?: Timestamp
   reason?: string
 }
 
+const CONSENTS_COLLECTION = 'gdpr_consents';
+const DELETION_REQUESTS_COLLECTION = 'gdpr_deletions';
+
 export const gdprService = {
   // Record user consent
-  recordConsent: (userId: string, consentType: 'analytics' | 'marketing' | 'essential', granted: boolean): ConsentRecord => {
+  recordConsent: async (userId: string, consentType: 'analytics' | 'marketing' | 'essential', granted: boolean): Promise<ConsentRecord> => {
+    const consentId = `consent_${Date.now()}`;
+    const now = Timestamp.now();
+    
     const record: ConsentRecord = {
-      id: `consent_${Date.now()}`,
+      id: consentId,
       userId,
       consentType,
       granted,
-      timestamp: Date.now(),
+      timestamp: now,
       ipAddress: '192.168.1.1' // In production, capture actual IP
     }
 
-    const consents = JSON.parse(localStorage.getItem('aether_gdpr_consents') || '[]')
-    consents.push(record)
-    localStorage.setItem('aether_gdpr_consents', JSON.stringify(consents))
+    const consentRef = doc(db, CONSENTS_COLLECTION, consentId);
+    await setDoc(consentRef, record);
 
-    return record
+    return record;
   },
 
   // Get user consent status
-  getConsentStatus: (userId: string): Record<string, boolean> => {
-    const consents = JSON.parse(localStorage.getItem('aether_gdpr_consents') || '[]')
-    const userConsents = consents.filter((c: ConsentRecord) => c.userId === userId)
+  getConsentStatus: async (userId: string): Promise<Record<string, boolean>> => {
+    const q = query(collection(db, CONSENTS_COLLECTION), where('userId', '==', userId));
+    const querySnapshot = await getDocs(q);
+    const userConsents = querySnapshot.docs.map(doc => doc.data() as ConsentRecord);
     
     return {
       analytics: userConsents.find((c: ConsentRecord) => c.consentType === 'analytics')?.granted || false,
       marketing: userConsents.find((c: ConsentRecord) => c.consentType === 'marketing')?.granted || false,
       essential: true // Essential cookies are always required
-    }
+    };
   },
 
   // Update user consent
-  updateConsent: (userId: string, consents: { analytics?: boolean; marketing?: boolean }): void => {
+  updateConsent: async (userId: string, consents: { analytics?: boolean; marketing?: boolean }): Promise<void> => {
     if (consents.analytics !== undefined) {
-      gdprService.recordConsent(userId, 'analytics', consents.analytics)
+      await gdprService.recordConsent(userId, 'analytics', consents.analytics);
     }
     if (consents.marketing !== undefined) {
-      gdprService.recordConsent(userId, 'marketing', consents.marketing)
+      await gdprService.recordConsent(userId, 'marketing', consents.marketing);
     }
   },
 
   // Request data deletion
-  requestDeletion: (userId: string, email: string, reason?: string): DataDeletionRequest => {
+  requestDeletion: async (userId: string, email: string, reason?: string): Promise<DataDeletionRequest> => {
+    const requestId = `deletion_${Date.now()}`;
+    const now = Timestamp.now();
+    
     const request: DataDeletionRequest = {
-      id: `deletion_${Date.now()}`,
+      id: requestId,
       userId,
       email,
       status: 'pending',
-      requestedAt: Date.now(),
+      requestedAt: now,
       reason
     }
 
-    const requests = JSON.parse(localStorage.getItem('aether_gdpr_deletions') || '[]')
-    requests.push(request)
-    localStorage.setItem('aether_gdpr_deletions', JSON.stringify(requests))
+    const requestRef = doc(db, DELETION_REQUESTS_COLLECTION, requestId);
+    await setDoc(requestRef, request);
 
-    return request
+    return request;
   },
 
   // Get deletion requests
-  getDeletionRequests: (): DataDeletionRequest[] => {
-    return JSON.parse(localStorage.getItem('aether_gdpr_deletions') || '[]')
+  getDeletionRequests: async (): Promise<DataDeletionRequest[]> => {
+    const q = query(collection(db, DELETION_REQUESTS_COLLECTION));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data() as DataDeletionRequest);
   },
 
   // Process deletion request
-  processDeletion: (requestId: string): boolean => {
-    const requests = JSON.parse(localStorage.getItem('aether_gdpr_deletions') || '[]')
-    const index = requests.findIndex((r: DataDeletionRequest) => r.id === requestId)
+  processDeletion: async (requestId: string): Promise<boolean> => {
+    const requestRef = doc(db, DELETION_REQUESTS_COLLECTION, requestId);
+    const requestDoc = await getDoc(requestRef);
     
-    if (index === -1) return false
+    if (!requestDoc.exists()) return false;
 
-    requests[index].status = 'processing'
-    localStorage.setItem('aether_gdpr_deletions', JSON.stringify(requests))
+    await updateDoc(requestRef, { status: 'processing' });
 
     // Simulate deletion process
-    setTimeout(() => {
-      requests[index].status = 'completed'
-      requests[index].completedAt = Date.now()
-      localStorage.setItem('aether_gdpr_deletions', JSON.stringify(requests))
-    }, 5000)
+    setTimeout(async () => {
+      await updateDoc(requestRef, { 
+        status: 'completed',
+        completedAt: Timestamp.now()
+      });
+    }, 5000);
 
-    return true
+    return true;
   },
 
   // Export user data (right to data portability)
-  exportUserData: (userId: string): Record<string, any> => {
+  exportUserData: async (userId: string): Promise<Record<string, any>> => {
     // In production, this would gather all user data from Firebase/Supabase
+    const consentStatus = await gdprService.getConsentStatus(userId);
+    
     return {
       userId,
       exportDate: new Date().toISOString(),
@@ -117,14 +133,14 @@ export const gdprService = {
       },
       projects: [],
       settings: {},
-      consents: gdprService.getConsentStatus(userId)
-    }
+      consents: consentStatus
+    };
   },
 
   // Check if user can be deleted (has no active subscriptions, etc.)
-  canDeleteUser: (userId: string): { canDelete: boolean; reason?: string } => {
+  canDeleteUser: async (userId: string): Promise<{ canDelete: boolean; reason?: string }> => {
     // In production, check for active subscriptions, pending transactions, etc.
-    return { canDelete: true }
+    return { canDelete: true };
   },
 
   // Generate privacy policy summary
@@ -143,6 +159,6 @@ export const gdprService = {
         'Right to restrict processing'
       ],
       contactEmail: 'privacy@aether.dev'
-    }
+    };
   }
 }

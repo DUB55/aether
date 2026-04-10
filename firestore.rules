@@ -142,6 +142,27 @@ service cloud.firestore {
     //   - createdAt: timestamp (required) - Timestamp
     //   - updatedAt: timestamp (required) - Timestamp
     //
+    // Collection: gdpr_consents
+    // Document ID: {consentId}
+    // Fields:
+    //   - id: string (required) - Consent record ID
+    //   - userId: string (required) - User ID
+    //   - consentType: string (required, enum: ['analytics', 'marketing', 'essential']) - Consent type
+    //   - granted: boolean (required) - Whether consent is granted
+    //   - timestamp: timestamp (required) - Timestamp
+    //   - ipAddress: string (optional) - IP address when consent was given
+    //
+    // Collection: gdpr_deletions
+    // Document ID: {requestId}
+    // Fields:
+    //   - id: string (required) - Request ID
+    //   - userId: string (required) - User ID
+    //   - email: string (required) - User email
+    //   - status: string (required, enum: ['pending', 'processing', 'completed', 'rejected']) - Request status
+    //   - requestedAt: timestamp (required) - Timestamp
+    //   - completedAt: timestamp (optional) - Completion timestamp
+    //   - reason: string (optional) - Reason for deletion
+    //
     // ===============================================================
 
     // ===============================================================
@@ -345,6 +366,26 @@ service cloud.firestore {
              data.updatedAt is timestamp;
     }
 
+    function isValidConsentRecord(data) {
+      return hasRequiredFields(['id', 'userId', 'consentType', 'granted', 'timestamp']) &&
+             hasOnlyAllowedFields(['id', 'userId', 'consentType', 'granted', 'timestamp', 'ipAddress']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.consentType in ['analytics', 'marketing', 'essential'] &&
+             data.granted is bool &&
+             data.timestamp is timestamp;
+    }
+
+    function isValidDataDeletionRequest(data) {
+      return hasRequiredFields(['id', 'userId', 'email', 'status', 'requestedAt']) &&
+             hasOnlyAllowedFields(['id', 'userId', 'email', 'status', 'requestedAt', 'completedAt', 'reason']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.email is string && data.email.size() > 0 &&
+             data.status in ['pending', 'processing', 'completed', 'rejected'] &&
+             data.requestedAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -437,6 +478,20 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidSCIMGroup(request.resource.data) && (isWorkspaceOwner(request.resource.data.workspaceId) || isAdmin());
       allow update: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
       allow delete: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+    }
+
+    match /gdpr_consents/{consentId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isValidConsentRecord(request.resource.data);
+      allow update: if false; // Consent records are immutable
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /gdpr_deletions/{requestId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isValidDataDeletionRequest(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     match /projects/{projectId} {
