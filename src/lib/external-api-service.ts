@@ -1,5 +1,9 @@
 // External API service
 // Supports integration with OpenAI, Claude, and other AI providers
+// Now uses Firebase Firestore for persistent storage
+
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 
 export interface APIProvider {
   id: string
@@ -15,7 +19,8 @@ export interface APIKey {
   providerId: string
   key: string
   name: string
-  createdAt: number
+  userId: string
+  createdAt: Timestamp
 }
 
 export interface APIRequest {
@@ -35,6 +40,8 @@ export interface APIResponse {
     totalTokens: number
   }
 }
+
+const API_KEYS_COLLECTION = 'api_keys';
 
 export const externalApiService = {
   // Available API providers
@@ -66,49 +73,60 @@ export const externalApiService = {
   },
 
   // Add API key
-  addApiKey: (providerId: string, key: string, name: string): APIKey => {
+  addApiKey: async (providerId: string, key: string, name: string): Promise<APIKey> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    const apiKeyId = `apikey_${Date.now()}`;
+    const now = Timestamp.now();
+    
     const apiKey: APIKey = {
-      id: `apikey_${Date.now()}`,
+      id: apiKeyId,
       providerId,
       key,
       name,
-      createdAt: Date.now()
+      userId: auth.currentUser.uid,
+      createdAt: now
     }
 
-    const apiKeys = JSON.parse(localStorage.getItem('aether_api_keys') || '[]')
-    apiKeys.push(apiKey)
-    localStorage.setItem('aether_api_keys', JSON.stringify(apiKeys))
+    const apiKeyRef = doc(db, API_KEYS_COLLECTION, apiKeyId);
+    await setDoc(apiKeyRef, apiKey);
 
-    // Enable provider
+    // Enable provider (in memory for now)
     const provider = externalApiService.providers[providerId as keyof typeof externalApiService.providers]
     if (provider) {
       provider.enabled = true
-      const enabledProviders = JSON.parse(localStorage.getItem('aether_enabled_providers') || '{}')
-      enabledProviders[providerId] = true
-      localStorage.setItem('aether_enabled_providers', JSON.stringify(enabledProviders))
     }
 
-    return apiKey
+    return apiKey;
   },
 
   // Get API keys
-  getApiKeys: (providerId?: string): APIKey[] => {
-    const apiKeys = JSON.parse(localStorage.getItem('aether_api_keys') || '[]')
-    if (providerId) {
-      return apiKeys.filter((k: APIKey) => k.providerId === providerId)
+  getApiKeys: async (providerId?: string): Promise<APIKey[]> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
     }
-    return apiKeys
+
+    let q = query(collection(db, API_KEYS_COLLECTION), where('userId', '==', auth.currentUser.uid));
+    
+    if (providerId) {
+      q = query(collection(db, API_KEYS_COLLECTION), where('userId', '==', auth.currentUser.uid), where('providerId', '==', providerId));
+    }
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data() as APIKey);
   },
 
   // Remove API key
-  removeApiKey: (keyId: string): boolean => {
-    const apiKeys = JSON.parse(localStorage.getItem('aether_api_keys') || '[]')
-    const filtered = apiKeys.filter((k: APIKey) => k.id !== keyId)
+  removeApiKey: async (keyId: string): Promise<boolean> => {
+    const apiKeyRef = doc(db, API_KEYS_COLLECTION, keyId);
+    const apiKeyDoc = await getDoc(apiKeyRef);
     
-    if (filtered.length === apiKeys.length) return false
+    if (!apiKeyDoc.exists()) return false;
 
-    localStorage.setItem('aether_api_keys', JSON.stringify(filtered))
-    return true
+    await deleteDoc(apiKeyRef);
+    return true;
   },
 
   // Call external API
@@ -119,7 +137,7 @@ export const externalApiService = {
         return { success: false, error: 'Provider not configured' }
       }
 
-      const apiKeys = externalApiService.getApiKeys(request.provider)
+      const apiKeys = await externalApiService.getApiKeys(request.provider)
       if (apiKeys.length === 0) {
         return { success: false, error: 'No API key configured' }
       }
@@ -188,11 +206,17 @@ export const externalApiService = {
   },
 
   // Get enabled providers
-  getEnabledProviders: (): APIProvider[] => {
-    const enabledProviders = JSON.parse(localStorage.getItem('aether_enabled_providers') || '{}')
+  getEnabledProviders: async (): Promise<APIProvider[]> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    const apiKeys = await externalApiService.getApiKeys();
+    const enabledProviderIds = [...new Set(apiKeys.map(k => k.providerId))];
+    
     return Object.entries(externalApiService.providers)
-      .filter(([id]) => enabledProviders[id])
-      .map(([_, provider]) => provider)
+      .filter(([id]) => enabledProviderIds.includes(id))
+      .map(([_, provider]) => ({ ...provider, enabled: true }));
   },
 
   // Test API connection
@@ -203,7 +227,7 @@ export const externalApiService = {
         return { success: false, error: 'Provider not found' }
       }
 
-      const apiKeys = externalApiService.getApiKeys(providerId)
+      const apiKeys = await externalApiService.getApiKeys(providerId)
       if (apiKeys.length === 0) {
         return { success: false, error: 'No API key configured' }
       }

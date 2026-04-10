@@ -163,6 +163,16 @@ service cloud.firestore {
     //   - completedAt: timestamp (optional) - Completion timestamp
     //   - reason: string (optional) - Reason for deletion
     //
+    // Collection: api_keys
+    // Document ID: {apiKeyId}
+    // Fields:
+    //   - id: string (required) - API key ID
+    //   - providerId: string (required) - Provider ID (openai, anthropic, cohere)
+    //   - key: string (required) - API key value (encrypted in production)
+    //   - name: string (required, max length 100) - API key name
+    //   - userId: string (required) - User who owns the key
+    //   - createdAt: timestamp (required) - Timestamp
+    //
     // ===============================================================
 
     // ===============================================================
@@ -386,6 +396,17 @@ service cloud.firestore {
              data.requestedAt is timestamp;
     }
 
+    function isValidApiKey(data) {
+      return hasRequiredFields(['id', 'providerId', 'key', 'name', 'userId', 'createdAt']) &&
+             hasOnlyAllowedFields(['id', 'providerId', 'key', 'name', 'userId', 'createdAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.providerId is string && data.providerId.size() > 0 &&
+             data.key is string && data.key.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.createdAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -490,6 +511,13 @@ service cloud.firestore {
     match /gdpr_deletions/{requestId} {
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
       allow create: if isAuthenticated() && isValidDataDeletionRequest(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /api_keys/{apiKeyId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isValidApiKey(request.resource.data);
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
