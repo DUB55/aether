@@ -1,9 +1,10 @@
 // Email verification service
 // Handles email verification for user signups
-// Now uses Firebase Firestore for persistent storage
+// Now uses Firebase Firestore for persistent storage and Resend for email sending
 
 import { db, auth } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { resendEmailService } from './resend-email-service';
 
 export interface EmailVerificationRequest {
   email: string
@@ -53,9 +54,16 @@ export const emailVerificationService = {
         verified: false
       });
       
-      // In production, this would send an actual email via a service like SendGrid, Resend, or Firebase Auth
-      // For now, we'll log the code to console and return it
-      console.log(`[Email Verification] Verification code for ${email}: ${verificationCode}`)
+      // Send verification email via Resend
+      const emailResult = await resendEmailService.sendVerificationEmail(email, verificationCode);
+      
+      if (!emailResult.success) {
+        console.error('Failed to send verification email:', emailResult.error);
+        return {
+          success: false,
+          message: emailResult.error || 'Failed to send verification email'
+        };
+      }
       
       return {
         success: true,
@@ -177,7 +185,16 @@ export const emailVerificationService = {
         expiresAt
       });
       
-      console.log(`[Email Verification] New verification code for ${request.email}: ${newCode}`)
+      // Send verification email via Resend
+      const emailResult = await resendEmailService.sendVerificationEmail(request.email, newCode);
+      
+      if (!emailResult.success) {
+        console.error('Failed to resend verification email:', emailResult.error);
+        return {
+          success: false,
+          message: emailResult.error || 'Failed to resend verification email'
+        };
+      }
       
       return {
         success: true,
