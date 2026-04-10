@@ -62,7 +62,11 @@ export class MultiProviderService {
     console.log('[MultiProviderService] Initializing providers...');
     
     for (const config of this.providerConfigs) {
-      const keys = (process.env[config.envKey] || "").split(",").map(k => k.trim()).filter(Boolean);
+      const envValue = process.env[config.envKey] || "";
+      // Handle both comma-separated lists and single keys
+      const keys = envValue.includes(",") 
+        ? envValue.split(",").map(k => k.trim()).filter(Boolean)
+        : envValue.trim() ? [envValue.trim()] : [];
       
       if (keys.length > 0) {
         const keyStates: KeyState[] = keys.map(key => ({
