@@ -222,6 +222,22 @@ service cloud.firestore {
     //   - metadata: map (optional) - Additional metadata
     //   - timestamp: timestamp (required) - Timestamp
     //
+    // Collection: notifications
+    // Document ID: {notificationId}
+    // Fields:
+    //   - id: string (required) - Notification ID
+    //   - userId: string (required) - User who should receive the notification
+    //   - type: string (required) - Notification type (info, success, warning, error, deployment, invitation, mention, system)
+    //   - title: string (required) - Notification title
+    //   - message: string (required) - Notification message
+    //   - read: boolean (required) - Whether notification has been read
+    //   - actionUrl: string (optional) - URL to navigate to when action is clicked
+    //   - actionLabel: string (optional) - Label for action button
+    //   - projectId: string (optional) - Associated project ID
+    //   - workspaceId: string (optional) - Associated workspace ID
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - expiresAt: timestamp (optional) - Expiration timestamp
+    //
     // Collection: verification_requests
     // Document ID: {userId}
     // Fields:
@@ -593,6 +609,23 @@ service cloud.firestore {
              data.timestamp is timestamp;
     }
 
+    function isValidNotification(data) {
+      return hasRequiredFields(['id', 'userId', 'type', 'title', 'message', 'read', 'createdAt']) &&
+             hasOnlyAllowedFields(['id', 'userId', 'type', 'title', 'message', 'read', 'actionUrl', 'actionLabel', 'projectId', 'workspaceId', 'createdAt', 'expiresAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId.size() > 0 &&
+             data.type is string && data.type.size() > 0 &&
+             data.title is string && data.title.size() > 0 &&
+             data.message is string && data.message.size() > 0 &&
+             data.read is bool &&
+             (!('actionUrl' in data) || (data.actionUrl is string && data.actionUrl.size() > 0)) &&
+             (!('actionLabel' in data) || (data.actionLabel is string && data.actionLabel.size() > 0)) &&
+             (!('projectId' in data) || (data.projectId is string && data.projectId.size() > 0)) &&
+             (!('workspaceId' in data) || (data.workspaceId is string && data.workspaceId.size() > 0)) &&
+             data.createdAt is timestamp &&
+             (!('expiresAt' in data) || data.expiresAt is timestamp);
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -727,6 +760,13 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidAuditLog(request.resource.data);
       allow update: if false; // Audit logs are immutable
       allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isValidNotification(request.resource.data) && isOwner(request.resource.data.userId);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId) && isValidNotification(request.resource.data);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     match /verification_requests/{userId} {
