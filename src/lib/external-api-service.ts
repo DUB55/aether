@@ -1,9 +1,10 @@
 // External API service
 // Supports integration with OpenAI, Claude, and other AI providers
-// Now uses Firebase Firestore for persistent storage
+// Now uses Firebase Firestore for persistent storage with encryption
 
 import { db, auth } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { cryptoService } from './crypto-service';
 
 export interface APIProvider {
   id: string
@@ -42,6 +43,40 @@ export interface APIResponse {
 }
 
 const API_KEYS_COLLECTION = 'api_keys';
+const ENCRYPTION_KEY_STORAGE_KEY = 'aether_api_encryption_key';
+
+// Get or create encryption key for the user
+const getOrCreateEncryptionKey = async (): Promise<CryptoKey | null> => {
+  try {
+    if (!auth.currentUser) {
+      console.error('User not authenticated');
+      return null;
+    }
+
+    // Check if encryption key exists in localStorage
+    const storedKeyData = localStorage.getItem(ENCRYPTION_KEY_STORAGE_KEY);
+    
+    if (storedKeyData) {
+      const importResult = await cryptoService.importKey(storedKeyData);
+      if (importResult.success && importResult.key) {
+        return importResult.key;
+      }
+    }
+
+    // Generate new key
+    const keyResult = await cryptoService.generateKey();
+    if (keyResult.success && keyResult.key && keyResult.keyData) {
+      // Store key data in localStorage (in production, this should be stored more securely)
+      localStorage.setItem(ENCRYPTION_KEY_STORAGE_KEY, keyResult.keyData);
+      return keyResult.key;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting encryption key:', error);
+    return null;
+  }
+};
 
 export const externalApiService = {
   // Available API providers
@@ -78,13 +113,24 @@ export const externalApiService = {
       throw new Error('User not authenticated');
     }
 
+    const encryptionKey = await getOrCreateEncryptionKey();
+    if (!encryptionKey) {
+      throw new Error('Failed to get encryption key');
+    }
+
     const apiKeyId = `apikey_${Date.now()}`;
     const now = Timestamp.now();
+    
+    // Encrypt the API key
+    const encryptResult = await cryptoService.encrypt(key, encryptionKey);
+    if (!encryptResult.success || !encryptResult.encryptedData) {
+      throw new Error('Failed to encrypt API key');
+    }
     
     const apiKey: APIKey = {
       id: apiKeyId,
       providerId,
-      key,
+      key: encryptResult.encryptedData, // Store encrypted key
       name,
       userId: auth.currentUser.uid,
       createdAt: now
@@ -108,6 +154,11 @@ export const externalApiService = {
       throw new Error('User not authenticated');
     }
 
+    const encryptionKey = await getOrCreateEncryptionKey();
+    if (!encryptionKey) {
+      throw new Error('Failed to get encryption key');
+    }
+
     let q = query(collection(db, API_KEYS_COLLECTION), where('userId', '==', auth.currentUser.uid));
     
     if (providerId) {
@@ -115,7 +166,23 @@ export const externalApiService = {
     }
     
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => doc.data() as APIKey);
+    const apiKeys = querySnapshot.docs.map(doc => doc.data() as APIKey);
+    
+    // Decrypt API keys
+    const decryptedKeys = await Promise.all(
+      apiKeys.map(async (apiKey) => {
+        const decryptResult = await cryptoService.decrypt(apiKey.key, encryptionKey);
+        if (decryptResult.success && decryptResult.decryptedData) {
+          return {
+            ...apiKey,
+            key: decryptResult.decryptedData
+          };
+        }
+        return apiKey;
+      })
+    );
+    
+    return decryptedKeys;
   },
 
   // Remove API key

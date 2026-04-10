@@ -1,23 +1,61 @@
 // Secrets management service
 // Securely stores and manages API keys and secrets
-// Now uses Firebase Firestore for persistent storage
+// Now uses Firebase Firestore for persistent storage with encryption
 
 import { db, auth } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { cryptoService } from './crypto-service';
 
 export interface Secret {
   id: string
   name: string
   value: string
-  type: 'api_key' | 'token' | 'password' | 'certificate'
-  environment: 'development' | 'staging' | 'production'
+  type: 'api_key' | 'password' | 'token' | 'certificate' | 'other'
   projectId?: string
+  workspaceId?: string
   createdAt: Timestamp
-  lastAccessed: Timestamp
+  updatedAt: Timestamp
+  lastAccessedAt?: Timestamp
+  expiresAt?: Timestamp
   description?: string
+  tags?: string[]
 }
 
 const SECRETS_COLLECTION = 'secrets';
+const ENCRYPTION_KEY_STORAGE_KEY = 'aether_encryption_key';
+
+// Get or create encryption key for the user
+const getOrCreateEncryptionKey = async (): Promise<CryptoKey | null> => {
+  try {
+    if (!auth.currentUser) {
+      console.error('User not authenticated');
+      return null;
+    }
+
+    // Check if encryption key exists in localStorage
+    const storedKeyData = localStorage.getItem(ENCRYPTION_KEY_STORAGE_KEY);
+    
+    if (storedKeyData) {
+      const importResult = await cryptoService.importKey(storedKeyData);
+      if (importResult.success && importResult.key) {
+        return importResult.key;
+      }
+    }
+
+    // Generate new key
+    const keyResult = await cryptoService.generateKey();
+    if (keyResult.success && keyResult.key && keyResult.keyData) {
+      // Store key data in localStorage (in production, this should be stored more securely)
+      localStorage.setItem(ENCRYPTION_KEY_STORAGE_KEY, keyResult.keyData);
+      return keyResult.key;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting encryption key:', error);
+    return null;
+  }
+};
 
 export const secretsService = {
   // Store a secret
@@ -26,14 +64,26 @@ export const secretsService = {
       throw new Error('User not authenticated');
     }
 
+    const encryptionKey = await getOrCreateEncryptionKey();
+    if (!encryptionKey) {
+      throw new Error('Failed to get encryption key');
+    }
+
     const secretId = `secret_${Date.now()}`;
     const now = Timestamp.now();
+    
+    // Encrypt the secret value
+    const encryptResult = await cryptoService.encrypt(secret.value, encryptionKey);
+    if (!encryptResult.success || !encryptResult.encryptedData) {
+      throw new Error('Failed to encrypt secret value');
+    }
     
     const newSecret: Secret = {
       ...secret,
       id: secretId,
+      value: encryptResult.encryptedData, // Store encrypted value
       createdAt: now,
-      lastAccessed: now
+      lastAccessedAt: now
     }
 
     // Store in Firebase Firestore
@@ -70,10 +120,28 @@ export const secretsService = {
     if (secretDoc.exists()) {
       const secret = secretDoc.data() as Secret;
       
-      // Update last accessed time
-      await updateDoc(secretRef, { lastAccessed: Timestamp.now() });
+      // Decrypt the secret value
+      const encryptionKey = await getOrCreateEncryptionKey();
+      if (!encryptionKey) {
+        console.error('Failed to get encryption key');
+        return null;
+      }
+
+      const decryptResult = await cryptoService.decrypt(secret.value, encryptionKey);
+      if (!decryptResult.success || !decryptResult.decryptedData) {
+        console.error('Failed to decrypt secret value');
+        return null;
+      }
+
+      const decryptedSecret = {
+        ...secret,
+        value: decryptResult.decryptedData // Return decrypted value
+      };
       
-      return secret;
+      // Update last accessed time
+      await updateDoc(secretRef, { lastAccessedAt: Timestamp.now() });
+      
+      return decryptedSecret;
     }
     
     return null;
@@ -86,10 +154,31 @@ export const secretsService = {
     
     if (!secretDoc.exists()) return null;
 
-    await updateDoc(secretRef, updates);
+    // If updating the value, encrypt it first
+    let finalUpdates = { ...updates };
+    if (updates.value) {
+      const encryptionKey = await getOrCreateEncryptionKey();
+      if (!encryptionKey) {
+        throw new Error('Failed to get encryption key');
+      }
+
+      const encryptResult = await cryptoService.encrypt(updates.value, encryptionKey);
+      if (!encryptResult.success || !encryptResult.encryptedData) {
+        throw new Error('Failed to encrypt secret value');
+      }
+
+      finalUpdates = {
+        ...updates,
+        value: encryptResult.encryptedData
+      };
+    }
+
+    finalUpdates.updatedAt = Timestamp.now();
+
+    await updateDoc(secretRef, finalUpdates);
     
     const updatedDoc = await getDoc(secretRef);
-    return updatedDoc.data() as Secret;
+    return await secretsService.getSecret(secretId);
   },
 
   // Delete a secret
@@ -171,11 +260,6 @@ export const secretsService = {
         token: secrets.filter((s: Secret) => s.type === 'token').length,
         password: secrets.filter((s: Secret) => s.type === 'password').length,
         certificate: secrets.filter((s: Secret) => s.type === 'certificate').length
-      },
-      byEnvironment: {
-        development: secrets.filter((s: Secret) => s.environment === 'development').length,
-        staging: secrets.filter((s: Secret) => s.environment === 'staging').length,
-        production: secrets.filter((s: Secret) => s.environment === 'production').length
       }
     };
   }
