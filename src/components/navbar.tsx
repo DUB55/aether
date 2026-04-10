@@ -45,10 +45,8 @@ export function Navbar() {
       )}
     >
       <div className="flex items-center gap-8">
-        <a href="/" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/'); window.dispatchEvent(new Event('routechange')) }} className="flex items-center gap-2 group cursor-pointer">
-          <div className="p-1 rounded-lg group-hover:scale-110 transition-transform duration-300">
-             <AetherLogo size={24} showText={false} className="text-foreground" />
-          </div>
+        <a href="/" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/'); window.dispatchEvent(new Event('routechange')) }} className="flex items-center gap-3 group cursor-pointer">
+          <AetherLogo size={28} showText={false} className="text-foreground group-hover:scale-110 transition-transform duration-300" />
           <span className="font-bold tracking-tight text-lg text-[var(--t)] hidden sm:block">
             Aether
           </span>

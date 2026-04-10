@@ -25,6 +25,7 @@ import {
   MessageSquare, 
   MoreHorizontal, 
   MousePointer2,
+  Palette,
   Plus, 
   RefreshCw, 
   Rocket, 
@@ -249,8 +250,9 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
     })
   }
   const [projectName, setProjectName] = useState('')
-  const [isInspectMode, setIsInspectMode] = useState(false)
-  const [isDeployDialogOpen, setIsDeployDialogOpen] = useState(false)
+  const [showAgentMode, setShowAgentMode] = useState(false)
+  const [composerAnimate, setComposerAnimate] = useState(false)
+    const [isDeployDialogOpen, setIsDeployDialogOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isCollaborateDialogOpen, setIsCollaborateDialogOpen] = useState(false)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
@@ -266,6 +268,14 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   const [isInstalling, setIsInstalling] = useState(false)
   const [aiStatus, setAiStatus] = useState<'ready' | 'generating' | 'error' | 'stopped'>('ready')
   const [webContainerUrl, setWebContainerUrl] = useState<string | null>(null)
+  const [selectedPreviewFile, setSelectedPreviewFile] = useState<string>('index.html')
+  const [showFileSuggestions, setShowFileSuggestions] = useState(false)
+  const [isPlanMode, setIsPlanMode] = useState(false)
+  const [isVisualEditMode, setIsVisualEditMode] = useState(false)
+  const [isThinking, setIsThinking] = useState(false)
+  const [thinkingContent, setThinkingContent] = useState('')
+  const [thinkingStartTime, setThinkingStartTime] = useState<number>(0)
+  const [showThinking, setShowThinking] = useState(false)
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -399,6 +409,11 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       setActiveTab('preview')
     }
   }, [isSharedView])
+
+  // Composer animation on page load
+  useEffect(() => {
+    setComposerAnimate(true)
+  }, [])
 
   // Initialize WebContainer
   useEffect(() => {
@@ -1504,10 +1519,46 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
                     className="msg"
                   >
                     <div className={cn(msg.role === 'user' ? "bubble user-bubble" : "ai-line md")}>
-                      {msg.role === 'user' ? msg.content : <ReactMarkdown>{msg.content}</ReactMarkdown>}
+                      {msg.role === 'user' ? msg.content : (
+                        <>
+                          <div className="ai-intro text-sm text-[var(--t3)] mb-2">
+                            Here's what I've built for you:
+                          </div>
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </>
+                      )}
+                    </div>
+                    <div className="msg-meta">
+                      <span className="msg-time">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="msg-date">{new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                      <button
+                        className="msg-copy"
+                        title="Copy message"
+                        onClick={() => {
+                          navigator.clipboard.writeText(msg.content)
+                          toast.success('Copied to clipboard')
+                        }}
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
                     </div>
                   </motion.div>
                 ))}
+                
+                {isThinking && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="msg"
+                  >
+                    <div className="ai-thinking">
+                      <div className="flex items-center gap-2 text-primary text-sm">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        <span className="animate-pulse">Thinking {thinkingStartTime > 0 && `(${Math.floor((Date.now() - thinkingStartTime) / 1000)}s)`}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
                 
                 {(streamingContent || isGenerating) && (
                   <motion.div 
@@ -1562,6 +1613,24 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
               <div ref={chatEndRef} />
             </div>
             <div className="composer bg-black/20 backdrop-blur-md border-t border-white/10">
+              {project.messages.length === 0 && !isGenerating && (
+                <div className="px-4 py-3 flex gap-2 overflow-x-auto">
+                  {[
+                    "Add a contact form",
+                    "Create a pricing section",
+                    "Add dark mode toggle",
+                    "Make it responsive"
+                  ].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => setInput(suggestion)}
+                      className="px-3 py-1.5 rounded-full bg-[var(--bg3)] border border-[var(--bdr)] text-xs text-[var(--t2)] whitespace-nowrap transition-all hover:bg-[var(--bg2)] hover:text-[var(--t)] hover:border-[var(--bdr2)]"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
               {selectedImage && (
                 <div className="px-4 py-2 flex items-center gap-2">
                   <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-[var(--bdr)] group">
@@ -1576,9 +1645,9 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
                   <span className="text-[10px] font-bold text-[var(--t3)] uppercase tracking-widest">Image attached</span>
                 </div>
               )}
-              <div className="composer-box">
+              <div>
                 <textarea 
-                  className="pinput" 
+                  className={cn("composer-input", composerAnimate && "loaded")} 
                   value={input}
                   spellCheck={false}
                   onChange={(e) => setInput(e.target.value)}
@@ -1593,6 +1662,26 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
                 />
                 <div className="pfoot">
                   <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setIsPlanMode(!isPlanMode)}
+                      className={cn(
+                        "p-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
+                        isPlanMode ? "bg-primary text-primary-foreground" : "hover:bg-[var(--bg3)] text-[var(--t3)] hover:text-[var(--t)]"
+                      )}
+                      title={isPlanMode ? "Switch to Build Mode" : "Switch to Plan Mode"}
+                    >
+                      {isPlanMode ? "Build" : "Plan"}
+                    </button>
+                    <button
+                      onClick={() => setIsVisualEditMode(!isVisualEditMode)}
+                      className={cn(
+                        "p-2 rounded-xl transition-all",
+                        isVisualEditMode ? "bg-primary text-primary-foreground" : "hover:bg-[var(--bg3)] text-[var(--t3)] hover:text-[var(--t)]"
+                      )}
+                      title="Toggle Visual Edit Mode"
+                    >
+                      <Palette className="w-4 h-4" />
+                    </button>
                     <VoiceInput 
                       onTranscript={(transcript) => setInput(prev => prev + ' ' + transcript)}
                       disabled={isGenerating}

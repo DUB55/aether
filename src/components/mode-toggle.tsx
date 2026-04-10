@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun, Zap } from "lucide-react"
+import { Moon, Sun, Star } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from '@/components/ui/button'
 
@@ -43,7 +43,7 @@ export function ModeToggle() {
     >
       {(!theme || theme === "light") && <Sun className="h-[1.2rem] w-[1.2rem] text-foreground" />}
       {theme === "dark" && <Moon className="h-[1.2rem] w-[1.2rem] text-foreground" />}
-      {theme === "black" && <Zap className="h-[1.2rem] w-[1.2rem] text-foreground" />}
+      {theme === "black" && <Star className="h-[1.2rem] w-[1.2rem] text-foreground" />}
       <span className="sr-only">Toggle theme</span>
     </Button>
   )

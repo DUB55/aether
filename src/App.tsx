@@ -81,23 +81,46 @@ function AppContent() {
   const { user, signIn, logout, projects: allProjects, saveProject, deleteProject } = useFirebase()
 
   useEffect(() => {
-    // Suppress WebSocket/Vite errors that are expected in sandboxed environments
+    // Force scroll to top immediately and also after a delay
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Also scroll after a short delay to override browser restore
+    const timeoutId = setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 100);
+
+    // Suppress WebSocket/Vite errors and Firebase network errors that are expected in sandboxed environments
     const originalError = console.error;
     console.error = (...args) => {
-      if (args[0] && typeof args[0] === 'string' && (args[0].includes('WebSocket') || args[0].includes('vite'))) {
+      if (args[0] && typeof args[0] === 'string' && (
+        args[0].includes('WebSocket') || 
+        args[0].includes('vite') ||
+        args[0].includes('auth/network-request-failed') ||
+        args[0].includes('FirebaseError')
+      )) {
         return;
       }
       originalError.apply(console, args);
     };
 
     const handleRejection = (event: PromiseRejectionEvent) => {
-      if (event.reason && event.reason.message && (event.reason.message.includes('WebSocket') || event.reason.message.includes('vite'))) {
+      if (event.reason && event.reason.message && (
+        event.reason.message.includes('WebSocket') || 
+        event.reason.message.includes('vite') ||
+        event.reason.message.includes('auth/network-request-failed') ||
+        event.reason.message.includes('FirebaseError')
+      )) {
         event.preventDefault();
       }
     };
 
     window.addEventListener('unhandledrejection', handleRejection);
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('unhandledrejection', handleRejection);
       console.error = originalError;
     };

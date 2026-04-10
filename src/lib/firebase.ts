@@ -76,8 +76,12 @@ export async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if(error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration. ");
+    if(error instanceof Error) {
+      if (error.message.includes('the client is offline')) {
+        console.error("Please check your Firebase configuration. ");
+      } else if (error.message.includes('ERR_BLOCKED_BY_CLIENT') || error.message.includes('blocked')) {
+        console.warn("Firebase connection blocked by browser extension. Some features may be limited.");
+      }
     }
   }
 }
