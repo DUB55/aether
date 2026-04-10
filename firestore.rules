@@ -208,6 +208,20 @@ service cloud.firestore {
     //   - lastTriggered: timestamp (optional) - Last time webhook was triggered
     //   - headers: map (optional) - Custom headers to send with webhook
     //
+    // Collection: audit_logs
+    // Document ID: {logId}
+    // Fields:
+    //   - id: string (required) - Audit log ID
+    //   - action: string (required) - Action performed
+    //   - userId: string (required) - User who performed the action
+    //   - userEmail: string (optional) - User email
+    //   - targetId: string (optional) - ID of the target resource
+    //   - targetType: string (optional) - Type of target resource
+    //   - ipAddress: string (optional) - IP address of the request
+    //   - userAgent: string (optional) - User agent string
+    //   - metadata: map (optional) - Additional metadata
+    //   - timestamp: timestamp (required) - Timestamp
+    //
     // Collection: verification_requests
     // Document ID: {userId}
     // Fields:
@@ -565,6 +579,20 @@ service cloud.firestore {
              (!('headers' in data) || data.headers is map);
     }
 
+    function isValidAuditLog(data) {
+      return hasRequiredFields(['id', 'action', 'userId', 'timestamp']) &&
+             hasOnlyAllowedFields(['id', 'action', 'userId', 'userEmail', 'targetId', 'targetType', 'ipAddress', 'userAgent', 'metadata', 'timestamp']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.action is string && data.action.size() > 0 &&
+             data.userId is string && data.userId.size() > 0 &&
+             (!('userEmail' in data) || (data.userEmail is string && data.userEmail.size() > 0)) &&
+             (!('targetId' in data) || (data.targetId is string && data.targetId.size() > 0)) &&
+             (!('targetType' in data) || (data.targetType is string && data.targetType.size() > 0)) &&
+             (!('ipAddress' in data) || (data.ipAddress is string && data.ipAddress.size() > 0)) &&
+             (!('userAgent' in data) || (data.userAgent is string && data.userAgent.size() > 0)) &&
+             data.timestamp is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -692,6 +720,13 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidWebhook(request.resource.data);
       allow update: if isAuthenticated() && isOwner(resource.data.userId) && isValidWebhook(request.resource.data);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isAuthenticated() && isValidAuditLog(request.resource.data);
+      allow update: if false; // Audit logs are immutable
+      allow delete: if isAuthenticated() && isAdmin();
     }
 
     match /verification_requests/{userId} {
