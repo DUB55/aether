@@ -176,6 +176,21 @@ service cloud.firestore {
     //   - userId: string (required) - User who owns the key
     //   - createdAt: timestamp (required) - Timestamp
     //
+    // Collection: env_vars
+    // Document ID: {envVarId}
+    // Fields:
+    //   - id: string (required) - Environment variable ID
+    //   - name: string (required, max length 100) - Variable name (uppercase, underscores)
+    //   - value: string (required) - Variable value (encrypted in production)
+    //   - environment: string (required, enum: ['development', 'staging', 'production']) - Environment
+    //   - projectId: string (optional) - Associated project ID
+    //   - workspaceId: string (optional) - Associated workspace ID
+    //   - userId: string (required) - User who owns the variable
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - updatedAt: timestamp (required) - Timestamp
+    //   - isEncrypted: boolean (required) - Whether value is encrypted
+    //   - description: string (optional, max length 500) - Description
+    //
     // Collection: verification_requests
     // Document ID: {userId}
     // Fields:
@@ -499,6 +514,22 @@ service cloud.firestore {
              data.updatedAt is timestamp;
     }
 
+    function isValidEnvVar(data) {
+      return hasRequiredFields(['id', 'name', 'value', 'environment', 'userId', 'createdAt', 'updatedAt', 'isEncrypted']) &&
+             hasOnlyAllowedFields(['id', 'name', 'value', 'environment', 'projectId', 'workspaceId', 'userId', 'createdAt', 'updatedAt', 'isEncrypted', 'description']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.value is string && data.value.size() > 0 &&
+             data.environment in ['development', 'staging', 'production'] &&
+             (!('projectId' in data) || (data.projectId is string && data.projectId.size() > 0)) &&
+             (!('workspaceId' in data) || (data.workspaceId is string && data.workspaceId.size() > 0)) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             data.isEncrypted is bool &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 500));
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -611,6 +642,13 @@ service cloud.firestore {
       allow read: if isAuthenticated() && isOwner(resource.data.userId);
       allow create: if isAuthenticated() && isValidApiKey(request.resource.data);
       allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /env_vars/{envVarId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isValidEnvVar(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId) && isValidEnvVar(request.resource.data);
       allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
