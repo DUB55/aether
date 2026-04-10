@@ -49,6 +49,18 @@ service cloud.firestore {
     //   - createdAt: timestamp (required) - Timestamp
     //   - updatedAt: timestamp (required) - Timestamp
     //
+    // Collection: version_history
+    // Document ID: {versionId}
+    // Fields:
+    //   - id: string (required) - The version ID
+    //   - projectId: string (required) - The parent project ID
+    //   - version: string (required) - Version number (e.g., v1, v2)
+    //   - description: string (required, max length 500) - Version description
+    //   - files: map (required) - File contents
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - createdBy: string (required) - User who created the version
+    //   - isCurrent: boolean (required) - Whether this is the current version
+    //
     // ===============================================================
 
     // ===============================================================
@@ -61,6 +73,10 @@ service cloud.firestore {
 
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isProjectOwner(projectId) {
+      return isAuthenticated() && request.auth.uid == get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId;
     }
 
     function isAdmin() {
@@ -145,6 +161,19 @@ service cloud.firestore {
              data.updatedAt is timestamp;
     }
 
+    function isValidProjectVersion(data) {
+      return hasRequiredFields(['id', 'projectId', 'version', 'description', 'files', 'createdAt', 'createdBy', 'isCurrent']) &&
+             hasOnlyAllowedFields(['id', 'projectId', 'version', 'description', 'files', 'createdAt', 'createdBy', 'isCurrent']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.projectId is string && data.projectId.size() > 0 &&
+             data.version is string && data.version.size() > 0 &&
+             data.description is string && data.description.size() > 0 && data.description.size() <= 500 &&
+             data.files is map &&
+             data.createdAt is timestamp &&
+             data.createdBy is string &&
+             data.isCurrent is bool;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -181,6 +210,13 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidWorkspace(request.resource.data);
       allow update: if isAuthenticated() && isValidWorkspace(request.resource.data) && (isOwner(resource.data.ownerId) || isAdmin());
       allow delete: if isAuthenticated() && (isOwner(resource.data.ownerId) || isAdmin());
+    }
+
+    match /version_history/{versionId} {
+      allow read: if isAuthenticated() && (isProjectOwner(resource.data.projectId) || isAdmin());
+      allow create: if isAuthenticated() && isValidProjectVersion(request.resource.data) && (isProjectOwner(request.resource.data.projectId) || isAdmin());
+      allow update: if isAuthenticated() && isValidProjectVersion(request.resource.data) && (isProjectOwner(resource.data.projectId) || isAdmin());
+      allow delete: if isAuthenticated() && (isProjectOwner(resource.data.projectId) || isAdmin());
     }
 
     match /projects/{projectId} {

@@ -1,5 +1,9 @@
 // Version history and rollback service
 // Manages project versions and allows rollback to previous states
+// Now uses Firebase Firestore for persistent storage
+
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, getDocs, Timestamp } from 'firebase/firestore';
 
 export interface ProjectVersion {
   id: string
@@ -7,7 +11,7 @@ export interface ProjectVersion {
   version: string
   description: string
   files: Record<string, string>
-  createdAt: number
+  createdAt: Timestamp
   createdBy: string
   isCurrent: boolean
 }
@@ -18,66 +22,94 @@ export interface RollbackResult {
   restoredVersion?: ProjectVersion
 }
 
+const VERSION_HISTORY_COLLECTION = 'version_history';
+
 export const versionHistoryService = {
   // Save a new version
-  saveVersion: (
+  saveVersion: async (
     projectId: string,
     files: Record<string, string>,
     description: string,
     createdBy: string
-  ): ProjectVersion => {
-    const versions = versionHistoryService.getVersions(projectId)
+  ): Promise<ProjectVersion> => {
+    if (!auth.currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get existing versions to mark previous current as not current
+    const q = query(collection(db, VERSION_HISTORY_COLLECTION), where('projectId', '==', projectId), where('isCurrent', '==', true));
+    const querySnapshot = await getDocs(q);
     
-    // Mark previous current version as not current
-    versions.forEach(v => v.isCurrent = false)
+    // Mark previous current versions as not current
+    querySnapshot.forEach(async (doc) => {
+      await updateDoc(doc.ref, { isCurrent: false });
+    });
     
     // Generate version number
-    const versionNumber = versions.length + 1
+    const allVersionsQuery = query(collection(db, VERSION_HISTORY_COLLECTION), where('projectId', '==', projectId));
+    const allVersionsSnapshot = await getDocs(allVersionsQuery);
+    const versionNumber = allVersionsSnapshot.size + 1;
+    
+    const versionId = `version_${Date.now()}`;
+    const now = Timestamp.now();
     
     const newVersion: ProjectVersion = {
-      id: `version_${Date.now()}`,
+      id: versionId,
       projectId,
       version: `v${versionNumber}`,
       description,
       files: { ...files },
-      createdAt: Date.now(),
+      createdAt: now,
       createdBy,
       isCurrent: true
     }
     
-    versions.push(newVersion)
+    // Store in Firebase Firestore
+    const versionRef = doc(db, VERSION_HISTORY_COLLECTION, versionId);
+    await setDoc(versionRef, newVersion);
     
-    // Store in localStorage (in production, this would be in Firebase/Supabase)
-    const allVersions = JSON.parse(localStorage.getItem('aether_version_history') || '{}')
-    allVersions[projectId] = versions
-    localStorage.setItem('aether_version_history', JSON.stringify(allVersions))
-    
-    return newVersion
+    return newVersion;
   },
 
   // Get all versions for a project
-  getVersions: (projectId: string): ProjectVersion[] => {
-    const allVersions = JSON.parse(localStorage.getItem('aether_version_history') || '{}')
-    return allVersions[projectId] || []
+  getVersions: async (projectId: string): Promise<ProjectVersion[]> => {
+    const q = query(collection(db, VERSION_HISTORY_COLLECTION), where('projectId', '==', projectId));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => doc.data() as ProjectVersion).sort((a, b) => 
+      b.createdAt.toMillis() - a.createdAt.toMillis()
+    );
   },
 
   // Get a specific version
-  getVersion: (projectId: string, versionId: string): ProjectVersion | null => {
-    const versions = versionHistoryService.getVersions(projectId)
-    return versions.find(v => v.id === versionId) || null
+  getVersion: async (projectId: string, versionId: string): Promise<ProjectVersion | null> => {
+    const versionRef = doc(db, VERSION_HISTORY_COLLECTION, versionId);
+    const versionDoc = await getDoc(versionRef);
+    
+    if (versionDoc.exists()) {
+      const version = versionDoc.data() as ProjectVersion;
+      if (version.projectId === projectId) {
+        return version;
+      }
+    }
+    return null;
   },
 
   // Get current version
-  getCurrentVersion: (projectId: string): ProjectVersion | null => {
-    const versions = versionHistoryService.getVersions(projectId)
-    return versions.find(v => v.isCurrent) || null
+  getCurrentVersion: async (projectId: string): Promise<ProjectVersion | null> => {
+    const q = query(collection(db, VERSION_HISTORY_COLLECTION), where('projectId', '==', projectId), where('isCurrent', '==', true));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      return querySnapshot.docs[0].data() as ProjectVersion;
+    }
+    return null;
   },
 
   // Rollback to a specific version
-  rollbackToVersion: (projectId: string, versionId: string): RollbackResult => {
+  rollbackToVersion: async (projectId: string, versionId: string): Promise<RollbackResult> => {
     try {
-      const versions = versionHistoryService.getVersions(projectId)
-      const targetVersion = versions.find(v => v.id === versionId)
+      const targetVersion = await versionHistoryService.getVersion(projectId, versionId);
       
       if (!targetVersion) {
         return {
@@ -87,7 +119,7 @@ export const versionHistoryService = {
       }
       
       // Create a new version with the rolled-back state
-      const rollbackVersion = versionHistoryService.saveVersion(
+      const rollbackVersion = await versionHistoryService.saveVersion(
         projectId,
         targetVersion.files,
         `Rollback to ${targetVersion.version}`,
@@ -109,56 +141,55 @@ export const versionHistoryService = {
   },
 
   // Delete a version (cannot delete current version)
-  deleteVersion: (projectId: string, versionId: string): boolean => {
+  deleteVersion: async (projectId: string, versionId: string): Promise<boolean> => {
     try {
-      const versions = versionHistoryService.getVersions(projectId)
-      const version = versions.find(v => v.id === versionId)
+      const versionRef = doc(db, VERSION_HISTORY_COLLECTION, versionId);
+      const versionDoc = await getDoc(versionRef);
       
-      if (!version) return false
+      if (!versionDoc.exists()) return false;
+      
+      const version = versionDoc.data() as ProjectVersion;
       if (version.isCurrent) {
-        console.error('Cannot delete current version')
-        return false
+        console.error('Cannot delete current version');
+        return false;
       }
       
-      const filteredVersions = versions.filter(v => v.id !== versionId)
+      if (version.projectId !== projectId) return false;
       
-      const allVersions = JSON.parse(localStorage.getItem('aether_version_history') || '{}')
-      allVersions[projectId] = filteredVersions
-      localStorage.setItem('aether_version_history', JSON.stringify(allVersions))
-      
-      return true
+      await deleteDoc(versionRef);
+      return true;
     } catch (error) {
-      console.error('Delete version error:', error)
-      return false
+      console.error('Delete version error:', error);
+      return false;
     }
   },
 
   // Compare two versions
-  compareVersions: (projectId: string, versionId1: string, versionId2: string): {
+  compareVersions: async (projectId: string, versionId1: string, versionId2: string): Promise<{
     added: string[]
     modified: string[]
     deleted: string[]
-  } => {
-    const version1 = versionHistoryService.getVersion(projectId, versionId1)
-    const version2 = versionHistoryService.getVersion(projectId, versionId2)
+  }> => {
+    const version1 = await versionHistoryService.getVersion(projectId, versionId1);
+    const version2 = await versionHistoryService.getVersion(projectId, versionId2);
     
     if (!version1 || !version2) {
       return { added: [], modified: [], deleted: [] }
     }
     
-    const files1 = Object.keys(version1.files)
-    const files2 = Object.keys(version2.files)
+    const files1 = Object.keys(version1.files);
+    const files2 = Object.keys(version2.files);
     
-    const added = files2.filter(f => !files1.includes(f))
-    const deleted = files1.filter(f => !files2.includes(f))
-    const modified = files1.filter(f => files2.includes(f) && version1.files[f] !== version2.files[f])
+    const added = files2.filter(f => !files1.includes(f));
+    const deleted = files1.filter(f => !files2.includes(f));
+    const modified = files1.filter(f => files2.includes(f) && version1.files[f] !== version2.files[f]);
     
-    return { added, modified, deleted }
+    return { added, modified, deleted };
   },
 
   // Get version statistics
-  getVersionStats: (projectId: string) => {
-    const versions = versionHistoryService.getVersions(projectId)
+  getVersionStats: async (projectId: string) => {
+    const versions = await versionHistoryService.getVersions(projectId);
     
     return {
       totalVersions: versions.length,
@@ -166,6 +197,17 @@ export const versionHistoryService = {
       firstVersion: versions[0]?.version || 'none',
       lastVersion: versions[versions.length - 1]?.version || 'none',
       totalStorage: JSON.stringify(versions).length // Approximate storage size
-    }
-  }
+    };
+  },
+
+  // Subscribe to version changes for a project (real-time updates)
+  subscribeToVersions: (projectId: string, callback: (versions: ProjectVersion[]) => void) => {
+    const q = query(collection(db, VERSION_HISTORY_COLLECTION), where('projectId', '==', projectId));
+    return onSnapshot(q, (snapshot) => {
+      const versions = snapshot.docs.map(doc => doc.data() as ProjectVersion).sort((a, b) => 
+        b.createdAt.toMillis() - a.createdAt.toMillis()
+      );
+      callback(versions);
+    });
+  },
 }
