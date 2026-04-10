@@ -94,6 +94,20 @@ service cloud.firestore {
     //   - enabled: boolean (required) - Whether connection is enabled
     //   - createdAt: timestamp (required) - Timestamp
     //
+    // Collection: secrets
+    // Document ID: {secretId}
+    // Fields:
+    //   - id: string (required) - Secret ID
+    //   - name: string (required, max length 100) - Secret name
+    //   - value: string (required) - Secret value (encrypted in production)
+    //   - type: string (required, enum: ['api_key', 'token', 'password', 'certificate']) - Secret type
+    //   - environment: string (required, enum: ['development', 'staging', 'production']) - Environment
+    //   - projectId: string (optional) - Associated project ID
+    //   - userId: string (required) - User who owns the secret
+    //   - createdAt: timestamp (required) - Timestamp
+    //   - lastAccessed: timestamp (required) - Last access timestamp
+    //   - description: string (optional, max length 500) - Description
+    //
     // ===============================================================
 
     // ===============================================================
@@ -245,6 +259,21 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    function isValidSecret(data) {
+      return hasRequiredFields(['id', 'name', 'value', 'type', 'environment', 'userId', 'createdAt', 'lastAccessed']) &&
+             hasOnlyAllowedFields(['id', 'name', 'value', 'type', 'environment', 'projectId', 'userId', 'createdAt', 'lastAccessed', 'description']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.value is string && data.value.size() > 0 &&
+             data.type in ['api_key', 'token', 'password', 'certificate'] &&
+             data.environment in ['development', 'staging', 'production'] &&
+             (!('projectId' in data) || (data.projectId is string && data.projectId.size() > 0)) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.createdAt is timestamp &&
+             data.lastAccessed is timestamp &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 500));
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -309,6 +338,13 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidSSOConnection(request.resource.data) && (isWorkspaceOwner(request.resource.data.workspaceId) || isAdmin());
       allow update: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
       allow delete: if isAuthenticated() && (isWorkspaceOwner(resource.data.workspaceId) || isAdmin());
+    }
+
+    match /secrets/{secretId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isValidSecret(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     match /projects/{projectId} {
