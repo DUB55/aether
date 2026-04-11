@@ -15,34 +15,28 @@
       "destination": "/api/server.ts"
     },
     {
+      "source": "/icons/(.*)",
+      "destination": "/icons/$1"
+    },
+    {
+      "source": "/logo.png",
+      "destination": "/logo.png"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.ico"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/dist/assets/$1"
+    },
+    {
+      "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|xml|txt|map))",
+      "destination": "/dist/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/dist/index.html"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/server.ts"
-    },
-    {
-      "src": "/icons/(.*)",
-      "dest": "/icons/$1"
-    },
-    {
-      "src": "/logo.png",
-      "dest": "/logo.png"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/favicon.ico"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/dist/assets/$1"
-    },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|xml|txt|map))",
-      "dest": "/dist/$1"
     }
   ],
   "headers": [
