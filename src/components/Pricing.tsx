@@ -54,7 +54,7 @@ interface PricingProps {
 }
 
 export function Pricing({ onPlanSelect, className }: PricingProps) {
-  const [config, setConfig] = useState<PricingConfig>({
+  const [config] = useState<PricingConfig>({
     ads: {
       enabled: false,
       placement: 'sidebar',
@@ -97,46 +97,46 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
             'Everything in Starter',
             'Advanced AI Models',
             'Priority Support',
+            'Unlimited AI Requests',
+            'Advanced Templates',
             'Custom Domains',
-            'Advanced Analytics',
-            'Premium Templates',
-            'Agent Mode Access'
+            'Priority Deployment'
           ],
           limits: {
-            aiRequests: 10000,
-            projects: 100,
-            storage: '10GB'
+            aiRequests: -1,
+            projects: -1,
+            storage: '100GB'
           },
           popular: false
         },
         {
           id: 'enterprise',
           name: 'Enterprise',
-          description: 'Maximum power and security for large-scale applications',
+          description: 'For teams and organizations that need advanced features',
           price: 99,
           billingCycle: 'monthly',
           features: [
             'Everything in Pro',
-            'Dedicated AI Resources',
-            '24/7 Support',
-            'SLA Guarantees',
+            'Team Collaboration',
+            'Advanced Analytics',
             'Custom Integrations',
-            'Advanced Security',
-            'Unlimited Everything'
+            'Dedicated Support',
+            'SLA Guarantee',
+            'Custom AI Models',
+            'White-label Options'
           ],
           limits: {
-            aiRequests: 999999,
-            projects: 999999,
-            storage: 'unlimited'
-          },
-          popular: false
+            aiRequests: -1,
+            projects: -1,
+            storage: 'Unlimited'
+          }
         }
       ]
     },
     stripe: {
-      publishableKey: 'pk_test_51234567890abcdef',
-      secretKey: 'sk_test_51234567890abcdef',
-      webhookSecret: 'whsec_test_51234567890abcdef'
+      publishableKey: 'pk_test_12345678901234567890',
+      secretKey: 'sk_test_12345678901234567890',
+      webhookSecret: 'whsec_12345678901234567890'
     },
     ui: {
       showPricing: true,
@@ -146,112 +146,6 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
   })
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
-
-  useEffect(() => {
-    // Load pricing configuration
-    const loadConfig = async () => {
-      try {
-        const response = await fetch('/api/pricing-config')
-        const data = await response.json()
-        setConfig(data)
-      } catch (error) {
-        console.error('Failed to load pricing config:', error)
-        // Use default config if API fails
-        setConfig({
-          ads: {
-            enabled: false,
-            placement: 'sidebar',
-            provider: 'google-adsense',
-            publisherId: 'ca-pub-12345678901234567890',
-            adSlot: 'aether-sidebar-ad'
-          },
-          pricing: {
-            enabled: true,
-            currency: 'USD',
-            plans: [
-              {
-                id: 'starter',
-                name: 'Starter',
-                description: 'Perfect for exploring Aether and building your first apps',
-                price: 0,
-                billingCycle: 'monthly',
-                features: [
-                  'Unlimited Projects',
-                  'Access to Basic AI Models',
-                  'Instant Preview',
-                  'Community Support',
-                  'Free Deployment',
-                  'Basic Templates'
-                ],
-                limits: {
-                  aiRequests: 1000,
-                  projects: 10,
-                  storage: '1GB'
-                },
-                popular: true
-              },
-              {
-                id: 'pro',
-                name: 'Pro',
-                description: 'Advanced features for power users who want more control',
-                price: 29,
-                billingCycle: 'monthly',
-                features: [
-                  'Everything in Starter',
-                  'Advanced AI Models',
-                  'Priority Support',
-                  'Custom Domains',
-                  'Advanced Analytics',
-                  'Premium Templates',
-                  'Agent Mode Access'
-                ],
-                limits: {
-                  aiRequests: 10000,
-                  projects: 100,
-                  storage: '10GB'
-                },
-                popular: false
-              },
-              {
-                id: 'enterprise',
-                name: 'Enterprise',
-                description: 'Maximum power and security for large-scale applications',
-                price: 99,
-                billingCycle: 'monthly',
-                features: [
-                  'Everything in Pro',
-                  'Dedicated AI Resources',
-                  '24/7 Support',
-                  'SLA Guarantees',
-                  'Custom Integrations',
-                  'Advanced Security',
-                  'Unlimited Everything'
-                ],
-                limits: {
-                  aiRequests: 999999,
-                  projects: 999999,
-                  storage: 'unlimited'
-                },
-                popular: false
-              }
-            ]
-          },
-          stripe: {
-            publishableKey: 'pk_test_51234567890abcdef',
-            secretKey: 'sk_test_51234567890abcdef',
-            webhookSecret: 'whsec_test_51234567890abcdef'
-          },
-          ui: {
-            showPricing: true,
-            showAds: false,
-            forceAdDisplay: false
-          }
-        })
-      }
-    }
-
-    loadConfig()
-  }, [])
 
   const handlePlanSelect = (plan: PricingPlan) => {
     setSelectedPlan(plan.id)
