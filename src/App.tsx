@@ -64,6 +64,8 @@ import { AgentMode } from '@/components/AgentMode'
 import { Pricing } from '@/components/Pricing'
 import { Ads } from '@/components/Ads'
 import { UserManagementDashboard } from '@/components/UserManagementDashboard'
+import { TemplateMarketplace } from '@/components/TemplateMarketplace'
+import { CommunityGallery } from '@/components/CommunityGallery'
 
 export default function App() {
   return (
@@ -504,6 +506,58 @@ function AppContent() {
 
               {currentRoute === 'ads' && (
                 <Ads />
+              )}
+
+              {currentRoute === 'docs' && !activeDoc && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-12"
+                >
+                  <div className="text-center space-y-6">
+                    <h2 className="text-4xl font-bold text-[var(--t)]">Documentation</h2>
+                    <p className="text-xl text-[var(--t2)] max-w-2xl mx-auto">
+                      Everything you need to know about building with Aether.
+                    </p>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <motion.div 
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="p-8 rounded-[40px] liquid-glass border border-[var(--bdr)] space-y-4 cursor-pointer hover:border-primary/30 transition-all"
+                      onClick={() => setActiveDoc('Quick Start Guide')}
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <MessageSquare className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-[var(--t)]">Quick Start Guide</h3>
+                      <p className="text-[var(--t2)] leading-relaxed">
+                        Follow these simple steps to build your first app without writing a single line of code.
+                      </p>
+                      <div className="flex items-center gap-2 text-primary font-medium">
+                        <span>Get Started</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </div>
+                    </motion.div>
+                    
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="p-8 rounded-[40px] liquid-glass border border-[var(--bdr)] space-y-4"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <Cpu className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-[var(--t)]">How Aether Works</h3>
+                      <p className="text-[var(--t2)] leading-relaxed">
+                        Learn about the AI-powered development process and how Aether creates complete applications.
+                      </p>
+                    </motion.div>
+                  </div>
+                </motion.div>
               )}
 
               {currentRoute === 'docs' && activeDoc && (
