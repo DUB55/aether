@@ -6,21 +6,7 @@ import React, { useEffect, useState } from "react"
 import { cn } from '@/lib/utils'
 import { AetherLogo } from './aether-logo'
 import { motion } from "framer-motion"
-// import { useFirebase } from './FirebaseProvider'
-// Mock Firebase for testing
-const useMockFirebase = () => ({
-  user: null,
-  signIn: async () => {},
-  logout: async () => {},
-  isAuthReady: true,
-  projects: [],
-  saveProject: async () => {},
-  deleteProject: async () => {},
-  saveSnapshot: async () => {},
-  getSnapshots: async () => [],
-  restoreSnapshot: async () => ({}),
-  fetchProjectById: async () => () => {}
-});
+import { useFirebase } from './FirebaseProvider'
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -34,7 +20,7 @@ import { AnimatePresence } from 'framer-motion'
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { user, signIn, logout } = useMockFirebase()
+  const { user, signIn, logout } = useFirebase()
   const [pfpErrorCount, setPfpErrorCount] = useState(0)
 
   useEffect(() => {

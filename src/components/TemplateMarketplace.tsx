@@ -4,21 +4,7 @@ import { TEMPLATES, type Template } from '@/lib/templates';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ExternalLink, Heart, Layout } from 'lucide-react';
 import { cn } from '@/lib/utils';
-// import { useFirebase } from './FirebaseProvider';
-// Mock Firebase for testing
-const useMockFirebase = () => ({
-  user: null,
-  signIn: async () => {},
-  logout: async () => {},
-  isAuthReady: true,
-  projects: [],
-  saveProject: async () => {},
-  deleteProject: async () => {},
-  saveSnapshot: async () => {},
-  getSnapshots: async () => [],
-  restoreSnapshot: async () => ({}),
-  fetchProjectById: async () => () => {}
-});
+import { useFirebase } from './FirebaseProvider';
 import { db, handleFirestoreError, OperationType } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, deleteDoc, collection, query, where, increment, updateDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -28,7 +14,7 @@ interface TemplateMarketplaceProps {
 }
 
 export function TemplateMarketplace({ onSelect }: TemplateMarketplaceProps) {
-  const { user } = useMockFirebase();
+  const { user } = useFirebase();
   const [likes, setLikes] = useState<Record<string, number>>({});
   const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
 

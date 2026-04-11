@@ -6,21 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Cpu, Rocket, X, AlertTriangle } from 'lucide-react'
 import { AetherLogo } from './aether-logo'
-// import { useFirebase } from './FirebaseProvider'
-// Mock Firebase for testing
-const useMockFirebase = () => ({
-  user: null,
-  signIn: async () => {},
-  logout: async () => {},
-  isAuthReady: true,
-  projects: [],
-  saveProject: async () => {},
-  deleteProject: async () => {},
-  saveSnapshot: async () => {},
-  getSnapshots: async () => [],
-  restoreSnapshot: async () => ({}),
-  fetchProjectById: async () => () => {}
-});
+import { useFirebase } from './FirebaseProvider'
 
 interface LoginModalProps {
   open: boolean
@@ -29,7 +15,7 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
-  const { user } = useMockFirebase()
+  const { user } = useFirebase()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 

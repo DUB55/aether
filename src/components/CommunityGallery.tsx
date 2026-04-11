@@ -11,21 +11,7 @@ import {
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-// import { useFirebase } from '@/components/FirebaseProvider';
-// Mock Firebase for testing
-const useMockFirebase = () => ({
-  user: null,
-  signIn: async () => {},
-  logout: async () => {},
-  isAuthReady: true,
-  projects: [],
-  saveProject: async () => {},
-  deleteProject: async () => {},
-  saveSnapshot: async () => {},
-  getSnapshots: async () => [],
-  restoreSnapshot: async () => ({}),
-  fetchProjectById: async () => () => {}
-});
+import { useFirebase } from '@/components/FirebaseProvider';
 import { ProjectPreview } from '@/components/ProjectPreview';
 import { AetherLogo } from '@/components/aether-logo';
 import { CONFIG } from '@/config';
@@ -39,7 +25,7 @@ interface CommunityProject extends Project {
 }
 
 export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
-  const { saveProject } = useMockFirebase();
+  const { saveProject } = useFirebase();
   const [projects, setProjects] = useState<CommunityProject[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'trending' | 'recent'>('all');
