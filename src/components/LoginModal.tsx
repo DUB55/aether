@@ -91,16 +91,14 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
             </button>
 
             <div className="flex flex-col items-center text-center space-y-6">
-                <div className="w-40 h-16 rounded-2xl bg-[var(--bg3)] flex items-center justify-center mb-2">
-                  <AetherLogo size={40} />
+                <div className="flex items-center gap-3 justify-center">
+                  <AetherLogo size={32} />
+                  <DialogTitle className="text-2xl font-bold tracking-tight text-[var(--t)]">Aether</DialogTitle>
                 </div>
                 
-                <div className="space-y-2">
-                  <DialogTitle className="text-2xl font-bold tracking-tight text-[var(--t)]">Join Aether</DialogTitle>
-                  <DialogDescription className="text-[var(--t3)]">
-                    Sign in to save your projects, collaborate with others, and access advanced AI models.
-                  </DialogDescription>
-                </div>
+                <DialogDescription className="text-[var(--t3)]">
+                  Sign in to save your projects, collaborate with others, and access advanced AI models.
+                </DialogDescription>
 
                 <div className="w-full space-y-4 pt-2">
                   {error && (

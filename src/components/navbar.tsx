@@ -89,18 +89,27 @@ export function Navbar() {
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-[var(--bdr)]">
                   {user.photoURL ? (
                     <img 
-                      src={`/api/proxy/image?url=${encodeURIComponent(user.photoURL)}`} 
+                      src={user.photoURL} 
                       alt={user.displayName || 'User'} 
                       className="w-full h-full object-cover" 
-                      onError={() => {
-                        if (pfpErrorCount < 3) {
-                          setTimeout(() => setPfpErrorCount(prev => prev + 1), 1000);
+                      onError={(e) => {
+                        console.log('[Navbar] Profile picture error, falling back to default');
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent && parent.lastElementChild) {
+                          (parent.lastElementChild as HTMLElement).style.display = 'flex';
                         }
                       }}
+                      onLoad={() => {
+                        console.log('[Navbar] Profile picture loaded successfully');
+                      }}
                     />
-                  ) : (
-                    <User className="w-4 h-4 text-primary" />
-                  )}
+                  ) : null}
+                  <User 
+                    className="w-4 h-4 text-primary" 
+                    style={{ display: user.photoURL ? 'none' : 'flex' }}
+                  />
                 </div>
               </button>
             </DropdownMenuTrigger>

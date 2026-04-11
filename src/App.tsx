@@ -137,6 +137,16 @@ function AppContent() {
     console.log('[App] isLoginModalOpen changed:', isLoginModalOpen, 'user:', user ? 'authenticated' : 'null')
   }, [isLoginModalOpen, user])
 
+  useEffect(() => {
+    if (user && localStorage.getItem('aether_pending_prompt')) {
+      console.log('[App] User authenticated with pending prompt, executing handleStartProject')
+      // Small delay to ensure Firebase is fully ready
+      setTimeout(() => {
+        handleStartProject()
+      }, 500)
+    }
+  }, [user])
+
   const [showImageGenerator, setShowImageGenerator] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [showAgentMode, setShowAgentMode] = useState(false)
@@ -273,24 +283,38 @@ function AppContent() {
     const trimmed = input.trim()
     if (!trimmed) return
     
+    console.log('[App] handleStartProject - Starting with prompt:', trimmed)
+    
     if (!user) {
-      console.log('[App] handleStartProject - User not authenticated, opening login modal')
+      console.log('[App] handleStartProject - User not authenticated, saving prompt and opening login modal')
+      // Save the prompt to be used after login
+      const pendingPrompt = trimmed
+      localStorage.setItem('aether_pending_prompt', pendingPrompt)
       setIsLoginModalOpen(true)
       return
     }
 
+    // If we have a pending prompt from login, use that instead
+    const promptToUse = localStorage.getItem('aether_pending_prompt') || trimmed
+    if (localStorage.getItem('aether_pending_prompt')) {
+      console.log('[App] handleStartProject - Using pending prompt after login:', promptToUse)
+      localStorage.removeItem('aether_pending_prompt')
+    }
+
+    console.log('[App] handleStartProject - Creating project with prompt:', promptToUse)
     setBusy(true)
     const id = Math.random().toString(36).substring(7)
     
     // Check if user is asking for images and auto-generate
-    const containsImageKeywords = /\b(image|picture|photo|pic|visual|art|graphic|illustration|design|draw|paint|create.*image|generate.*image|make.*image)\b/i.test(trimmed)
+    const containsImageKeywords = /\b(image|picture|photo|pic|visual|art|graphic|illustration|design|draw|paint|create.*image|generate.*image|make.*image)\b/i.test(promptToUse)
     
-    let messages: Message[] = [{ role: "user", content: trimmed }]
+    let messages: Message[] = [{ role: "user", content: promptToUse }]
     
     if (containsImageKeywords) {
       // Auto-generate an image based on the prompt
       try {
-        const imagePrompt = trimmed.length > 100 ? trimmed.substring(0, 100) : trimmed
+        const imagePrompt = promptToUse.length > 100 ? promptToUse.substring(0, 100) : promptToUse
+        console.log('[App] handleStartProject - Generating image for prompt:', imagePrompt)
         const response = await fetch('/api/generate-image', {
           method: 'POST',
           headers: {
@@ -336,10 +360,12 @@ function AppContent() {
     }
     
     try {
+      console.log('[App] handleStartProject - Saving project:', newProject.id)
       // Save project immediately before navigation
       await saveProject(newProject)
       
       // Navigate to editor immediately
+      console.log('[App] handleStartProject - Navigating to editor:', `/editor/${id}`)
       window.history.pushState({}, '', `/editor/${id}`)
       window.dispatchEvent(new Event('routechange'))
       setInput("")

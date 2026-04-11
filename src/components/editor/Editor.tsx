@@ -739,10 +739,23 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   }, [project?.settings]);
 
   const handleSend = async (overrideInput?: string, isAutoSend = false) => {
+    console.log('[Editor] handleSend START - messageContent:', overrideInput || input)
+    console.log('[Editor] handleSend - overrideInput:', overrideInput)
+    console.log('[Editor] handleSend - isAutoSend:', isAutoSend)
+    console.log('[Editor] handleSend - input:', input)
+    console.log('[Editor] handleSend - selectedImage:', selectedImage)
+    console.log('[Editor] handleSend - project exists:', !!project)
+    console.log('[Editor] handleSend - isGenerating:', isGenerating)
+    console.log('[Editor] handleSend - user exists:', !!user)
+    
     const messageContent = overrideInput || input
-    if ((!messageContent.trim() && !selectedImage) || !project || isGenerating) return
+    if ((!messageContent.trim() && !selectedImage) || !project || isGenerating) {
+      console.log('[Editor] handleSend - Early return due to validation failure')
+      return
+    }
 
     if (!user && !isAutoSend) {
+      console.log('[Editor] handleSend - User not authenticated, opening login modal')
       setIsLoginModalOpen(true)
       return
     }
