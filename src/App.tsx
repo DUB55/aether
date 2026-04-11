@@ -1,79 +1,8 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import FallbackIcon from '@/components/FallbackIcon'
-import { 
-  ChevronDown,
-  ArrowUp,
-  ArrowLeft,
-  Loader2,
-  Rocket,
-  Heart,
-  AlertTriangle,
-  Plus,
-  Search,
-  Settings2,
-  Brain,
-  Trash2,
-  Layout,
-  Users,
-  Lock,
-  Calendar,
-  Clock,
-  Library,
-  Sparkles,
-  ZapOff,
-  Terminal,
-  Share2,
-  Globe,
-  Cpu,
-  Zap,
-  MousePointer2,
-  Code2,
-  Layers,
-  Shield,
-  MessageSquare,
-  MoreHorizontal,
-  ImageIcon,
-} from "lucide-react"
-import { Button } from '@/components/ui/button'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Navbar } from '@/components/navbar'
-import { ThemeProvider } from '@/components/theme-provider'
-// Temporarily disable Firebase to test
-// import { FirebaseProvider, useFirebase } from '@/components/FirebaseProvider'
-import { cn } from '@/lib/utils'
-import { storage } from '@/lib/storage'
-import { type Project } from '@/types'
-import { Toaster, toast } from "sonner"
+import React from "react"
 
-// Mock Firebase for testing
-const MockFirebaseProvider = ({ children }: { children: React.ReactNode }) => {
-  console.log('MockFirebaseProvider: Rendering children');
-  return <>{children}</>;
-};
-
-const useMockFirebase = () => ({
-  user: null,
-  signIn: async () => {},
-  logout: async () => {},
-  isAuthReady: true,
-  projects: [],
-  saveProject: async () => {},
-  deleteProject: async () => {},
-  saveSnapshot: async () => {},
-  getSnapshots: async () => [],
-  restoreSnapshot: async () => ({}),
-  fetchProjectById: async () => () => {}
-});
-
-import { Editor } from '@/components/editor/Editor'
-import { Onboarding } from '@/components/Onboarding'
-import { TemplateMarketplace } from '@/components/TemplateMarketplace'
-import { CommunityGallery } from '@/components/CommunityGallery'
+console.log('App.tsx: Starting minimal test version');
 import { ProjectPreview } from '@/components/ProjectPreview'
 import { LoginModal } from '@/components/LoginModal'
 import PrivacyPolicy from '@/pages/PrivacyPolicy'

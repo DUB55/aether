@@ -28,7 +28,21 @@ import {
   Lock
 } from 'lucide-react'
 import { exportProjectToGithub } from '@/lib/github-registry'
-import { useFirebase } from '../FirebaseProvider'
+// import { useFirebase } from '../FirebaseProvider'
+// Mock Firebase for testing
+const useMockFirebase = () => ({
+  user: null,
+  signIn: async () => {},
+  logout: async () => {},
+  isAuthReady: true,
+  projects: [],
+  saveProject: async () => {},
+  deleteProject: async () => {},
+  saveSnapshot: async () => {},
+  getSnapshots: async () => [],
+  restoreSnapshot: async () => ({}),
+  fetchProjectById: async () => () => {}
+});
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { type Project } from '@/types'
@@ -62,7 +76,7 @@ export function SettingsDialog({
   onRename, 
   onDelete 
 }: SettingsDialogProps) {
-  const { user } = useFirebase();
+  const { user } = useMockFirebase();
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);

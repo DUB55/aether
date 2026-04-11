@@ -51,7 +51,21 @@ import {
 import { motion, AnimatePresence } from 'motion/react'
 import MonacoEditor from '@monaco-editor/react'
 import ReactMarkdown from 'react-markdown'
-import { useFirebase } from '@/components/FirebaseProvider'
+// import { useFirebase } from '@/components/FirebaseProvider'
+// Mock Firebase for testing
+const useMockFirebase = () => ({
+  user: null,
+  signIn: async () => {},
+  logout: async () => {},
+  isAuthReady: true,
+  projects: [],
+  saveProject: async () => {},
+  deleteProject: async () => {},
+  saveSnapshot: async () => {},
+  getSnapshots: async () => [],
+  restoreSnapshot: async () => ({}),
+  fetchProjectById: async () => () => {}
+});
 import { cn } from '@/lib/utils'
 import { streamRequest } from '@/lib/ai-service'
 import { type Message, type Project } from '@/types'
@@ -85,7 +99,7 @@ interface FileStatus {
 
 export function Editor({ projectId, onBack, isSharedView = false }: EditorViewProps) {
   const { theme } = useTheme()
-  const { user, signIn, saveProject: firebaseSaveProject, projects, saveSnapshot, getSnapshots, restoreSnapshot, fetchProjectById, deleteProject } = useFirebase()
+  const { user, signIn, saveProject: firebaseSaveProject, projects, saveSnapshot, getSnapshots, restoreSnapshot, fetchProjectById, deleteProject } = useMockFirebase()
   const [lastRemoteUpdate, setLastRemoteUpdate] = useState<number>(0)
   const [project, setProject] = useState<Project | null>(null)
   const [activeFile, setActiveFile] = useState('index.html')
