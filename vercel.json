@@ -5,7 +5,10 @@
     "api/server.ts": {
       "maxDuration": 60
     },
-    "api/**/*.ts": {
+    "server/multi-provider-service.ts": {
+      "maxDuration": 60
+    },
+    "server/**/*.ts": {
       "maxDuration": 60
     }
   },
