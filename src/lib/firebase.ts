@@ -69,6 +69,16 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   }
   console.error('Firestore Error: ', JSON.stringify(errInfo));
+  
+  // Don't throw errors for offline scenarios - allow fallback to work
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  if (errorMessage.includes('the client is offline') || 
+      errorMessage.includes('ERR_BLOCKED_BY_CLIENT') ||
+      errorMessage.includes('blocked')) {
+    console.warn('[Firebase] Network/Client error detected, allowing fallback');
+    return; // Don't throw - let the fallback handle it
+  }
+  
   throw new Error(JSON.stringify(errInfo));
 }
 

@@ -366,10 +366,16 @@ function AppContent() {
     
     try {
       console.log('[App] handleStartProject - Saving project:', newProject.id)
-      // Save project immediately before navigation
-      await saveProject(newProject)
+      // Save project but don't let Firebase errors block navigation
+      try {
+        await saveProject(newProject)
+        console.log('[App] handleStartProject - Project saved successfully')
+      } catch (saveError) {
+        console.warn('[App] handleStartProject - Project save failed, but continuing:', saveError)
+        toast.warning("Project created locally (sync may be limited)")
+      }
       
-      // Navigate to editor immediately
+      // Navigate to editor immediately regardless of save status
       console.log('[App] handleStartProject - Navigating to editor:', `/editor/${id}`)
       window.history.pushState({}, '', `/editor/${id}`)
       window.dispatchEvent(new Event('routechange'))
@@ -377,7 +383,12 @@ function AppContent() {
       toast.success("Project created!")
     } catch (error) {
       console.error("Project creation error:", error)
-      toast.error("Failed to create project")
+      // Still navigate even on error
+      console.log('[App] handleStartProject - Navigating to editor despite error:', `/editor/${id}`)
+      window.history.pushState({}, '', `/editor/${id}`)
+      window.dispatchEvent(new Event('routechange'))
+      setInput("")
+      toast.error("Project created with limited functionality")
     } finally {
       // Keep busy state for AI generation
       setTimeout(() => setBusy(false), 3000)

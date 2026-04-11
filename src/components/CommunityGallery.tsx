@@ -42,6 +42,142 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
 
   useEffect(() => {
     const fetchProjects = async () => {
+      // Check if we already determined that the registry doesn't exist
+      const registryStatus = localStorage.getItem('aether_registry_status');
+      if (registryStatus === 'not_found') {
+        console.log('[CommunityGallery] Registry previously marked as not found, showing sample projects directly');
+        const sampleProjects: CommunityProject[] = [
+          {
+            id: 'sample-1',
+            name: 'Task Manager App',
+            description: 'A beautiful task management application with drag-and-drop functionality',
+            files: {
+              'index.html': `
+                <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+                  <div class="max-w-4xl mx-auto">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-8">Task Manager</h1>
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                      <div class="flex items-center gap-4 mb-6">
+                        <input type="text" placeholder="Add a new task..." class="flex-1 px-4 py-2 border rounded-lg">
+                        <button class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">Add Task</button>
+                      </div>
+                      <div class="space-y-2">
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <input type="checkbox" class="w-5 h-5">
+                          <span class="flex-1">Complete project documentation</span>
+                          <button class="text-red-500 hover:text-red-700">Delete</button>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <input type="checkbox" class="w-5 h-5">
+                          <span class="flex-1">Review pull requests</span>
+                          <button class="text-red-500 hover:text-red-700">Delete</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `
+            },
+            ownerId: 'sample-user',
+            authorName: 'John Doe',
+            updatedAt: new Date().toISOString(),
+            isPublic: true,
+            messages: [],
+            createdAt: new Date().toISOString(),
+            lastModified: Date.now()
+          },
+          {
+            id: 'sample-2',
+            name: 'Weather Dashboard',
+            description: 'Real-time weather dashboard with beautiful charts and forecasts',
+            files: {
+              'index.html': `
+                <div class="min-h-screen bg-gradient-to-br from-blue-400 to-purple-600 p-8">
+                  <div class="max-w-6xl mx-auto">
+                    <h1 class="text-5xl font-bold text-white mb-8 text-center">Weather Dashboard</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 text-white">
+                        <h3 class="text-2xl font-semibold mb-4">Today</h3>
+                        <div class="text-6xl mb-4">72°F</div>
+                        <p class="text-lg">Partly Cloudy</p>
+                      </div>
+                      <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 text-white">
+                        <h3 class="text-2xl font-semibold mb-4">Tomorrow</h3>
+                        <div class="text-6xl mb-4">68°F</div>
+                        <p class="text-lg">Sunny</p>
+                      </div>
+                      <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 text-white">
+                        <h3 class="text-2xl font-semibold mb-4">Week</h3>
+                        <div class="text-6xl mb-4">65°F</div>
+                        <p class="text-lg">Mixed</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `
+            },
+            ownerId: 'sample-user-2',
+            authorName: 'Jane Smith',
+            updatedAt: new Date().toISOString(),
+            isPublic: true,
+            messages: [],
+            createdAt: new Date().toISOString(),
+            lastModified: Date.now()
+          },
+          {
+            id: 'sample-3',
+            name: 'Portfolio Website',
+            description: 'Modern portfolio website with smooth animations and responsive design',
+            files: {
+              'index.html': `
+                <div class="min-h-screen bg-gray-900 text-white">
+                  <nav class="px-8 py-6">
+                    <div class="max-w-6xl mx-auto flex justify-between items-center">
+                      <h2 class="text-2xl font-bold">My Portfolio</h2>
+                      <div class="flex gap-6">
+                        <a href="#" class="hover:text-blue-400">Home</a>
+                        <a href="#" class="hover:text-blue-400">About</a>
+                        <a href="#" class="hover:text-blue-400">Projects</a>
+                        <a href="#" class="hover:text-blue-400">Contact</a>
+                      </div>
+                    </div>
+                  </nav>
+                  <main class="max-w-6xl mx-auto px-8 py-16">
+                    <section class="text-center mb-16">
+                      <h1 class="text-6xl font-bold mb-4">Hi, I'm Alex</h1>
+                      <p class="text-2xl text-gray-400">Full Stack Developer</p>
+                    </section>
+                    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      <div class="bg-gray-800 rounded-lg p-6 hover:transform hover:scale-105 transition">
+                        <h3 class="text-xl font-semibold mb-2">E-Commerce Platform</h3>
+                        <p class="text-gray-400">Modern shopping experience with React</p>
+                      </div>
+                      <div class="bg-gray-800 rounded-lg p-6 hover:transform hover:scale-105 transition">
+                        <h3 class="text-xl font-semibold mb-2">Task Management</h3>
+                        <p class="text-gray-400">Collaborative project management tool</p>
+                      </div>
+                      <div class="bg-gray-800 rounded-lg p-6 hover:transform hover:scale-105 transition">
+                        <h3 class="text-xl font-semibold mb-2">Weather App</h3>
+                        <p class="text-gray-400">Real-time weather forecasting</p>
+                      </div>
+                    </section>
+                  </main>
+                </div>
+              `
+            },
+            ownerId: 'sample-user-3',
+            authorName: 'Alex Johnson',
+            updatedAt: new Date().toISOString(),
+            isPublic: true,
+            messages: [],
+            createdAt: new Date().toISOString(),
+            lastModified: Date.now()
+          }
+        ];
+        setProjects(sampleProjects);
+        return;
+      }
+
       try {
         // Fetch projects from GitHub registry
         const { REPO, PATH, BRANCH } = CONFIG.GITHUB_REGISTRY;
@@ -72,7 +208,10 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
           console.log('[CommunityGallery] Setting projects:', sortedProjects.length, 'projects');
           setProjects(sortedProjects);
         } else if (contentRes.status === 404) {
-          console.log('[CommunityGallery] Registry file not found (404), showing sample projects');
+          console.log('[CommunityGallery] Registry file not found (404), marking status and showing sample projects');
+          // Mark that registry doesn't exist to prevent future attempts
+          localStorage.setItem('aether_registry_status', 'not_found');
+          
           // Show sample projects when registry doesn't exist
           const sampleProjects: CommunityProject[] = [
             {
@@ -210,8 +349,7 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
         }
       } catch (error) {
         console.error('[CommunityGallery] Error fetching community projects:', error);
-        toast.error('Failed to load community gallery');
-        // Show sample projects even on error
+        // Don't show toast error for network issues, just show sample projects
         const sampleProjects: CommunityProject[] = [
           {
             id: 'sample-1',
