@@ -4,34 +4,12 @@
   "functions": {
     "api/server.ts": {
       "maxDuration": 60
-    },
-    "server/multi-provider-service.ts": {
-      "maxDuration": 60
-    },
-    "server/**/*.ts": {
-      "maxDuration": 60
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/server.ts"
-    },
-    {
-      "source": "/icons/(.*)",
-      "destination": "/icons/$1"
-    },
-    {
-      "source": "/logo.png",
-      "destination": "/logo.png"
-    },
-    {
-      "source": "/favicon.ico",
-      "destination": "/favicon.ico"
-    },
-    {
-      "source": "/assets/(.*)",
-      "destination": "/dist/assets/$1"
     },
     {
       "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|xml|txt|map))",
