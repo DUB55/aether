@@ -365,22 +365,25 @@ function AppContent() {
     }
     
     try {
-      console.log('[App] handleStartProject - Saving project:', newProject.id)
-      // Save project but don't let Firebase errors block navigation
-      try {
-        await saveProject(newProject)
-        console.log('[App] handleStartProject - Project saved successfully')
-      } catch (saveError) {
-        console.warn('[App] handleStartProject - Project save failed, but continuing:', saveError)
-        toast.warning("Project created locally (sync may be limited)")
-      }
+      console.log('[App] handleStartProject - Navigating to editor IMMEDIATELY:', `/editor/${id}`)
       
-      // Navigate to editor immediately regardless of save status
-      console.log('[App] handleStartProject - Navigating to editor:', `/editor/${id}`)
+      // Navigate IMMEDIATELY - before any async operations
       window.history.pushState({}, '', `/editor/${id}`)
       window.dispatchEvent(new Event('routechange'))
       setInput("")
-      toast.success("Project created!")
+      
+      // Show immediate feedback
+      toast.success("Opening editor...")
+      
+      // Now save project in background (don't await)
+      console.log('[App] handleStartProject - Saving project in background:', newProject.id)
+      saveProject(newProject).then(() => {
+        console.log('[App] handleStartProject - Project saved successfully')
+      }).catch(saveError => {
+        console.warn('[App] handleStartProject - Project save failed:', saveError)
+        toast.warning("Project saved locally (sync may be limited)")
+      })
+      
     } catch (error) {
       console.error("Project creation error:", error)
       // Still navigate even on error
@@ -388,10 +391,10 @@ function AppContent() {
       window.history.pushState({}, '', `/editor/${id}`)
       window.dispatchEvent(new Event('routechange'))
       setInput("")
-      toast.error("Project created with limited functionality")
+      toast.error("Opening editor with limited functionality")
     } finally {
-      // Keep busy state for AI generation
-      setTimeout(() => setBusy(false), 3000)
+      // Keep busy state for AI generation (shorter time since navigation is immediate)
+      setTimeout(() => setBusy(false), 1000)
     }
   }
 
