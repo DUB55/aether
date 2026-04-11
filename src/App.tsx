@@ -43,11 +43,33 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Navbar } from '@/components/navbar'
 import { ThemeProvider } from '@/components/theme-provider'
-import { FirebaseProvider, useFirebase } from '@/components/FirebaseProvider'
+// Temporarily disable Firebase to test
+// import { FirebaseProvider, useFirebase } from '@/components/FirebaseProvider'
 import { cn } from '@/lib/utils'
 import { storage } from '@/lib/storage'
 import { type Project } from '@/types'
 import { Toaster, toast } from "sonner"
+
+// Mock Firebase for testing
+const MockFirebaseProvider = ({ children }: { children: React.ReactNode }) => {
+  console.log('MockFirebaseProvider: Rendering children');
+  return <>{children}</>;
+};
+
+const useMockFirebase = () => ({
+  user: null,
+  signIn: async () => {},
+  logout: async () => {},
+  isAuthReady: true,
+  projects: [],
+  saveProject: async () => {},
+  deleteProject: async () => {},
+  saveSnapshot: async () => {},
+  getSnapshots: async () => [],
+  restoreSnapshot: async () => ({}),
+  fetchProjectById: async () => () => {}
+});
+
 import { Editor } from '@/components/editor/Editor'
 import { Onboarding } from '@/components/Onboarding'
 import { TemplateMarketplace } from '@/components/TemplateMarketplace'
@@ -71,14 +93,14 @@ import { UserManagementDashboard } from '@/components/UserManagementDashboard'
 
 export default function App() {
   return (
-    <FirebaseProvider>
+    <MockFirebaseProvider>
       <AppContent />
-    </FirebaseProvider>
+    </MockFirebaseProvider>
   )
 }
 
 function AppContent() {
-  const { user, signIn, logout, projects: allProjects, saveProject, deleteProject } = useFirebase()
+  const { user, signIn, logout, projects: allProjects, saveProject, deleteProject } = useMockFirebase()
 
   useEffect(() => {
     // Force scroll to top immediately and also after a delay
