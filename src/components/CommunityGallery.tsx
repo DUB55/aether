@@ -47,30 +47,41 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
         const { REPO, PATH, BRANCH } = CONFIG.GITHUB_REGISTRY;
         const [owner, repo] = REPO.split('/');
         
+        console.log('[CommunityGallery] Fetching from:', `${owner}/${repo}/${PATH} on ${BRANCH}`);
+        
         const contentRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${PATH}?ref=${BRANCH}`, {
           headers: {
             'Accept': 'application/vnd.github.v3+json'
           }
         });
 
+        console.log('[CommunityGallery] Response status:', contentRes.status);
+        
         if (contentRes.ok) {
           const contentData = await contentRes.json();
+          console.log('[CommunityGallery] Content data received:', contentData);
+          
           const projectData = JSON.parse(atob(contentData.content));
+          console.log('[CommunityGallery] Parsed project data:', projectData);
           
           // Sort by updatedAt descending and limit to 50
           const sortedProjects = projectData
             .sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
             .slice(0, 50);
           
+          console.log('[CommunityGallery] Setting projects:', sortedProjects.length, 'projects');
           setProjects(sortedProjects);
         } else if (contentRes.status === 404) {
+          console.log('[CommunityGallery] Registry file not found (404)');
           // Registry file doesn't exist yet
           setProjects([]);
         } else {
+          const errorText = await contentRes.text();
+          console.error('[CommunityGallery] Failed to fetch registry:', contentRes.status, errorText);
           throw new Error(`Failed to fetch registry: ${contentRes.statusText}`);
         }
       } catch (error) {
-        console.error('Error fetching community projects:', error);
+        console.error('[CommunityGallery] Error fetching community projects:', error);
         toast.error('Failed to load community gallery');
         setProjects([]);
       }

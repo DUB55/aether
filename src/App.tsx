@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ArrowUp,
   ArrowLeft,
+  ArrowRight,
   Loader2,
   Rocket,
   Heart,
@@ -66,6 +67,7 @@ import { Ads } from '@/components/Ads'
 import { UserManagementDashboard } from '@/components/UserManagementDashboard'
 import { TemplateMarketplace } from '@/components/TemplateMarketplace'
 import { CommunityGallery } from '@/components/CommunityGallery'
+import { Onboarding } from '@/components/Onboarding'
 
 export default function App() {
   return (

@@ -2,7 +2,7 @@ export const CONFIG = {
   USE_LIQUID_DESIGN: true,
   GITHUB_CLIENT_ID: process.env.VITE_GITHUB_CLIENT_ID || '',
   GITHUB_REGISTRY: {
-    REPO: 'DUB55/aether',
+    REPO: 'DUB55/aether-projects',
     PATH: 'projects.json',
     BRANCH: 'main'
   },
