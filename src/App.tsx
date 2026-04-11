@@ -437,7 +437,7 @@ function AppContent() {
           <motion.main
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20 flex-1"
+            className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-8 flex-1"
           >
             <UserManagementDashboard />
           </motion.main>
@@ -468,7 +468,7 @@ function AppContent() {
           <motion.main
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative z-10 max-w-5xl mx-auto px-6 pt-32 pb-20 flex-1"
+            className="relative z-10 max-w-5xl mx-auto px-6 pt-32 pb-8 flex-1"
           >
             <div className="space-y-12">
               <div className="space-y-4 text-center">
@@ -1037,7 +1037,7 @@ function AppContent() {
         <motion.main
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="relative z-10 flex flex-col items-center pt-32 pb-24 flex-1"
+          className="relative z-10 flex flex-col items-center pt-32 pb-8 flex-1"
         >
           {/* Hero Section */}
           <div className="max-w-6xl w-full px-6 text-center space-y-12 relative z-10">
