@@ -636,12 +636,32 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
           setProjectName(p.name)
         })
       } else {
+        console.log('[Editor] Loading regular project from Firebase projects array')
+        console.log('[Editor] Available projects in Firebase:', projects.length)
+        console.log('[Editor] Project IDs in Firebase:', projects.map(p => p.id))
+        console.log('[Editor] Looking for projectId:', projectId)
+        
         const p = projects.find(p => p.id === projectId)
+        console.log('[Editor] Found project in Firebase array:', p ? 'YES' : 'NO')
+        
         if (p) {
+          console.log('[Editor] Setting project from Firebase array:', p.name)
           setProject(p)
           setProjectName(p.name)
           const snaps = await getSnapshots(projectId)
           setSnapshots(snaps)
+        } else {
+          console.log('[Editor] Project not found in Firebase array, trying direct fetch')
+          // Fallback: Try to fetch directly from Firebase
+          unsubscribe = fetchProjectById(projectId, (fetchedProject) => {
+            console.log('[Editor] Fetched project directly:', fetchedProject)
+            if (fetchedProject) {
+              setProject(fetchedProject)
+              setProjectName(fetchedProject.name)
+            } else {
+              console.error('[Editor] Could not fetch project directly either')
+            }
+          })
         }
       }
     }
