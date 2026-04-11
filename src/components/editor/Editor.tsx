@@ -272,6 +272,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   const [showFileSuggestions, setShowFileSuggestions] = useState(false)
   const [isPlanMode, setIsPlanMode] = useState(false)
   const [isVisualEditMode, setIsVisualEditMode] = useState(false)
+  const [isInspectMode, setIsInspectMode] = useState(false)
   const [isThinking, setIsThinking] = useState(false)
   const [thinkingContent, setThinkingContent] = useState('')
   const [thinkingStartTime, setThinkingStartTime] = useState<number>(0)
