@@ -340,23 +340,20 @@ function AppContent() {
     }
     
     try {
-      // Wait a bit for smooth animation on landing page
-      await new Promise(resolve => setTimeout(resolve, 800))
+      // Save project immediately before navigation
+      await saveProject(newProject)
       
       // Navigate to editor immediately
       window.history.pushState({}, '', `/editor/${id}`)
       window.dispatchEvent(new Event('routechange'))
       setInput("")
-      
-      // Save project in background after navigation
-      await saveProject(newProject)
       toast.success("Project created!")
     } catch (error) {
       console.error("Project creation error:", error)
       toast.error("Failed to create project")
     } finally {
-      // Keep busy state for a bit longer to show loading in editor
-      setTimeout(() => setBusy(false), 1500)
+      // Keep busy state for AI generation
+      setTimeout(() => setBusy(false), 3000)
     }
   }
 
@@ -988,20 +985,29 @@ function AppContent() {
         <div 
           suppressHydrationWarning
           className={cn(
-            "landing-bg fixed inset-0 pointer-events-none",
+            "landing-bg fixed top-0 left-0 right-0 pointer-events-none",
             `gradient-${gradientTheme}`
           )} 
         />
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 1.5, ease: "easeOut" }}
-          className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[800px] pointer-events-none"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ 
+            opacity: 1, 
+            scale: [0, 1]
+          }}
+          transition={{ 
+            delay: 1.5,
+            scale: { delay: 1.5, duration: 0.6, ease: 'easeOut' },
+            opacity: { delay: 1.5, duration: 0.2, ease: 'easeOut' }
+          }}
+          className="absolute top-20 left-1/2 -translate-x-1/2 w-[900px] h-[300px] pointer-events-none rounded-full animate-gradient-x"
           style={{
-            background: 'radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.4) 0%, rgba(139, 92, 246, 0.3) 30%, rgba(236, 72, 153, 0.2) 60%, transparent 80%)',
-            filter: 'blur(100px)',
-            animation: 'gradient-x 5s ease infinite',
-            backgroundSize: '200% 200%'
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(139, 92, 246, 0.3) 50%, rgba(236, 72, 153, 0.2) 100%)',
+            backgroundSize: '200% 200%',
+            filter: 'blur(60px)',
+            willChange: 'transform, opacity',
+            transform: 'translateZ(0)',
+            transformStyle: 'preserve-3d'
           }}
         />
         <Navbar />
@@ -1029,10 +1035,25 @@ function AppContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-6xl md:text-[112px] font-black tracking-tighter text-[var(--t)] leading-[0.88] max-w-5xl mx-auto"
+                className="text-6xl md:text-[112px] font-black tracking-tighter text-white leading-[0.88] max-w-5xl mx-auto"
               >
                 Build anything <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-500 animate-gradient-x">just by asking.</span>
+                <motion.span 
+                  initial={{ color: '#ffffff' }}
+                  animate={{ color: '#ffffff' }}
+                  whileInView={{ color: 'transparent' }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 1.8, duration: 0.5, ease: 'easeInOut' }}
+                  style={{
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    backgroundImage: 'linear-gradient(to right, #2563eb, #a855f7)',
+                    backgroundSize: '200% 200%'
+                  }}
+                  className="animate-gradient-x"
+                >
+                  just by asking.
+                </motion.span>
               </motion.h1>
 
               <motion.p
@@ -1056,8 +1077,8 @@ function AppContent() {
                 onSubmit={handleStartProject} 
                 className="relative group"
               >
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600/50 to-purple-500/50 rounded-[40px] blur-2xl opacity-60 group-focus-within:opacity-80 transition-opacity duration-700 animate-gradient-x" style={{ backgroundSize: '200% 200%' }} />
-                <div className="relative liquid-glass rounded-[38px] p-2 bg-[var(--bg)]/60 dark:bg-black/40 border-[var(--bdr)] dark:border-white/20 backdrop-blur-3xl shadow-2xl transition-all duration-500 group-focus-within:border-primary/50 group-focus-within:bg-[var(--bg)]/80">
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600/50 to-purple-500/50 rounded-[38px] blur-2xl opacity-0 group-focus-within:opacity-40 transition-opacity duration-700 animate-gradient-x pointer-events-none" style={{ backgroundSize: '200% 200%' }} />
+                <div className="relative liquid-glass rounded-[38px] p-2 bg-transparent border-[var(--bdr)] dark:border-white/20 backdrop-blur-4xl shadow-2xl transition-all duration-500 group-focus-within:border-primary/50 group-focus-within:bg-transparent">
                   <div className="p-4 sm:p-6 space-y-4">
                     <textarea
                       value={input}

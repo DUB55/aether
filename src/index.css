@@ -366,9 +366,12 @@
 }
 
 .icon-btn:hover {
-  background: var(--bg2);
-  border-color: var(--bdr2);
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(255, 255, 255, 0.3);
   color: var(--t);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
 }
 
 .btn {
@@ -388,9 +391,12 @@
 }
 
 .btn:hover {
-  background: var(--bg2);
-  border-color: var(--bdr2);
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(255, 255, 255, 0.3);
   color: var(--t);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
 }
 
 .icon-btn svg {
@@ -481,13 +487,20 @@
 
 .composer {
   padding: 0.75rem 1rem 1rem;
-  background: transparent;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
 }
 
 /* Fresh composer styling */
 .composer-input {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border-radius: 1.5rem;
   padding: 1rem 1.25rem 0.5rem;
   margin: 0 1rem 1rem;
@@ -501,18 +514,19 @@
   box-sizing: border-box;
 }
 
+/* Force complete transparency always - no effects */
+.composer-input:not(:focus),
 .composer-input:focus {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
-  background-size: 200% 200%;
-  animation: gradient-x 5s ease infinite;
-  border-color: rgba(255, 255, 255, 0.2);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0) !important;
+  background-color: rgba(0, 0, 0, 0) !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  animation: none !important;
+  box-shadow: none !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.composer-input.loaded {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
-  border-color: rgba(255, 255, 255, 0.12);
-}
 
 .pinput {
   width: 100%;
@@ -1019,6 +1033,12 @@ body.viewer-mode .prev-empty{display:none!important}
 @keyframes gradient-x {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
+}
+
+@keyframes gradient-flow {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  33% { transform: scale(1.1) rotate(120deg); }
+  66% { transform: scale(1.05) rotate(240deg); }
 }
 
 .animate-float {

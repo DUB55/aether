@@ -410,11 +410,6 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
     }
   }, [isSharedView])
 
-  // Composer animation on page load
-  useEffect(() => {
-    setComposerAnimate(true)
-  }, [])
-
   // Initialize WebContainer
   useEffect(() => {
     if (!project || isWebContainerLoading || webcontainer) return
@@ -1612,7 +1607,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
 
               <div ref={chatEndRef} />
             </div>
-            <div className="composer bg-black/20 backdrop-blur-md border-t border-white/10">
+            <div className="composer">
               {project.messages.length === 0 && !isGenerating && (
                 <div className="px-4 py-3 flex gap-2 overflow-x-auto">
                   {[
@@ -1647,7 +1642,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
               )}
               <div>
                 <textarea 
-                  className={cn("composer-input", composerAnimate && "loaded")} 
+                  className="composer-input" 
                   value={input}
                   spellCheck={false}
                   onChange={(e) => setInput(e.target.value)}
