@@ -85,10 +85,10 @@ export const streamRequest = async (options: StreamOptions, retryCount = 0) => {
         body: errorBody
       });
 
-      // If API doesn't exist (404), fall back to mock responses
+      // Don't use fallback responses - require real API
       if (response.status === 404) {
-        console.warn('[AI Service] API endpoint not found, using fallback responses');
-        return provideFallbackResponse(options);
+        console.error('[AI Service] API endpoint not found - please start the development server');
+        throw new Error(`AI Service Error (${response.status}): API endpoint not found. Please start the development server with 'npm run dev'`);
       }
 
       throw new Error(`AI Service Error (${response.status}): ${errorBody || response.statusText}`);

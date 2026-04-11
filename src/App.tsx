@@ -422,7 +422,6 @@ function AppContent() {
             onBack={() => { window.history.pushState({}, '', isSharedView ? '/' : '/projects'); window.dispatchEvent(new Event('routechange')) }} 
             isSharedView={isSharedView}
           />
-          <Footer />
         </div>
         <Toaster position="bottom-center" richColors />
       </ThemeProvider>
