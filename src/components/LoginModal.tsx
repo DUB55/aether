@@ -77,8 +77,8 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
         >
           {/* Background Decoration */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
-            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
+            <div className="absolute -top-24 -right-32 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-24 -left-32 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
           </div>
 
           <div className="relative z-10 p-8">
@@ -93,7 +93,6 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
             <div className="flex flex-col items-center text-center space-y-6">
                 <div className="flex items-center gap-3 justify-center">
                   <AetherLogo size={32} />
-                  <DialogTitle className="text-2xl font-bold tracking-tight text-[var(--t)]">Aether</DialogTitle>
                 </div>
                 
                 <DialogDescription className="text-[var(--t3)]">
@@ -163,17 +162,7 @@ export function LoginModal({ open, onClose, onLogin }: LoginModalProps) {
                     By continuing, you agree to Aether's Terms of Service and Privacy Policy.
                   </p>
 
-                  {!error && (
-                    <div className="space-y-2">
-                      <p className="text-[10px] text-center text-slate-500 dark:text-slate-600 px-2">
-                        If you see an error, please disable ad blockers and try again.
-                      </p>
-                      <p className="text-[10px] text-center text-slate-600 dark:text-slate-700 px-2">
-                        For testing: Open browser console and run <code className="bg-slate-800 px-1 rounded">localStorage.setItem('aether_debug_mode', 'true')</code>
-                      </p>
-                    </div>
-                  )}
-                </div>
+                                  </div>
               </div>
           </div>
         </motion.div>
