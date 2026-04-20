@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
+import { enterpriseSystemsRegistry } from '@/lib/enterprise'
 import { motion, AnimatePresence } from "framer-motion"
 import FallbackIcon from '@/components/FallbackIcon'
 import { 
@@ -141,6 +142,12 @@ function AppContent() {
   useEffect(() => {
     console.log('[App] isLoginModalOpen changed:', isLoginModalOpen, 'user:', user ? 'authenticated' : 'null')
   }, [isLoginModalOpen, user])
+
+  useEffect(() => {
+    enterpriseSystemsRegistry.initializeAll().catch(error => {
+      console.error('[App] Failed to initialize enterprise systems:', error)
+    })
+  }, [])
 
   useEffect(() => {
     if (user && localStorage.getItem('aether_pending_prompt')) {
