@@ -138,6 +138,9 @@ OPENAI_API_KEY=your_openai_api_key_here
 - Name: `OPENAI_API_KEY`
 - Value: Your API key
 
+**Fallback (No API Key Required):**
+If you don't have an OpenAI API key, Aether will automatically fall back to **Pollinations AI**, a free image generation service that requires no API key. The fallback happens automatically and provides good quality images without any setup.
+
 **Testing:**
 ```bash
 # Test image generation
@@ -156,6 +159,8 @@ Simply type "generate an image [your description]" in the chat, and Aether will 
 - "Generate an image of a modern office workspace"
 - "Create a picture showing a mountain landscape at dawn"
 - "Make a visual representation of a futuristic city"
+
+The system will automatically use OpenAI DALL-E if you have an API key configured, or fall back to Pollinations AI if you don't. You'll be notified which provider was used in the chat response.
 
 ---
 

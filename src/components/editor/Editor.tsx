@@ -843,9 +843,11 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
         
         if (response.ok) {
           const data = await response.json();
+          const provider = data.provider || 'unknown';
+          const providerName = provider === 'openai' ? 'OpenAI DALL-E' : 'Pollinations AI';
           const assistantMessage: Message = {
             role: 'assistant',
-            content: `I've generated an image based on your request: "${imagePrompt}"`,
+            content: `I've generated an image based on your request: "${imagePrompt}" (using ${providerName})`,
             image: data.imageUrl
           };
           
@@ -855,7 +857,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
             updatedAt: new Date().toISOString()
           };
           setProject(finalProject);
-          toast.success('Image generated successfully!');
+          toast.success(`Image generated successfully using ${providerName}!`);
         } else {
           throw new Error('Failed to generate image');
         }
@@ -863,7 +865,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
         console.error('Image generation error:', error);
         const errorMessage: Message = {
           role: 'assistant',
-          content: 'Sorry, I encountered an error generating the image. Please make sure the OPENAI_API_KEY is configured in your environment variables.'
+          content: 'Sorry, I encountered an error generating the image. Please try again.'
         };
         const finalProject = {
           ...updatedProject,
@@ -871,7 +873,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
           updatedAt: new Date().toISOString()
         };
         setProject(finalProject);
-        toast.error('Failed to generate image. Please check your API key configuration.');
+        toast.error('Failed to generate image. Please try again.');
       } finally {
         setIsGenerating(false);
         setAiStatus('ready');
