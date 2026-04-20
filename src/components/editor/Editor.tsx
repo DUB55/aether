@@ -8,6 +8,7 @@ import {
   Clock,
   Code2, 
   Copy, 
+  Database,
   Download, 
   Edit3,
   ExternalLink, 
@@ -64,6 +65,11 @@ import { SettingsDialog } from './SettingsDialog'
 import { Terminal } from './Terminal'
 import { TemplateMarketplace } from './TemplateMarketplace'
 import { VoiceInput } from './VoiceInput'
+import { PluginManager } from '../enterprise/PluginManager'
+import { BackendIntegrationDialog } from '../enterprise/BackendIntegrationDialog'
+import { FigmaImportDialog } from '../enterprise/FigmaImportDialog'
+import { InteractiveChatMode } from '../enterprise/InteractiveChatMode'
+import { TeamManagementDashboard } from '../enterprise/TeamManagementDashboard'
 import { getWebContainer, mountFiles } from '@/lib/webcontainer'
 import { type Terminal as XTerm } from 'xterm'
 
@@ -274,6 +280,13 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   const [isVisualEditMode, setIsVisualEditMode] = useState(false)
   const [isInspectMode, setIsInspectMode] = useState(false)
   const [isThinking, setIsThinking] = useState(false)
+  
+  // Enterprise features state
+  const [isPluginManagerOpen, setIsPluginManagerOpen] = useState(false)
+  const [isBackendIntegrationOpen, setIsBackendIntegrationOpen] = useState(false)
+  const [isFigmaImportOpen, setIsFigmaImportOpen] = useState(false)
+  const [isInteractiveChatOpen, setIsInteractiveChatOpen] = useState(false)
+  const [isTeamManagementOpen, setIsTeamManagementOpen] = useState(false)
   const [thinkingContent, setThinkingContent] = useState('')
   const [thinkingStartTime, setThinkingStartTime] = useState<number>(0)
   const [showThinking, setShowThinking] = useState(false)
@@ -800,6 +813,72 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       setInput('')
     }
 
+    // Check for image generation request
+    const imageGenerationMatch = messageContent.match(/(?:generate|create|make).*?(?:an? )?(?:image|picture|photo|graphic|visual|art|drawing|illustration)/i);
+    if (imageGenerationMatch) {
+      const imagePrompt = messageContent.replace(/(?:generate|create|make).*?(?:an? )?(?:image|picture|photo|graphic|visual|art|drawing|illustration)(?: of| called| showing| with| that)?/i, '').trim() || messageContent;
+      
+      const userMessage: Message = { role: 'user', content: messageContent };
+      updatedProject = {
+        ...project,
+        messages: [...project.messages, userMessage],
+        updatedAt: new Date().toISOString()
+      };
+      setProject(updatedProject);
+      setInput('');
+      
+      setIsGenerating(true);
+      setAiStatus('generating');
+      
+      try {
+        const response = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: imagePrompt,
+            size: '1024x1024',
+            quality: 'standard'
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const assistantMessage: Message = {
+            role: 'assistant',
+            content: `I've generated an image based on your request: "${imagePrompt}"`,
+            image: data.imageUrl
+          };
+          
+          const finalProject = {
+            ...updatedProject,
+            messages: [...updatedProject.messages, assistantMessage],
+            updatedAt: new Date().toISOString()
+          };
+          setProject(finalProject);
+          toast.success('Image generated successfully!');
+        } else {
+          throw new Error('Failed to generate image');
+        }
+      } catch (error) {
+        console.error('Image generation error:', error);
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: 'Sorry, I encountered an error generating the image. Please make sure the OPENAI_API_KEY is configured in your environment variables.'
+        };
+        const finalProject = {
+          ...updatedProject,
+          messages: [...updatedProject.messages, errorMessage],
+          updatedAt: new Date().toISOString()
+        };
+        setProject(finalProject);
+        toast.error('Failed to generate image. Please check your API key configuration.');
+      } finally {
+        setIsGenerating(false);
+        setAiStatus('ready');
+      }
+      return;
+    }
+
     // Handle greetings or empty messages
     const lowerInput = messageContent.toLowerCase().trim();
     if (lowerInput === 'hi' || lowerInput === 'hello' || lowerInput === 'hey') {
@@ -847,7 +926,9 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       console.log('========================');
 
       const isFirstMessage = updatedProject.messages.length <= 2;
-      const personality = `
+      
+      // Adjust personality based on mode
+      let personality = `
         You are Aether, an autonomous AI developer.
         ${isFirstMessage ? "This is the first prompt. Generate a professional project name and include it as [PROJECT_NAME: Your Name]." : ""}
         To create or update a file, wrap it in BEGIN FILE: path and END FILE: path.
@@ -860,6 +941,75 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
         4. NO CONVERSATION: DO NOT introduce yourself, DO NOT say "Hello", DO NOT say "I can help with that". Start DIRECTLY with the code or the task.
         5. PROJECT STRUCTURE: Follow standard Vite/React project structure for web and Expo structure for mobile.
       `;
+
+      if (showAgentMode) {
+        personality = `
+          You are Aether, an autonomous AI AGENT with full decision-making authority.
+          ${isFirstMessage ? "This is the first prompt. Generate a professional project name and include it as [PROJECT_NAME: Your Name]." : ""}
+          
+          AGENT MODE - You are empowered to:
+          1. Make architectural decisions without asking for permission
+          2. Choose appropriate libraries, frameworks, and patterns autonomously
+          3. Implement complete features with best practices
+          4. Add error handling, validation, and edge cases proactively
+          5. Optimize for performance and user experience
+          6. Write clean, maintainable, and well-documented code
+          
+          To create or update a file, wrap it in BEGIN FILE: path and END FILE: path.
+          To delete a file, use [DELETE: path].
+          
+          CRITICAL GUIDELINES:
+          1. UI: Use shadcn/ui components by default. Assume they are available in @/components/ui/*. Use Tailwind CSS for all styling.
+          2. BACKEND: If the user needs a database or auth, use Supabase. Assume the client is initialized in @/lib/supabase.
+          3. MOBILE: If the user asks for a mobile app, use React Native with Expo.
+          4. BE PROACTIVE: Don't just do the minimum. Add value with thoughtful implementations.
+          5. NO CONVERSATION: Start DIRECTLY with the code or the task.
+          6. PROJECT STRUCTURE: Follow standard Vite/React project structure for web and Expo structure for mobile.
+        `;
+      }
+
+      if (isPlanMode) {
+        personality = `
+          You are Aether, an AI PLANNER. Before implementing, you must create a detailed plan.
+          ${isFirstMessage ? "This is the first prompt. Generate a professional project name and include it as [PROJECT_NAME: Your Name]." : ""}
+          
+          PLAN MODE - You must:
+          1. First, analyze the request thoroughly
+          2. Create a step-by-step implementation plan
+          3. List all files that will be created/modified
+          4. Explain the architecture and design decisions
+          5. Outline the implementation approach
+          6. After the plan is approved (user responds with "execute" or "proceed"), then implement
+          
+          Format your plan as:
+          [PLAN]
+          ## Overview
+          [Brief description]
+          
+          ## Architecture
+          [Architecture decisions]
+          
+          ## Files to Create/Modify
+          - [file1]: [purpose]
+          - [file2]: [purpose]
+          
+          ## Implementation Steps
+          1. [Step 1]
+          2. [Step 2]
+          ...
+          [/PLAN]
+          
+          If the user says "execute" or "proceed" after your plan, then implement using:
+          To create or update a file, wrap it in BEGIN FILE: path and END FILE: path.
+          To delete a file, use [DELETE: path].
+          
+          CRITICAL GUIDELINES:
+          1. UI: Use shadcn/ui components by default. Assume they are available in @/components/ui/*. Use Tailwind CSS for all styling.
+          2. BACKEND: If the user needs a database or auth, use Supabase. Assume the client is initialized in @/lib/supabase.
+          3. MOBILE: If the user asks for a mobile app, use React Native with Expo.
+          4. PROJECT STRUCTURE: Follow standard Vite/React project structure for web and Expo structure for mobile.
+        `;
+      }
 
       await streamRequest({
         input: messageContent,
@@ -1469,6 +1619,11 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Project Notes" onClick={() => setIsNotesOpen(!isNotesOpen)}><FileText className="w-3.5 h-3.5" /></motion.button>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Download HTML" onClick={dlHTML}><Download className="w-3.5 h-3.5" /></motion.button>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Deploy" onClick={() => { setPublishStatus('idle'); setIsDeployDialogOpen(true); }}><Rocket className="w-3.5 h-3.5" /></motion.button>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Figma Import" onClick={() => setIsFigmaImportOpen(true)}><Palette className="w-3.5 h-3.5" /></motion.button>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Backend Integration" onClick={() => setIsBackendIntegrationOpen(true)}><Database className="w-3.5 h-3.5" /></motion.button>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Interactive Chat" onClick={() => setIsInteractiveChatOpen(true)}><MessageSquare className="w-3.5 h-3.5" /></motion.button>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Team Management" onClick={() => setIsTeamManagementOpen(true)}><Users className="w-3.5 h-3.5" /></motion.button>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Plugins" onClick={() => setIsPluginManagerOpen(true)}><Cpu className="w-3.5 h-3.5" /></motion.button>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Settings" onClick={() => setIsSettingsDialogOpen(true)}><Settings className="w-3.5 h-3.5" /></motion.button>
             </div>
           )}
@@ -2692,6 +2847,63 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
         open={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)} 
         onLogin={signIn} 
+      />
+
+      {/* Enterprise Feature Dialogs */}
+      <PluginManager 
+        open={isPluginManagerOpen}
+        onOpenChange={setIsPluginManagerOpen}
+      />
+
+      <BackendIntegrationDialog 
+        open={isBackendIntegrationOpen}
+        onOpenChange={setIsBackendIntegrationOpen}
+        projectId={projectId}
+      />
+
+      <FigmaImportDialog 
+        open={isFigmaImportOpen}
+        onOpenChange={setIsFigmaImportOpen}
+        projectId={projectId}
+        onImportComplete={(code) => {
+          if (project && code.html) {
+            const updatedProject = {
+              ...project,
+              files: {
+                ...project.files,
+                'index.html': code.html
+              },
+              updatedAt: new Date().toISOString()
+            }
+            setProject(updatedProject)
+            toast.success('Figma design imported successfully!')
+          }
+        }}
+      />
+
+      <InteractiveChatMode 
+        open={isInteractiveChatOpen}
+        onOpenChange={setIsInteractiveChatOpen}
+        projectId={projectId}
+        onChatComplete={(context) => {
+          if (project) {
+            const updatedProject = {
+              ...project,
+              settings: {
+                ...project.settings,
+                chatContext: context
+              },
+              updatedAt: new Date().toISOString()
+            }
+            setProject(updatedProject)
+          }
+        }}
+      />
+
+      <TeamManagementDashboard 
+        open={isTeamManagementOpen}
+        onOpenChange={setIsTeamManagementOpen}
+        userId={user?.uid}
       />
     </div>
   )

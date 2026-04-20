@@ -114,6 +114,51 @@ curl -X POST https://your-app.vercel.app/api/ai/chat \
 
 ---
 
+### OpenAI (DALL-E Image Generation)
+
+**Purpose:** AI-powered image generation for design assets
+
+**Required Environment Variables:**
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+**How to Get API Key:**
+
+1. Go to [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Sign in with your OpenAI account
+3. Click **"Create new secret key"**
+4. Give your key a name (e.g., "Aether Image Generation")
+5. Copy the API key (you won't see it again!)
+6. Add to your environment variables
+
+**Where to Add:**
+- Local: `.env` file
+- Vercel: Settings → Environment Variables → Add Variable
+- Name: `OPENAI_API_KEY`
+- Value: Your API key
+
+**Testing:**
+```bash
+# Test image generation
+curl -X POST http://localhost:5173/api/generate-image \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "A futuristic city at sunset", "size": "1024x1024"}'
+
+# Test on Vercel
+curl -X POST https://your-app.vercel.app/api/generate-image \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "A futuristic city at sunset", "size": "1024x1024"}'
+```
+
+**Usage in Chat:**
+Simply type "generate an image [your description]" in the chat, and Aether will automatically generate and display the image. For example:
+- "Generate an image of a modern office workspace"
+- "Create a picture showing a mountain landscape at dawn"
+- "Make a visual representation of a futuristic city"
+
+---
+
 ### Supabase
 
 **Purpose:** Backend-as-a-service with PostgreSQL database, auth, and storage
