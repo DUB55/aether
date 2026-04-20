@@ -2,7 +2,7 @@
   "version": 2,
   "outputDirectory": "dist",
   "functions": {
-    "api/**/*.ts": {
+    "api/**/*.{ts,js}": {
       "runtime": "nodejs18.x"
     }
   },
