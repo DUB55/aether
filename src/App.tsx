@@ -1,14 +1,15 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { enterpriseSystemsRegistry } from '@/lib/enterprise'
 import { motion, AnimatePresence } from "framer-motion"
 import FallbackIcon from '@/components/FallbackIcon'
 import { 
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ArrowUp,
   ArrowLeft,
-  ArrowRight,
   Loader2,
   Rocket,
   Heart,
@@ -38,6 +39,23 @@ import {
   MessageSquare,
   MoreHorizontal,
   ImageIcon,
+  Paperclip,
+  SlidersHorizontal,
+  ArrowUpRight,
+  CheckCircle2,
+  Box,
+  Database,
+  Palette,
+  Smartphone,
+  ShoppingCart,
+  Gamepad2,
+  Play,
+  Cloud,
+  Newspaper,
+  MessageCircle,
+  Sparkle,
+  BarChart3,
+  X,
 } from "lucide-react"
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
@@ -54,6 +72,22 @@ import { ProjectPreview } from '@/components/ProjectPreview'
 import { LoginModal } from '@/components/LoginModal'
 import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import TermsOfService from '@/pages/TermsOfService'
+import CookiePolicy from '@/pages/CookiePolicy'
+import License from '@/pages/License'
+import Security from '@/pages/Security'
+import About from '@/pages/About'
+import Careers from '@/pages/Careers'
+import Press from '@/pages/Press'
+import Partners from '@/pages/Partners'
+import Contact from '@/pages/Contact'
+import Blog from '@/pages/Blog'
+import Support from '@/pages/Support'
+import Documentation from '@/pages/Documentation'
+import ApiReference from '@/pages/ApiReference'
+import Guides from '@/pages/Guides'
+import EditorPage from '@/pages/Editor'
+import LandingVariation3 from '@/landing-v3/LandingVariation3'
+import { EmailAdmin } from '@/components/EmailAdmin'
 import { CONFIG } from '@/config'
 import { type Template, TEMPLATES } from '@/lib/templates'
 import { type Message } from '@/types'
@@ -70,6 +104,164 @@ import { TemplateMarketplace } from '@/components/TemplateMarketplace'
 import { CommunityGallery } from '@/components/CommunityGallery'
 import { Onboarding } from '@/components/Onboarding'
 import { Editor } from '@/components/editor/Editor'
+import { LandingBackground } from '@/components/LandingBackground'
+import { AppUpdater } from '@/components/AppUpdater'
+import { ProjectTypeDialog } from '@/components/ProjectTypeDialog'
+import { SyncStatusIndicator } from '@/components/SyncStatusIndicator'
+import { localStorageService } from '@/lib/local-storage'
+import { syncEngine } from '@/lib/sync-engine'
+
+// Feature Showcase Component - Navy/Cyan Design System
+function FeatureShowcase() {
+  const [activeFeature, setActiveFeature] = useState(0);
+  
+  const features = [
+    {
+      id: 'autonomous',
+      title: "Autonomous Engine",
+      desc: "AI understands project architecture and manages dependencies automatically.",
+      icon: Cpu,
+    },
+    {
+      id: 'preview',
+      title: "Instant Previews",
+      desc: "Real-time changes with WebContainer technology. No local setup required.",
+      icon: Zap,
+    },
+    {
+      id: 'inspector',
+      title: "Visual Inspector",
+      desc: "Click any element to locate and edit its code instantly.",
+      icon: MousePointer2,
+    },
+    {
+      id: 'github',
+      title: "GitHub Sync",
+      desc: "Push generated code to your repository. Your code, your control.",
+      icon: Code2,
+    },
+    {
+      id: 'editing',
+      title: "Multi-File Editing",
+      desc: "AI modifies multiple files simultaneously for consistent updates.",
+      icon: Layers,
+    },
+    {
+      id: 'secure',
+      title: "Secure by Design",
+      desc: "Auto-generated Firebase security rules and authentication patterns.",
+      icon: Shield,
+    }
+  ];
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+      {/* Left side - Browser mockup with placeholders */}
+      <motion.div 
+        className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#0a0f1a] border border-white/[0.08]"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.2 }}
+      >
+        {/* Browser chrome */}
+        <div className="h-10 bg-[#0f172a] border-b border-white/[0.06] flex items-center px-4 gap-3">
+          {/* Window controls */}
+          <div className="flex gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+            <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
+            <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+          </div>
+          {/* Address bar */}
+          <div className="flex-1 mx-4">
+            <div className="bg-[#02040a] rounded-md px-3 py-1.5 text-xs text-[#64748b] text-center border border-white/[0.06]">
+              localhost:3000
+            </div>
+          </div>
+        </div>
+        
+        {/* Content area with placeholders */}
+        <div className="p-6 space-y-4">
+          {/* Placeholder label for screenshot */}
+          <div className="aspect-video bg-[#02040a] rounded-lg border border-dashed border-white/[0.08] flex flex-col items-center justify-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-[#5063F0]/10 flex items-center justify-center">
+              <ImageIcon className="w-6 h-6 text-[#6b7ce5]" />
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-semibold text-[#475569] uppercase tracking-wider">Placeholder</p>
+              <p className="text-sm text-[#64748b] mt-1">Real application screenshot / video</p>
+            </div>
+          </div>
+          
+          {/* Code view placeholder */}
+          <div className="bg-[#02040a] rounded-lg border border-white/[0.06] p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Terminal className="w-4 h-4 text-[#6b7ce5]" />
+              <span className="text-xs font-medium text-[#64748b]">Code View</span>
+            </div>
+            <div className="space-y-2">
+              <div className="h-2 bg-[#1e293b] rounded w-3/4" />
+              <div className="h-2 bg-[#1e293b] rounded w-full" />
+              <div className="h-2 bg-[#1e293b] rounded w-5/6" />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Right side - Feature list */}
+      <div className="space-y-3">
+        {features.map((feature, idx) => {
+          const IconComponent = feature.icon;
+          const isActive = activeFeature === idx;
+          
+          return (
+            <motion.div
+              key={feature.id}
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.05 * idx }}
+              onClick={() => setActiveFeature(idx)}
+              className={`
+                group relative p-4 rounded-xl cursor-pointer transition-all duration-300
+                ${isActive 
+                  ? 'bg-[#5063F0]/[0.08] border border-[#5063F0]/20' 
+                  : 'bg-transparent border border-transparent hover:bg-white/[0.03] hover:border-white/[0.06]'
+                }
+              `}
+            >
+              <div className="flex items-start gap-4">
+                <div className={`
+                  w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300
+                  ${isActive 
+                    ? 'bg-[#5063F0]/15' 
+                    : 'bg-white/[0.05] group-hover:bg-white/[0.08]'
+                  }
+                `}>
+                  <IconComponent className={`w-5 h-5 ${isActive ? 'text-[#6b7ce5]' : 'text-[#64748b]'}`} />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <h3 className={`font-semibold text-base transition-colors ${isActive ? 'text-slate-100' : 'text-slate-300'}`}>
+                    {feature.title}
+                  </h3>
+                  <p className={`text-sm leading-relaxed mt-1 transition-colors ${isActive ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {feature.desc}
+                  </p>
+                </div>
+                
+                <ArrowUpRight className={`
+                  w-4 h-4 mt-1 transition-all duration-300
+                  ${isActive ? 'text-[#6b7ce5] rotate-0' : 'text-[#475569] -rotate-45 group-hover:text-slate-400'}
+                `} />
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -81,6 +273,34 @@ export default function App() {
 
 function AppContent() {
   const { user, signIn, logout, projects: allProjects, saveProject, deleteProject } = useFirebase()
+  const [showEnhanced, setShowEnhanced] = useState(true)
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
+
+  // Detect URL parameter
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const showParam = urlParams.get('show');
+      
+      // Always use enhanced mode (show=false functionality) unless explicitly set to true
+      if (showParam === 'true') {
+        setShowEnhanced(false);
+      } else {
+        // Default to enhanced mode for all other cases (no param or show=false)
+        setShowEnhanced(true);
+      }
+    }
+  }, []);
+
+  // Detect if running in Tauri (desktop app)
+  useEffect(() => {
+    const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
+    if (isTauri) {
+      document.body.classList.add('tauri');
+    } else {
+      document.body.classList.remove('tauri');
+    }
+  }, []);
 
   useEffect(() => {
     // Force scroll to top immediately and also after a delay
@@ -138,6 +358,29 @@ function AppContent() {
   const [activeDoc, setActiveDoc] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [showProjectTypeDialog, setShowProjectTypeDialog] = useState(false)
+  const [pendingProjectData, setPendingProjectData] = useState<{ prompt: string; messages: any[] } | null>(null)
+  const [carouselIndex, setCarouselIndex] = useState(0)
+  const carouselRef = useRef<HTMLDivElement>(null)
+
+  const handlePrevCarousel = () => {
+    if (carouselIndex > 0 && carouselRef.current) {
+      const newIndex = carouselIndex - 1;
+      setCarouselIndex(newIndex);
+      const scrollAmount = 280 * newIndex; // 280px card width + gap
+      carouselRef.current.scrollTo({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const handleNextCarousel = () => {
+    const totalItems = 6; // Total number of carousel items
+    if (carouselIndex < totalItems - 1 && carouselRef.current) {
+      const newIndex = carouselIndex + 1;
+      setCarouselIndex(newIndex);
+      const scrollAmount = 280 * newIndex; // 280px card width + gap
+      carouselRef.current.scrollTo({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     console.log('[App] isLoginModalOpen changed:', isLoginModalOpen, 'user:', user ? 'authenticated' : 'null')
@@ -189,7 +432,9 @@ function AppContent() {
       messages: [],
       isPublic: false,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      storageMode: 'cloud',
+      syncStatus: 'synced'
     }
     await saveProject(newProject)
     window.history.pushState({}, '', `/editor/${newProject.id}`)
@@ -255,6 +500,54 @@ function AppContent() {
       } else if (pathname === '/terms-of-service' || pathname === '/terms') {
         setCurrentRoute('terms-of-service')
         setActiveProjectId(null)
+      } else if (pathname === '/cookie-policy') {
+        setCurrentRoute('cookie-policy')
+        setActiveProjectId(null)
+      } else if (pathname === '/license') {
+        setCurrentRoute('license')
+        setActiveProjectId(null)
+      } else if (pathname === '/security') {
+        setCurrentRoute('security')
+        setActiveProjectId(null)
+      } else if (pathname === '/about') {
+        setCurrentRoute('about')
+        setActiveProjectId(null)
+      } else if (pathname === '/careers') {
+        setCurrentRoute('careers')
+        setActiveProjectId(null)
+      } else if (pathname === '/press') {
+        setCurrentRoute('press')
+        setActiveProjectId(null)
+      } else if (pathname === '/partners') {
+        setCurrentRoute('partners')
+        setActiveProjectId(null)
+      } else if (pathname === '/contact') {
+        setCurrentRoute('contact')
+        setActiveProjectId(null)
+      } else if (pathname === '/blog') {
+        setCurrentRoute('blog')
+        setActiveProjectId(null)
+      } else if (pathname === '/support') {
+        setCurrentRoute('support')
+        setActiveProjectId(null)
+      } else if (pathname === '/documentation') {
+        setCurrentRoute('documentation')
+        setActiveProjectId(null)
+      } else if (pathname === '/api-reference') {
+        setCurrentRoute('api-reference')
+        setActiveProjectId(null)
+      } else if (pathname === '/guides') {
+        setCurrentRoute('guides')
+        setActiveProjectId(null)
+      } else if (pathname === '/editor-page') {
+        setCurrentRoute('editor-page')
+        setActiveProjectId(null)
+      } else if (pathname === '/admin/email') {
+        setCurrentRoute('admin-email')
+        setActiveProjectId(null)
+      } else if (pathname === '/v3' || pathname === '/new') {
+        setCurrentRoute('landing-v3')
+        setActiveProjectId(null)
       } else if (currentRoute === 'pricing') {
         setCurrentRoute('pricing')
         setActiveProjectId(null)
@@ -290,12 +583,30 @@ function AppContent() {
   }
 
   const handleStartProject = async (e?: React.FormEvent) => {
-    e?.preventDefault()
-    if (busy) return
-    const trimmed = input.trim()
-    if (!trimmed) return
+    console.log('[LANDING-PAGE] handleStartProject called:', {
+      hasEvent: !!e,
+      busy: busy,
+      inputLength: input.length,
+      inputTrimmed: input.trim(),
+      timestamp: new Date().toISOString()
+    });
     
-    console.log('[App] handleStartProject - Starting with prompt:', trimmed)
+    e?.preventDefault()
+    if (busy) {
+      console.log('[LANDING-PAGE] Returning early - busy state:', busy);
+      return
+    }
+    const trimmed = input.trim()
+    if (!trimmed) {
+      console.log('[LANDING-PAGE] Returning early - empty input');
+      return
+    }
+    
+    console.log('[LANDING-PAGE] Starting project creation:', {
+      prompt: trimmed,
+      user: user ? 'logged in' : 'not logged in',
+      userId: user?.uid || 'none'
+    });
     
     if (!user) {
       console.log('[App] handleStartProject - User not authenticated, saving prompt and opening login modal')
@@ -313,20 +624,26 @@ function AppContent() {
       localStorage.removeItem('aether_pending_prompt')
     }
 
-    console.log('[App] handleStartProject - Creating project with prompt:', promptToUse)
-    setBusy(true)
-    const id = Math.random().toString(36).substring(7)
+    console.log('[LANDING-PAGE] Creating new project:', {
+      prompt: promptToUse,
+      timestamp: new Date().toISOString()
+    });
     
     // Check if user is asking for images and auto-generate
     const containsImageKeywords = /\b(image|picture|photo|pic|visual|art|graphic|illustration|design|draw|paint|create.*image|generate.*image|make.*image)\b/i.test(promptToUse)
+    console.log('[LANDING-PAGE] Image keywords detected:', containsImageKeywords);
     
     let messages: Message[] = [{ role: "user", content: promptToUse }]
     
     if (containsImageKeywords) {
-      // Auto-generate an image based on the prompt
+      // Auto-generate an image based on prompt
       try {
         const imagePrompt = promptToUse.length > 100 ? promptToUse.substring(0, 100) : promptToUse
-        console.log('[App] handleStartProject - Generating image for prompt:', imagePrompt)
+        console.log('[LANDING-PAGE] Generating image for prompt:', {
+          fullPrompt: promptToUse,
+          truncatedPrompt: imagePrompt,
+          wasTruncated: promptToUse.length > 100
+        });
         const response = await fetch('/api/generate-image', {
           method: 'POST',
           headers: {
@@ -356,6 +673,20 @@ function AppContent() {
         // Continue without image if generation fails
       }
     }
+
+    // Store pending project data and show project type dialog
+    setPendingProjectData({ prompt: promptToUse, messages })
+    setShowProjectTypeDialog(true)
+    setInput("")
+  }
+
+  const handleProjectTypeSelect = async (storageMode: 'cloud' | 'hybrid', localPath?: string) => {
+    if (!pendingProjectData || !user) return
+    
+    const { prompt: promptToUse, messages } = pendingProjectData
+    setBusy(true)
+    const id = Math.random().toString(36).substring(7)
+    console.log('[LANDING-PAGE] Generated project ID:', id);
     
     const newProject: Project = {
       id,
@@ -368,40 +699,75 @@ function AppContent() {
       files: {
         'index.html': ''
       },
-      messages
+      messages,
+      storageMode,
+      syncStatus: storageMode === 'cloud' ? 'synced' : 'pending',
+      localPath: storageMode === 'hybrid' ? localPath : undefined,
+      settings: {
+        autoSync: storageMode === 'hybrid',
+        syncInterval: 5, // 5 minutes
+        conflictResolution: 'latest'
+      }
     }
     
     try {
-      console.log('[App] handleStartProject - Navigating to editor IMMEDIATELY:', `/editor/${id}`)
+      console.log('[App] handleProjectTypeSelect - Navigating to editor IMMEDIATELY:', `/editor/${id}`)
       
       // Navigate IMMEDIATELY - before any async operations
       window.history.pushState({}, '', `/editor/${id}`)
       window.dispatchEvent(new Event('routechange'))
-      setInput("")
       
       // Show immediate feedback
-      toast.success("Opening editor...")
+      toast.success(`Creating ${storageMode === 'hybrid' ? 'hybrid' : 'cloud'} project...`)
       
       // Now save project in background (don't await)
-      console.log('[App] handleStartProject - Saving project in background:', newProject.id)
+      console.log('[App] handleProjectTypeSelect - Saving project in background:', newProject.id)
       saveProject(newProject).then(() => {
-        console.log('[App] handleStartProject - Project saved successfully')
+        console.log('[App] handleProjectTypeSelect - Project saved successfully')
+        if (storageMode === 'hybrid') {
+          // Initialize local files for hybrid projects
+          initializeLocalProject(newProject, localPath)
+        }
       }).catch(saveError => {
-        console.warn('[App] handleStartProject - Project save failed:', saveError)
+        console.warn('[App] handleProjectTypeSelect - Project save failed:', saveError)
         toast.warning("Project saved locally (sync may be limited)")
       })
       
     } catch (error) {
       console.error("Project creation error:", error)
       // Still navigate even on error
-      console.log('[App] handleStartProject - Navigating to editor despite error:', `/editor/${id}`)
+      console.log('[App] handleProjectTypeSelect - Navigating to editor despite error:', `/editor/${id}`)
       window.history.pushState({}, '', `/editor/${id}`)
       window.dispatchEvent(new Event('routechange'))
-      setInput("")
       toast.error("Opening editor with limited functionality")
     } finally {
-      // Keep busy state for AI generation (shorter time since navigation is immediate)
+      // Clear pending data and keep busy state for AI generation
+      setPendingProjectData(null)
       setTimeout(() => setBusy(false), 1000)
+    }
+  }
+
+  const initializeLocalProject = async (project: Project, localPath?: string) => {
+    if (!localPath || project.storageMode !== 'hybrid') return
+    
+    try {
+      console.log('[App] Initializing local project at:', localPath)
+      
+      // Initialize hybrid project with local files
+      await localStorageService.initializeHybridProject(project, localPath)
+      
+      // Start auto-sync if enabled
+      if (project.settings?.autoSync) {
+        await syncEngine.startAutoSync(project, {
+          autoResolveConflicts: false,
+          conflictResolution: project.settings?.conflictResolution || 'latest',
+          bidirectional: true
+        })
+      }
+      
+      console.log('[App] Hybrid project initialized successfully')
+    } catch (error) {
+      console.error('Failed to initialize local project:', error)
     }
   }
 
@@ -448,6 +814,151 @@ function AppContent() {
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
         <TermsOfService />
       </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'cookie-policy') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <CookiePolicy />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'license') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <License />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'security') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <Security />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'about') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <About />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'careers') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <Careers />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'press') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <Press />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'partners') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <Partners />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'contact') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <Contact />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'blog') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <Blog />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'support') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <Support />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'documentation') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <Documentation />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'api-reference') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <ApiReference />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'guides') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <Guides />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'editor-page') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <EditorPage />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'admin-email') {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+        <EmailAdmin />
+      </ThemeProvider>
+    )
+  }
+
+  if (currentRoute === 'landing-v3') {
+    return (
+      <LandingVariation3 
+        onStartProject={(prompt) => {
+          // Handle project start from landing v3
+          const trimmed = prompt.trim();
+          if (!trimmed) return;
+          
+          // Set input and trigger project creation
+          setInput(trimmed);
+          
+          if (!user) {
+            localStorage.setItem('aether_pending_prompt', trimmed);
+            setIsLoginModalOpen(true);
+          } else {
+            // Navigate to home and start project
+            window.history.pushState({}, '', '/');
+            window.dispatchEvent(new Event('routechange'));
+            setTimeout(() => handleStartProject(), 100);
+          }
+        }}
+      />
     )
   }
 
@@ -538,8 +1049,8 @@ function AppContent() {
                   className="space-y-12"
                 >
                   <div className="text-center space-y-6">
-                    <h2 className="text-4xl font-bold text-[var(--t)]">Documentation</h2>
-                    <p className="text-xl text-[var(--t2)] max-w-2xl mx-auto">
+                    <h2 className="text-4xl font-bold text-slate-100">Documentation</h2>
+                    <p className="text-xl text-slate-400 max-w-2xl mx-auto">
                       Everything you need to know about building with Aether.
                     </p>
                   </div>
@@ -549,17 +1060,17 @@ function AppContent() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.1 }}
-                      className="p-8 rounded-[40px] liquid-glass border border-[var(--bdr)] space-y-4 cursor-pointer hover:border-primary/30 transition-all"
+                      className="p-8 rounded-[40px] bg-[#0a0f1a] border border-white/[0.06] space-y-4 cursor-pointer hover:border-[#5063F0]/30 transition-all"
                       onClick={() => setActiveDoc('Quick Start Guide')}
                     >
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <MessageSquare className="w-6 h-6 text-primary" />
+                      <div className="w-12 h-12 rounded-2xl bg-[#5063F0]/10 flex items-center justify-center">
+                        <MessageSquare className="w-6 h-6 text-[#6b7ce5]" />
                       </div>
-                      <h3 className="text-2xl font-bold text-[var(--t)]">Quick Start Guide</h3>
-                      <p className="text-[var(--t2)] leading-relaxed">
+                      <h3 className="text-2xl font-bold text-slate-100">Quick Start Guide</h3>
+                      <p className="text-slate-400 leading-relaxed">
                         Follow these simple steps to build your first app without writing a single line of code.
                       </p>
-                      <div className="flex items-center gap-2 text-primary font-medium">
+                      <div className="flex items-center gap-2 text-[#6b7ce5] font-medium">
                         <span>Get Started</span>
                         <ArrowRight className="w-4 h-4" />
                       </div>
@@ -569,13 +1080,13 @@ function AppContent() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2 }}
-                      className="p-8 rounded-[40px] liquid-glass border border-[var(--bdr)] space-y-4"
+                      className="p-8 rounded-[40px] bg-[#0a0f1a] border border-white/[0.06] space-y-4"
                     >
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <Cpu className="w-6 h-6 text-primary" />
+                      <div className="w-12 h-12 rounded-2xl bg-[#5063F0]/10 flex items-center justify-center">
+                        <Cpu className="w-6 h-6 text-[#6b7ce5]" />
                       </div>
-                      <h3 className="text-2xl font-bold text-[var(--t)]">How Aether Works</h3>
-                      <p className="text-[var(--t2)] leading-relaxed">
+                      <h3 className="text-2xl font-bold text-slate-100">How Aether Works</h3>
+                      <p className="text-slate-400 leading-relaxed">
                         Learn about the AI-powered development process and how Aether creates complete applications.
                       </p>
                     </motion.div>
@@ -591,7 +1102,7 @@ function AppContent() {
                 >
                   <button 
                     onClick={() => setActiveDoc(null)}
-                    className="flex items-center gap-2 text-sm font-bold text-primary hover:opacity-80 transition-opacity mb-8"
+                    className="flex items-center gap-2 text-sm font-bold text-[#6b7ce5] hover:opacity-80 transition-opacity mb-8 cursor-pointer"
                   >
                     <ArrowLeft className="w-4 h-4" /> Back to Docs
                   </button>
@@ -1079,139 +1590,153 @@ function AppContent() {
       </ThemeProvider>
     )
   }  return (
-    <ThemeProvider attribute="class" defaultTheme="system" themes={["light", "dark", "black"]}>
-      <div className="relative min-h-screen selection:bg-primary/30 transition-colors duration-500 text-foreground overflow-x-hidden flex flex-col">
-        <div 
+    <ThemeProvider attribute="class" defaultTheme="dark" themes={["light", "dark", "black"]}>
+      <div className="relative min-h-screen bg-[#02040a] text-slate-100 overflow-x-hidden flex flex-col selection:bg-cyan-500/30">
+        {/* <div 
           suppressHydrationWarning
           className={cn(
             "landing-bg fixed top-0 left-0 right-0 pointer-events-none",
             `gradient-${gradientTheme}`
           )} 
-        />
-        <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ 
-            opacity: 1, 
-            scale: [0, 1]
-          }}
-          transition={{ 
-            delay: 1.5,
-            scale: { delay: 1.5, duration: 0.6, ease: 'easeOut' },
-            opacity: { delay: 1.5, duration: 0.2, ease: 'easeOut' }
-          }}
-          className="absolute top-20 left-1/2 -translate-x-1/2 w-[900px] h-[300px] pointer-events-none rounded-full animate-gradient-x"
-          style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(139, 92, 246, 0.3) 50%, rgba(236, 72, 153, 0.2) 100%)',
-            backgroundSize: '200% 200%',
-            filter: 'blur(60px)',
-            willChange: 'transform, opacity',
-            transform: 'translateZ(0)',
-            transformStyle: 'preserve-3d'
-          }}
-        />
+        /> */}
+        <LandingBackground />
         <Navbar />
         
         <motion.main
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="relative z-10 flex flex-col items-center pt-32 pb-8 flex-1"
+          className="relative z-10 flex flex-col items-center pt-32 pb-2 flex-1"
         >
           {/* Hero Section */}
-          <div className="max-w-6xl w-full px-6 text-center space-y-12 relative z-10">
+          <div className="max-w-6xl w-full px-6 text-center space-y-10 relative z-10">
             <div className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 dark:bg-white/5 text-primary dark:text-primary/80 text-[13px] font-bold border border-primary/10 dark:border-white/10 cursor-pointer hover:bg-primary/10 dark:hover:bg-white/10 transition-all group"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#5063F0]/10 text-[#6b7ce5] text-xs font-medium border border-[#5063F0]/20 cursor-pointer hover:bg-[#5063F0]/15 transition-all group"
                 onClick={() => { window.history.pushState({}, '', '/changelog'); window.dispatchEvent(new Event('routechange')) }}
               >
                 <span>Aether v2.0 is now live</span>
-                <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-1 transition-transform" />
+                <ChevronDown className="w-3 h-3 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
               </motion.div>
 
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-6xl md:text-[112px] font-black tracking-tighter text-white leading-[0.88] max-w-5xl mx-auto"
+                className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight text-slate-100 leading-[1.1] max-w-4xl mx-auto"
               >
-                Build anything <br />
-                <motion.span 
-                  initial={{ color: '#ffffff' }}
-                  animate={{ color: '#ffffff' }}
-                  whileInView={{ color: 'transparent' }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 1.8, duration: 0.5, ease: 'easeInOut' }}
-                  style={{
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    backgroundImage: 'linear-gradient(to right, #2563eb, #a855f7)',
-                    backgroundSize: '200% 200%'
-                  }}
-                  className="animate-gradient-x"
-                >
-                  just by asking.
-                </motion.span>
+                Build apps by asking AI.
               </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-[18px] md:text-[22px] font-medium text-[var(--t2)]/80 max-w-2xl mx-auto tracking-tight leading-relaxed"
+                className="text-lg md:text-xl font-medium text-slate-400 max-w-xl mx-auto leading-relaxed"
               >
-                Aether is an autonomous platform for building production-ready software. Vision to reality, instantly.
+                Describe what you want to build in plain English. Aether creates stunning, production-ready applications instantly.
               </motion.p>
             </div>
 
-            {/* Prompt Input Area */}
+            {/* Refined Prompt Input Area */}
             <motion.div
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
-              className="max-w-4xl mx-auto w-full"
+              className="max-w-3xl mx-auto w-full"
             >
               <form 
                 onSubmit={handleStartProject} 
                 className="relative group"
               >
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600/50 to-purple-500/50 rounded-[38px] blur-2xl opacity-0 group-focus-within:opacity-40 transition-opacity duration-700 animate-gradient-x pointer-events-none" style={{ backgroundSize: '200% 200%' }} />
-                <div className="relative liquid-glass rounded-[38px] p-2 bg-transparent border-[var(--bdr)] dark:border-white/20 backdrop-blur-4xl shadow-2xl transition-all duration-500 group-focus-within:border-primary/50 group-focus-within:bg-transparent">
-                  <div className="p-4 sm:p-6 space-y-4">
-                    <textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      placeholder="What would you like to build today?"
-                      className="w-full min-h-[120px] max-h-[200px] sm:min-h-[160px] sm:max-h-[250px] bg-transparent border-none focus:ring-0 text-xl sm:text-[26px] font-bold resize-none placeholder:text-[var(--t3)]/50 outline-none text-[var(--t)] leading-tight tracking-tight"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault()
-                          handleStartProject()
-                        }
-                      }}
-                    />
-                    <div className="relative">
+                <div className="relative bg-[#0a0f1a] rounded-xl p-4 border border-white/[0.08]">
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="What would you like to build?"
+                    className="w-full min-h-[80px] max-h-[140px] bg-transparent border-none focus:ring-0 text-base font-medium resize-none placeholder:text-slate-500 outline-none text-slate-200 leading-relaxed"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleStartProject()
+                      }
+                    }}
+                  />
+                  
+                  {/* Input Bar Actions */}
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-2">
                       <button 
-                        type="submit" 
-                        disabled={!input.trim() || busy}
-                        className={cn(
-                          "absolute right-2 bottom-2 flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-500 shadow-xl cursor-pointer",
-                          input.trim() && !busy 
-                            ? "bg-primary text-primary-foreground hover:scale-[1.02] hover:shadow-primary/25" 
-                            : "bg-[var(--bg3)] text-[var(--t3)] opacity-50 cursor-not-allowed"
-                        )}
+                        type="button"
+                        className="p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-all"
+                        title="Attach file"
                       >
-                        {busy ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <ArrowUp className="w-6 h-6" />
-                        )}
+                        <Paperclip className="w-4 h-4" />
+                      </button>
+                      <button 
+                        type="button"
+                        className="p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-all"
+                        title="Settings"
+                      >
+                        <SlidersHorizontal className="w-4 h-4" />
                       </button>
                     </div>
+                    
+                    <button 
+                      type="submit" 
+                      disabled={!input.trim() || busy}
+                      className={cn(
+                        "flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-300",
+                        input.trim() && !busy 
+                          ? "bg-[#5063F0] text-white hover:bg-[#4765EE]" 
+                          : "bg-slate-700 text-slate-500 cursor-not-allowed"
+                      )}
+                    >
+                      {busy ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <ArrowUp className="w-5 h-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
               </form>
+            </motion.div>
+
+            {/* Trusted By - Engineering Teams */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="pt-10"
+            >
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-6">Trusted by engineering teams at</p>
+              <div className="flex items-center justify-center gap-10 md:gap-14 flex-wrap">
+                {/* Stripe */}
+                <div className="flex items-center gap-2 text-slate-500 hover:text-slate-400 transition-colors cursor-default">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.781l.408-4.214C17.024 2.186 14.665 1.08 11.99 1.08c-3.896 0-6.598 1.985-6.598 5.31 0 3.305 2.146 4.79 5.92 6.052 2.297.77 3.033 1.467 3.033 2.492 0 .953-.724 1.502-2.025 1.502-1.876 0-5.159-.877-6.938-2.056l-.404 4.256c1.96 1.142 5.558 2.088 8.477 2.088 4.108 0 6.774-1.824 6.774-5.415 0-3.135-2.029-4.576-5.253-5.656z"/>
+                  </svg>
+                  <span className="text-sm font-semibold tracking-tight">Stripe</span>
+                </div>
+                {/* Vercel */}
+                <div className="flex items-center gap-2 text-slate-500 hover:text-slate-400 transition-colors cursor-default">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 1L24 22H0L12 1Z"/>
+                  </svg>
+                  <span className="text-sm font-semibold tracking-tight">Vercel</span>
+                </div>
+                {/* Resend */}
+                <div className="flex items-center gap-2 text-slate-500 hover:text-slate-400 transition-colors cursor-default">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2 4h20v16H2V4zm18 14V6H4v12h16z"/>
+                    <path d="M6 10h12v2H6v-2zm0 4h8v2H6v-2z"/>
+                  </svg>
+                  <span className="text-sm font-semibold tracking-tight">Resend</span>
+                </div>
+              </div>
             </motion.div>
 
           </div>
@@ -1254,61 +1779,428 @@ function AppContent() {
               </div>
             </div>
           )}
-          {/* Features Section */}
+          {/* Bento Grid Features Section */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="max-w-6xl w-full px-6 mt-48 space-y-16"
+            className="max-w-7xl w-full px-6 mt-32"
           >
-            <div className="text-center space-y-4">
-              <h2 className="text-4xl md:text-6xl font-black tracking-tight text-[var(--t)]">Engineered for speed.</h2>
-              <p className="text-xl text-[var(--t2)] max-w-2xl mx-auto">Everything you need to go from idea to production in record time.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { 
-                  title: "Autonomous Engine", 
-                  desc: "Our AI understands your entire project architecture and manages dependencies automatically.",
-                  icon: <IconSystem type="cpu" />
-                },
-                { 
-                  title: "Instant Previews", 
-                  desc: "See your changes in real-time with integrated WebContainer technology. No local setup required.",
-                  icon: <IconSystem type="zap" />
-                },
-                { 
-                  title: "Visual Inspector", 
-                  desc: "Click any element in your preview to instantly locate and edit its code.",
-                  icon: <IconSystem type="mouse-pointer" />
-                },
-                { 
-                  title: "GitHub Sync", 
-                  desc: "Seamlessly push your generated code to GitHub. Your code, your repository, your control.",
-                  icon: <IconSystem type="code" />
-                },
-                { 
-                  title: "Multi-File Editing", 
-                  desc: "The AI can modify multiple files simultaneously, ensuring consistent updates across your entire application.",
-                  icon: <IconSystem type="layers" />
-                },
-                { 
-                  title: "Secure by Design", 
-                  desc: "Integrated Firebase support with automatically generated security rules and authentication patterns.",
-                  icon: <IconSystem type="shield" />
-                }
-              ].map((feature, idx) => (
-                <div key={idx} className="p-8 liquid-glass rounded-[40px] border border-[var(--bdr)] dark:border-white/5 space-y-4 group hover:border-primary/30 transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-2xl font-bold text-[var(--t)]">{feature.title}</h3>
-                  <p className="text-[var(--t2)] leading-relaxed text-sm">{feature.desc}</p>
+            {showEnhanced ? (
+              /* Enhanced Mode: Bento Grid Image + Interface Images */
+              <div className="space-y-8">
+                <div className="text-center space-y-3 mb-14">
+                  <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-100">Built for modern development</h2>
+                  <p className="text-lg text-slate-500 max-w-xl mx-auto">Everything you need to ship faster.</p>
                 </div>
-              ))}
+                
+                {/* Bento Grid Image */}
+                <div className="flex justify-center mb-12">
+                  <img 
+                    src="/bento-hero-image.png" 
+                    alt="Aether AI Features" 
+                    className="w-full max-w-4xl rounded-2xl shadow-2xl border border-white/[0.06]"
+                  />
+                </div>
+              </div>
+            ) : (
+              /* Original Bento Grid */
+              <div className="space-y-8">
+                <div className="text-center space-y-3 mb-14">
+                  <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-100">Built for modern development</h2>
+                  <p className="text-lg text-slate-500 max-w-xl mx-auto">Everything you need to ship faster.</p>
+                </div>
+
+                {/* Bento Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* AI Chat Interface - Large */}
+                  <div className="md:col-span-2 p-6 rounded-2xl bg-[#0a0f1a] border border-white/[0.06] hover:border-[#5063F0]/20 transition-all">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#5063F0]/10 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-[#6b7ce5]" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-200">AI-Powered Development</h3>
+                        <p className="text-sm text-slate-500">Natural language to production code</p>
+                      </div>
+                    </div>
+                    
+                    {/* Chat mockup */}
+                    <div className="bg-[#02040a] rounded-xl p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#5063F0]/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-[#6b7ce5]">A</span>
+                        </div>
+                        <div className="bg-[#0a0f1a] rounded-lg px-3 py-2 text-sm text-slate-400 max-w-[80%]">
+                          I'll create a modern landing page with hero section, features grid, and contact form. Using React + Tailwind.
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 justify-end">
+                        <div className="bg-[#5063F0] rounded-lg px-3 py-2 text-sm text-white max-w-[80%]">
+                          Build a SaaS landing page with pricing and testimonials
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs">You</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Real-time Preview */}
+                  <div className="p-6 rounded-2xl bg-[#0a0f1a] border border-white/[0.06] hover:border-[#5063F0]/20 transition-all">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                        <Play className="w-5 h-5 text-green-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-200">Live Preview</h3>
+                        <p className="text-sm text-slate-500">See changes instantly</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#02040a] rounded-xl p-3 aspect-video flex items-center justify-center">
+                      <div className="w-full h-full bg-[#0a0f1a] rounded-lg shadow-lg flex items-center justify-center">
+                        <div className="text-center">
+                          <Globe className="w-8 h-8 text-[#5063F0] mx-auto mb-2" />
+                          <span className="text-xs text-slate-500">Live Preview</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Code Generation */}
+                  <div className="p-6 rounded-2xl bg-[#0a0f1a] border border-white/[0.06] hover:border-[#5063F0]/20 transition-all">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                        <Code2 className="w-5 h-5 text-purple-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-200">Smart Code</h3>
+                        <p className="text-sm text-slate-500">Best practices built-in</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#02040a] rounded-xl p-3 font-mono text-xs text-slate-400">
+                      <div className="text-green-400">$ aether generate</div>
+                      <div className="text-slate-500 mt-1">{'>'} Building...</div>
+                      <div className="text-[#5063F0] mt-1">{'>'} Done! 2.3s</div>
+                    </div>
+                  </div>
+
+                  {/* One-Click Deploy */}
+                  <div className="p-6 rounded-2xl bg-[#0a0f1a] border border-white/[0.06] hover:border-[#5063F0]/20 transition-all">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                        <Rocket className="w-5 h-5 text-orange-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-200">One-Click Deploy</h3>
+                        <p className="text-sm text-slate-500">Production in seconds</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#02040a] rounded-xl p-3">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                        <span className="text-sm text-slate-400">Deployed</span>
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        <div>https://your-app.aether.dev</div>
+                        <div className="text-[#5063F0] mt-1">✓ SSL Certificate</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Firebase Integration */}
+                  <div className="md:col-span-2 p-6 rounded-2xl bg-[#0a0f1a] border border-white/[0.06] hover:border-[#5063F0]/20 transition-all">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                        <Database className="w-5 h-5 text-red-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-200">Firebase Integration</h3>
+                        <p className="text-sm text-slate-500">Auth, database, storage ready</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-[#02040a] rounded-lg p-3 text-center">
+                        <Shield className="w-6 h-6 text-red-500 mx-auto mb-2" />
+                        <span className="text-xs text-slate-400">Authentication</span>
+                      </div>
+                      <div className="bg-[#02040a] rounded-lg p-3 text-center">
+                        <Database className="w-6 h-6 text-red-500 mx-auto mb-2" />
+                        <span className="text-xs text-slate-400">Firestore</span>
+                      </div>
+                      <div className="bg-[#02040a] rounded-lg p-3 text-center">
+                        <Cloud className="w-6 h-6 text-red-500 mx-auto mb-2" />
+                        <span className="text-xs text-slate-400">Storage</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Discover Section - Realistic Frames */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="w-full mt-32 overflow-hidden"
+          >
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex items-end justify-between mb-8">
+                <div className="space-y-1">
+                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-100">Discover what's possible</h2>
+                  <p className="text-base text-slate-500">{showEnhanced ? "AI-generated interfaces built with Aether" : "Templates and applications built with Aether"}</p>
+                </div>
+              </div>
             </div>
+            
+            {/* Interface Images Carousel for Enhanced Mode */}
+            {showEnhanced ? (
+              <div className="relative">
+                {/* Left Arrow */}
+                <button 
+                  onClick={handlePrevCarousel}
+                  disabled={carouselIndex === 0}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#0a0f1a] border border-white/[0.06] flex items-center justify-center hover:border-[#5063F0]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  <ChevronLeft className="w-5 h-5 text-slate-400" />
+                </button>
+                
+                {/* Right Arrow */}
+                <button 
+                  onClick={handleNextCarousel}
+                  disabled={carouselIndex >= 7} // 8 interface images total (0-7)
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#0a0f1a] border border-white/[0.06] flex items-center justify-center hover:border-[#5063F0]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  <ChevronRight className="w-5 h-5 text-slate-400" />
+                </button>
+
+                <div ref={carouselRef} className="flex gap-5 overflow-x-auto pb-4 px-6 scrollbar-hide snap-x snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  {[
+                    {
+                      title: "Mobile App",
+                      desc: "Modern mobile app interface with glass morphism effects and cyan accents.",
+                      image: "/mobile-app-interface.png",
+                      icon: Smartphone
+                    },
+                    {
+                      title: "Video Game Interface",
+                      desc: "Futuristic gaming HUD with sci-fi aesthetics and neon cyan elements.",
+                      image: "/video-game-interface.png",
+                      icon: Gamepad2
+                    },
+                    {
+                      title: "Database Admin",
+                      desc: "Professional dashboard with data visualization and glass morphism panels.",
+                      image: "/database-admin-interface.png",
+                      icon: Database
+                    },
+                    {
+                      title: "Code Editor",
+                      desc: "Modern development IDE with syntax highlighting and dark theme.",
+                      image: "/code-editor-interface.png",
+                      icon: Code2
+                    },
+                    {
+                      title: "Analytics Dashboard",
+                      desc: "Business intelligence interface with charts and data visualization.",
+                      image: "/analytics-dashboard.png",
+                      icon: BarChart3
+                    },
+                    {
+                      title: "Settings",
+                      desc: "Configuration panel with controls and modern UI elements.",
+                      image: "/settings-interface.png",
+                      icon: Settings2
+                    },
+                    {
+                      title: "Social Messaging",
+                      desc: "Modern chat interface with glass morphism design.",
+                      image: "/social-messaging-interface.png",
+                      icon: MessageCircle
+                    },
+                    {
+                      title: "E-commerce",
+                      desc: "Online shopping platform with modern retail design.",
+                      image: "/ecommerce-interface.png",
+                      icon: ShoppingCart
+                    }
+                  ].map((item, index) => {
+                    const IconComponent = item.icon;
+                    return (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.1 }}
+                        className="flex-shrink-0 w-[280px] snap-start group cursor-pointer"
+                        onClick={() => setSelectedImageIndex(index)}
+                      >
+                        {/* Frame container with image */}
+                        <div className="relative h-[300px] rounded-xl overflow-hidden mb-3 bg-[#0a0f1a] border border-white/[0.06] group-hover:border-[#5063F0]/20 transition-all">
+                          <img 
+                            src={item.image} 
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback to placeholder if image doesn't load
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) {
+                                const fallback = document.createElement('div');
+                                fallback.className = 'absolute inset-0 flex items-center justify-center bg-[#02040a]';
+                                fallback.innerHTML = `
+                                  <div class="text-center">
+                                    <div class="w-12 h-12 rounded-full bg-[#5063F0]/20 flex items-center justify-center mx-auto mb-3">
+                                      <svg class="w-6 h-6 text-[#6b7ce5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                      </svg>
+                                    </div>
+                                    <div class="text-sm font-medium text-slate-400">${item.title}</div>
+                                  </div>
+                                `;
+                                parent.appendChild(fallback);
+                              }
+                            }}
+                          />
+                          
+                          {/* Gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <h3 className="font-semibold text-slate-200 group-hover:text-[#6b7ce5] transition-colors">{item.title}</h3>
+                          <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{item.desc}</p>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+                
+                {/* Fade edges */}
+                <div className="absolute top-0 left-0 bottom-4 w-8 bg-gradient-to-r from-[#02040a] to-transparent pointer-events-none" />
+                <div className="absolute top-0 right-0 bottom-4 w-8 bg-gradient-to-l from-[#02040a] to-transparent pointer-events-none" />
+              </div>
+            ) : (
+              /* Placeholder carousel for regular mode */
+              <div className="relative">
+                {/* Left Arrow */}
+                <button 
+                  onClick={handlePrevCarousel}
+                  disabled={carouselIndex === 0}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#0a0f1a] border border-white/[0.06] flex items-center justify-center hover:border-[#5063F0]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  <ChevronLeft className="w-5 h-5 text-slate-400" />
+                </button>
+                
+                {/* Right Arrow */}
+                <button 
+                  onClick={handleNextCarousel}
+                  disabled={carouselIndex >= 5} // 6 items total (0-5)
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#0a0f1a] border border-white/[0.06] flex items-center justify-center hover:border-[#5063F0]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  <ChevronRight className="w-5 h-5 text-slate-400" />
+                </button>
+
+                <div ref={carouselRef} className="flex gap-5 overflow-x-auto pb-4 px-6 scrollbar-hide snap-x snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  {[
+                    {
+                      title: "Mobile App",
+                      desc: "Responsive PWA with real-time sync, offline storage, and push notifications.",
+                      frame: "phone",
+                      icon: Smartphone,
+                      image: "/templates/images/mobile-app-placeholder.png"
+                    },
+                    {
+                      title: "Game Interface",
+                      desc: "Modular scoreboard UI with player stats, leaderboards, and real-time updates.",
+                      frame: "browser",
+                      icon: Gamepad2,
+                      image: "/templates/images/game-interface-placeholder.png"
+                    },
+                    {
+                      title: "Database Admin",
+                      desc: "Detailed CRUD panel with search, filters, pagination, and data export.",
+                      frame: "browser",
+                      icon: Database,
+                      image: "/templates/images/database-admin-placeholder.png"
+                    },
+                    {
+                      title: "Dashboard UI",
+                      desc: "Analytics dashboard with charts, widgets, and real-time data visualization.",
+                      frame: "browser",
+                      icon: Layout,
+                      image: "/templates/images/dashboard-ui-placeholder.png"
+                    },
+                    {
+                      title: "E-commerce Store",
+                      desc: "Product grid with cart management, checkout flow, and inventory tracking.",
+                      frame: "browser",
+                      icon: ShoppingCart,
+                      image: "/templates/images/ecommerce-store-placeholder.png"
+                    },
+                    {
+                      title: "API Dashboard",
+                      desc: "REST API documentation with interactive testing and monitoring tools.",
+                      frame: "browser",
+                      icon: Globe,
+                      image: "/templates/images/api-dashboard-placeholder.png"
+                    },
+                  ].map((item, idx) => {
+                    const IconComponent = item.icon;
+                    return (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="flex-shrink-0 w-[280px] snap-start group cursor-pointer"
+                        onClick={() => { window.history.pushState({}, '', '/templates'); window.dispatchEvent(new Event('routechange')) }}
+                      >
+                        {/* Frame container with image */}
+                        <div className="relative h-[300px] rounded-xl overflow-hidden mb-3 bg-[#0a0f1a] border border-white/[0.06] group-hover:border-[#5063F0]/20 transition-all">
+                          <img 
+                            src={item.image} 
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback to placeholder if image doesn't load
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.parentElement?.classList.add('fallback-placeholder');
+                            }}
+                          />
+                          
+                          {/* Fallback placeholder */}
+                          <div className="fallback-placeholder absolute inset-0 flex items-center justify-center bg-[#02040a] hidden">
+                            <IconComponent className="w-12 h-12 text-[#6b7ce5]" />
+                          </div>
+                          
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-[#02040a]/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="px-3 py-1.5 rounded-lg bg-[#5063F0] text-white text-xs font-semibold">
+                              Preview
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <h3 className="font-semibold text-slate-200 group-hover:text-[#6b7ce5] transition-colors">{item.title}</h3>
+                          <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{item.desc}</p>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+                
+                {/* Fade edges */}
+                <div className="absolute top-0 left-0 bottom-4 w-8 bg-gradient-to-r from-[#02040a] to-transparent pointer-events-none" />
+                <div className="absolute top-0 right-0 bottom-4 w-8 bg-gradient-to-l from-[#02040a] to-transparent pointer-events-none" />
+              </div>
+            )}
           </motion.div>
 
           {/* CTA Section */}
@@ -1316,30 +2208,30 @@ function AppContent() {
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="max-w-6xl w-full px-6 mt-48"
+            className="max-w-4xl w-full px-6 mt-32"
           >
-            <div className="p-16 md:p-24 liquid-glass rounded-[60px] border border-[var(--bdr)] dark:border-white/5 text-center space-y-12 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10" />
-              <div className="relative z-10 space-y-6">
-                <h2 className="text-5xl md:text-8xl font-black tracking-tighter text-[var(--t)] leading-none">Ready to build?</h2>
-                <p className="text-xl md:text-2xl text-[var(--t2)] max-w-2xl mx-auto">Join the future of software development today. No credit card required.</p>
+            <div className="p-12 md:p-16 rounded-2xl bg-[#0a0f1a] border border-white/[0.06] text-center space-y-6 relative overflow-hidden">
+              {/* Subtle blue glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#5063F0]/5 via-transparent to-transparent" />
+              
+              <div className="relative z-10 space-y-3">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-100">Ready to build?</h2>
+                <p className="text-base text-slate-500 max-w-md mx-auto">Start creating production-ready applications today. No credit card required.</p>
               </div>
-              <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-6">
-                <Button 
-                  size="lg" 
-                  className="rounded-full px-12 py-8 text-xl font-black shadow-2xl shadow-primary/20 hover:scale-105 hover:shadow-primary/30 transition-all"
+              
+              <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button 
+                  className="px-6 py-3 rounded-lg bg-[#1e3a8a] text-white font-semibold cursor-pointer"
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 >
                   Get Started Free
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="rounded-full px-12 py-8 text-xl font-black border-2 hover:scale-105 hover:bg-primary/10 transition-all"
-                  onClick={() => window.location.pathname = '/community'}
+                </button>
+                <button 
+                  className="px-6 py-3 rounded-lg bg-transparent text-slate-300 font-semibold border border-white/[0.08] cursor-pointer"
+                  onClick={() => { window.history.pushState({}, '', '/community'); window.dispatchEvent(new Event('routechange')) }}
                 >
                   View Gallery
-                </Button>
+                </button>
               </div>
             </div>
           </motion.div>
@@ -1441,7 +2333,91 @@ function AppContent() {
             </div>
           )}
         </AnimatePresence>
+
+        {/* Full-size Image Viewer */}
+        <AnimatePresence>
+          {selectedImageIndex !== null && (
+            <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/95 backdrop-blur-xl">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="relative w-full h-full flex items-center justify-center p-4"
+              >
+                {/* Close button */}
+                <button
+                  onClick={() => setSelectedImageIndex(null)}
+                  className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Navigation buttons */}
+                <button
+                  onClick={() => setSelectedImageIndex(Math.max(0, selectedImageIndex - 1))}
+                  disabled={selectedImageIndex === 0}
+                  className="absolute left-4 z-10 w-12 h-12 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                
+                <button
+                  onClick={() => setSelectedImageIndex(Math.min(7, selectedImageIndex + 1))}
+                  disabled={selectedImageIndex === 7}
+                  className="absolute right-4 z-10 w-12 h-12 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+
+                {/* Image display */}
+                <div className="max-w-6xl max-h-full flex items-center justify-center">
+                  <img 
+                    src={showEnhanced ? [
+                      "/mobile-app-interface.png",
+                      "/video-game-interface.png", 
+                      "/database-admin-interface.png",
+                      "/code-editor-interface.png",
+                      "/analytics-dashboard.png",
+                      "/settings-interface.png",
+                      "/social-messaging-interface.png",
+                      "/ecommerce-interface.png"
+                    ][selectedImageIndex] : [
+                      "/templates/images/mobile-app-placeholder.png",
+                      "/templates/images/game-interface-placeholder.png",
+                      "/templates/images/database-admin-placeholder.png",
+                      "/templates/images/dashboard-ui-placeholder.png",
+                      "/templates/images/ecommerce-store-placeholder.png",
+                      "/templates/images/api-dashboard-placeholder.png"
+                    ][selectedImageIndex]}
+                    alt={`Interface ${selectedImageIndex + 1}`}
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                  />
+                </div>
+
+                {/* Image counter */}
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-xl px-4 py-2 rounded-full text-white text-sm">
+                  {selectedImageIndex + 1} / {showEnhanced ? 8 : 6}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         <Toaster position="bottom-center" richColors />
+      <AppUpdater />
+      
+      {/* Project Type Dialog */}
+      {pendingProjectData && (
+        <ProjectTypeDialog
+          isOpen={showProjectTypeDialog}
+          onClose={() => {
+            setShowProjectTypeDialog(false)
+            setPendingProjectData(null)
+          }}
+          onSelect={handleProjectTypeSelect}
+          projectName={pendingProjectData.prompt}
+        />
+      )}
       </div>
     </ThemeProvider>
   )
