@@ -29,7 +29,7 @@ export function FinalCTA({ onStartProject }: FinalCTAProps) {
   };
 
   return (
-    <section id="cta" className="py-24 px-4 bg-gray-50 dark:bg-black">
+    <section id="cta" className="py-24 px-4 bg-white dark:bg-black">
       <div className="max-w-4xl mx-auto text-center">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}

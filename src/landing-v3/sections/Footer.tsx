@@ -50,7 +50,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="py-12 px-4 bg-gray-100 dark:bg-[#050505] border-t border-gray-200 dark:border-[#222]">
+    <footer className="py-12 px-4 bg-white dark:bg-black">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Logo */}
