@@ -2,21 +2,26 @@
 
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Plus, X, Paperclip, Palette, Database, Plug } from 'lucide-react';
+import { ArrowRight, Plus, X, Paperclip, Palette, Database, Plug, Lock } from 'lucide-react';
 import { GlowArc } from '../components/GlowArc';
 import { TemplatePill } from '../components/TemplatePill';
+import { useFirebase } from '@/components/FirebaseProvider';
+import type { SubscriptionTier } from '@/types';
 
 interface HeroProps {
   onStartProject?: (prompt: string, attachments?: File[], designSystem?: string) => void;
 }
 
 export function Hero({ onStartProject }: HeroProps) {
+  const { user, subscription } = useFirebase();
   const [input, setInput] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const [showDesignPanel, setShowDesignPanel] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const canAccessConnectors = subscription?.tier === 'starter' || subscription?.tier === 'pro' || subscription?.tier === 'enterprise';
 
   const templates = [
     'chrome extension',
@@ -176,15 +181,27 @@ export function Hero({ onStartProject }: HeroProps) {
                         <div className="p-2">
                           <button
                             type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222] text-left transition-colors cursor-pointer"
+                            disabled={!canAccessConnectors}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222] text-left transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => {
+                              if (!canAccessConnectors) {
+                                window.location.href = '/pricing';
+                                return;
+                              }
+                              fileInputRef.current?.click();
+                            }}
                           >
                             <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                               <Paperclip className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">Attach</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">Upload a file</div>
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                                Attach
+                                {!canAccessConnectors && <Lock className="w-3 h-3" />}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {canAccessConnectors ? 'Upload a file' : 'Upgrade to access'}
+                              </div>
                             </div>
                           </button>
 
@@ -207,29 +224,49 @@ export function Hero({ onStartProject }: HeroProps) {
 
                           <button
                             type="button"
-                            disabled
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222] text-left transition-colors cursor-pointer opacity-50"
+                            disabled={!canAccessConnectors}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222] text-left transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => {
+                              if (!canAccessConnectors) {
+                                window.location.href = '/pricing';
+                              }
+                            }}
                           >
                             <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                               <Plug className="w-4 h-4 text-green-600 dark:text-green-400" />
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">Connectors</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">Coming soon</div>
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                                Connectors
+                                {!canAccessConnectors && <Lock className="w-3 h-3" />}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {canAccessConnectors ? 'Coming soon' : 'Upgrade to access'}
+                              </div>
                             </div>
                           </button>
 
                           <button
                             type="button"
-                            disabled
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222] text-left transition-colors cursor-pointer opacity-50"
+                            disabled={!canAccessConnectors}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#222] text-left transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => {
+                              if (!canAccessConnectors) {
+                                window.location.href = '/pricing';
+                              }
+                            }}
                           >
                             <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
                               <Database className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">Databases</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">Coming soon</div>
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                                Databases
+                                {!canAccessConnectors && <Lock className="w-3 h-3" />}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {canAccessConnectors ? 'Coming soon' : 'Upgrade to access'}
+                              </div>
                             </div>
                           </button>
                         </div>

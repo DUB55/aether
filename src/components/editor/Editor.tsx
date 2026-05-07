@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { 
+import {
   AlertTriangle,
   ArrowUp,
-  Check, 
+  Check,
   ChevronDown,
   ChevronRight,
+  Paperclip,
   Clock,
   Code2, 
   Copy, 

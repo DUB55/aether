@@ -1,359 +1,321 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, Star, Zap, Shield, Globe, Users } from 'lucide-react'
-import { toast } from 'sonner'
+import React, { useState } from 'react';
+import { Check, Zap, Lock, Crown, Building2 } from 'lucide-react';
+import { PaymentModal } from '@/components/PaymentModal';
+import { useFirebase } from '@/components/FirebaseProvider';
+import { toast } from 'sonner';
+import type { SubscriptionTier } from '@/types';
 
-interface PricingPlan {
-  id: string
-  name: string
-  description: string
-  price: number
-  billingCycle: string
-  features: string[]
-  limits?: {
-    aiRequests?: number
-    projects?: number
-    storage?: string
-  }
-  popular?: boolean
-}
+export function Pricing() {
+  const { user } = useFirebase();
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionTier | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-interface PricingConfig {
-  ads: {
-    enabled: boolean
-    placement: string
-    provider: string
-    publisherId: string
-    adSlot: string
-  }
-  pricing: {
-    enabled: boolean
-    currency: string
-    plans: PricingPlan[]
-  }
-  stripe: {
-    publishableKey: string
-    secretKey: string
-    webhookSecret: string
-  }
-  ui: {
-    showPricing: boolean
-    showAds: boolean
-    forceAdDisplay: boolean
-  }
-}
-
-interface PricingProps {
-  onPlanSelect?: (plan: PricingPlan) => void
-  className?: string
-}
-
-export function Pricing({ onPlanSelect, className }: PricingProps) {
-  const [config] = useState<PricingConfig>({
-    ads: {
-      enabled: false,
-      placement: 'sidebar',
-      provider: 'google-adsense',
-      publisherId: 'ca-pub-12345678901234567890',
-      adSlot: 'aether-sidebar-ad'
+  const plans = [
+    {
+      id: 'free' as SubscriptionTier,
+      name: 'Free',
+      price: 0,
+      period: 'forever',
+      description: 'Perfect for getting started with AI-powered development',
+      icon: Lock,
+      features: [
+        'Basic AI code generation',
+        '3 projects',
+        'Community support',
+        'Standard templates',
+      ],
+      limitations: [
+        'No connectors',
+        'No advanced AI features',
+        'No collaboration',
+      ],
+      cta: 'Current Plan',
+      disabled: true,
     },
-    pricing: {
-      enabled: true,
-      currency: 'USD',
-      plans: [
-        {
-          id: 'starter',
-          name: 'Starter',
-          description: 'Perfect for exploring Aether and building your first apps',
-          price: 0,
-          billingCycle: 'monthly',
-          features: [
-            'Unlimited Projects',
-            'Access to Basic AI Models',
-            'Instant Preview',
-            'Community Support',
-            'Free Deployment',
-            'Basic Templates'
-          ],
-          limits: {
-            aiRequests: 1000,
-            projects: 10,
-            storage: '1GB'
-          },
-          popular: true
-        },
-        {
-          id: 'pro',
-          name: 'Pro',
-          description: 'Advanced features for power users who want more control',
-          price: 0,
-          billingCycle: 'monthly',
-          features: [
-            'Everything in Starter',
-            'Advanced AI Models',
-            'Priority Support',
-            'Unlimited AI Requests',
-            'Advanced Templates',
-            'Custom Domains',
-            'Priority Deployment'
-          ],
-          limits: {
-            aiRequests: -1,
-            projects: -1,
-            storage: '100GB'
-          },
-          popular: false
-        },
-        {
-          id: 'enterprise',
-          name: 'Enterprise',
-          description: 'For teams and organizations that need advanced features',
-          price: 0,
-          billingCycle: 'monthly',
-          features: [
-            'Everything in Pro',
-            'Team Collaboration',
-            'Advanced Analytics',
-            'Custom Integrations',
-            'Dedicated Support',
-            'SLA Guarantee',
-            'Custom AI Models',
-            'White-label Options'
-          ],
-          limits: {
-            aiRequests: -1,
-            projects: -1,
-            storage: 'Unlimited'
-          }
-        }
-      ]
+    {
+      id: 'starter' as SubscriptionTier,
+      name: 'Starter',
+      price: 15,
+      period: 'month',
+      description: 'For individual developers who need more power',
+      icon: Zap,
+      features: [
+        'Everything in Free',
+        '10 connectors',
+        'Advanced AI features',
+        '10 projects',
+        'Priority support',
+        'Custom templates',
+      ],
+      limitations: [
+        'No team collaboration',
+        'Limited connector access',
+      ],
+      cta: 'Get Started',
+      popular: true,
     },
-    stripe: {
-      publishableKey: 'pk_test_12345678901234567890',
-      secretKey: 'sk_test_12345678901234567890',
-      webhookSecret: 'whsec_12345678901234567890'
+    {
+      id: 'pro' as SubscriptionTier,
+      name: 'Pro',
+      price: 49,
+      period: 'month',
+      description: 'For professional teams building production apps',
+      icon: Crown,
+      features: [
+        'Everything in Starter',
+        'Unlimited connectors',
+        'Unlimited projects',
+        'Team collaboration (5 users)',
+        'Advanced analytics',
+        'API access',
+        'Dedicated support',
+      ],
+      limitations: [],
+      cta: 'Get Started',
     },
-    ui: {
-      showPricing: true,
-      showAds: false,
-      forceAdDisplay: false
+    {
+      id: 'enterprise' as SubscriptionTier,
+      name: 'Enterprise',
+      price: 199,
+      period: 'month',
+      description: 'For large organizations with custom needs',
+      icon: Building2,
+      features: [
+        'Everything in Pro',
+        'Unlimited team members',
+        'Custom integrations',
+        'SLA guarantee',
+        'White-label options',
+        'On-premise deployment',
+        '24/7 dedicated support',
+      ],
+      limitations: [],
+      cta: 'Contact Sales',
+    },
+  ];
+
+  const handlePlanSelect = (planId: SubscriptionTier) => {
+    if (!user) {
+      toast.error('Please sign in to upgrade your plan');
+      return;
     }
-  })
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
 
-  const handlePlanSelect = (plan: PricingPlan) => {
-    setSelectedPlan(plan.id)
-    if (onPlanSelect) {
-      onPlanSelect(plan)
+    if (planId === 'free') {
+      toast.info('You are already on the Free plan');
+      return;
     }
-    toast.success(`Selected ${plan.name} plan!`)
-  }
 
-  const handleBillingCycleChange = (cycle: 'monthly' | 'yearly') => {
-    setBillingCycle(cycle)
-  }
-
-  const getDiscountedPrice = (price: number) => {
-    if (billingCycle === 'yearly') {
-      return Math.round(price * 10 * 0.8) / 10 // 20% discount for yearly
+    if (planId === 'enterprise') {
+      toast.info('Enterprise plans require custom pricing. Contact sales@aether.ai');
+      return;
     }
-    return price
-  }
 
-  const getYearlySavings = (monthlyPrice: number) => {
-    const yearlyPrice = getDiscountedPrice(monthlyPrice)
-    const savings = monthlyPrice * 12 - yearlyPrice
-    return Math.round(savings)
-  }
+    setSelectedPlan(planId);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentComplete = async (transactionHash: string) => {
+    const { upgradeSubscription, verifyAndUpgradeSubscription } = useFirebase();
+    
+    try {
+      // Submit the subscription upgrade request
+      await upgradeSubscription(selectedPlan!, transactionHash, plans.find(p => p.id === selectedPlan)!.price);
+      
+      toast.success('Payment submitted! Your account will be upgraded once the transaction is confirmed on the blockchain.');
+      
+      // Try to verify immediately (in production, this would be done via webhook/polling)
+      const verified = await verifyAndUpgradeSubscription(transactionHash);
+      if (verified) {
+        toast.success('Payment verified! Your account has been upgraded.');
+      }
+      
+      setShowPaymentModal(false);
+      setSelectedPlan(null);
+    } catch (error) {
+      toast.error('Failed to process payment. Please try again.');
+    }
+  };
 
   return (
-    <div className={`min-h-screen bg-[var(--bg)] ${className}`}>
-      <div className="container mx-auto px-4 py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-6xl mx-auto"
-        >
-          {/* Header */}
-          <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-6xl font-bold text-[var(--t)] mb-4">
-              Simple, Transparent Pricing
-            </h1>
-            <p className="text-xl text-[var(--t2)] mb-8 max-w-2xl mx-auto">
-              Choose the perfect plan for your needs. All plans include core features, with no hidden fees.
-            </p>
-          </div>
+    <div className="min-h-screen bg-[var(--bg)] p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-[var(--t)] mb-4">
+            Simple, transparent pricing
+          </h1>
+          <p className="text-lg text-[var(--t2)] max-w-2xl mx-auto">
+            All plans include AI-powered development with BYOK (Bring Your Own Key). 
+            Connectors require paid plans - you provide your own API keys, we pay $0.
+          </p>
+        </div>
 
-          {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            {config.pricing.plans.map((plan, index) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="relative"
-              >
-                <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] liquid-glass border border-[var(--bdr)] ${
-                  selectedPlan === plan.id ? 'ring-2 ring-primary shadow-2xl' : ''
-                }`}>
-                  <CardHeader className="pb-6 space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <CardTitle className="text-3xl font-black text-[var(--t)]">
-                          {plan.name}
-                        </CardTitle>
-                        <p className="text-[var(--t2)] text-base leading-relaxed">
-                          {plan.description}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right pt-4 border-t border-[var(--bdr)]">
-                      <div className="text-4xl font-black text-[var(--t)] mb-1">
-                        Free
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0 space-y-6">
-                    <ul className="space-y-4">
-                      {plan.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                          <span className="text-[var(--t)] font-medium">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {plan.limits && (
-                      <div className="mt-6 pt-6 border-t border-[var(--bdr)]">
-                        <h4 className="font-bold text-[var(--t)] mb-4 text-lg">Usage Limits</h4>
-                        <div className="space-y-3 text-sm">
-                          {plan.limits.aiRequests && (
-                            <div className="flex justify-between items-center p-3 rounded-lg bg-[var(--bg2)]">
-                              <span className="text-[var(--t2)]">AI Requests</span>
-                              <span className="font-bold text-[var(--t)]">{plan.limits.aiRequests.toLocaleString()}/month</span>
-                            </div>
-                          )}
-                          {plan.limits.projects && (
-                            <div className="flex justify-between items-center p-3 rounded-lg bg-[var(--bg2)]">
-                              <span className="text-[var(--t2)]">Projects</span>
-                              <span className="font-bold text-[var(--t)]">{plan.limits.projects.toLocaleString()}</span>
-                            </div>
-                          )}
-                          {plan.limits.storage && (
-                            <div className="flex justify-between items-center p-3 rounded-lg bg-[var(--bg2)]">
-                              <span className="text-[var(--t2)]">Storage</span>
-                              <span className="font-bold text-[var(--t)]">{plan.limits.storage}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <div className="mt-6">
-                  <Button
-                    onClick={() => handlePlanSelect(plan)}
-                    className={`w-full py-4 text-lg font-bold rounded-2xl transition-all duration-300 ${
-                      selectedPlan === plan.id
-                        ? 'bg-primary text-[var(--bg)] shadow-xl shadow-primary/20'
-                        : 'bg-[var(--t)] text-[var(--bg)] hover:bg-primary hover:shadow-xl hover:shadow-primary/20'
-                    }`}
-                  >
-                    {selectedPlan === plan.id ? 'Selected' : `Get Started`}
-                  </Button>
+        {/* Pricing Cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {plans.map((plan) => (
+            <div
+              key={plan.id}
+              className={`relative bg-[var(--bg2)] rounded-2xl border ${
+                plan.popular
+                  ? 'border-primary shadow-xl shadow-primary/10'
+                  : 'border-[var(--bdr)]'
+              } p-6 transition-all hover:border-primary/30 ${
+                plan.disabled ? 'opacity-60' : ''
+              }`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="bg-primary text-[var(--bg)] text-xs font-semibold px-3 py-1 rounded-full">
+                    Most Popular
+                  </span>
                 </div>
-              </motion.div>
-            ))}
+              )}
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  plan.popular ? 'bg-primary' : 'bg-[var(--bg)]'
+                }`}>
+                  <plan.icon className={`w-6 h-6 ${
+                    plan.popular ? 'text-[var(--bg)]' : 'text-[var(--t2)]'
+                  }`} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-[var(--t)]">
+                    {plan.name}
+                  </h3>
+                  <p className="text-sm text-[var(--t2)]">
+                    {plan.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-[var(--t)]">
+                    ${plan.price}
+                  </span>
+                  <span className="text-[var(--t2)]">
+                    /{plan.period}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                {plan.features.map((feature, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-[var(--t2)]">
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+                {plan.limitations.map((limitation, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <Lock className="w-5 h-5 text-[var(--t3)] flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-[var(--t3)]">
+                      {limitation}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => handlePlanSelect(plan.id)}
+                disabled={plan.disabled}
+                className={`w-full py-3 px-4 rounded-xl font-medium transition-colors ${
+                  plan.disabled
+                    ? 'bg-[var(--bg)] text-[var(--t3)] cursor-not-allowed'
+                    : plan.popular
+                    ? 'bg-primary hover:bg-primary/90 text-[var(--bg)]'
+                    : 'bg-[var(--bg)] hover:bg-[var(--bg3)] text-[var(--t)]'
+                }`}
+              >
+                {plan.cta}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Connector Info */}
+        <div className="bg-[var(--bg2)] rounded-2xl border border-[var(--bdr)] p-8 mb-12">
+          <h2 className="text-2xl font-semibold text-[var(--t)] mb-4">
+            Connector Access by Plan
+          </h2>
+          <p className="text-[var(--t2)] mb-6">
+            Connectors require paid plans. You provide your own API keys (BYOK), so you pay for the services you use directly to the provider.
+          </p>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="p-4 rounded-xl bg-[var(--bg)]">
+              <h3 className="font-semibold text-[var(--t)] mb-2">Free</h3>
+              <p className="text-sm text-[var(--t2)]">No connectors available</p>
+            </div>
+            <div className="p-4 rounded-xl bg-primary/20">
+              <h3 className="font-semibold text-[var(--t)] mb-2">Starter</h3>
+              <p className="text-sm text-[var(--t2)]">10 connectors included</p>
+            </div>
+            <div className="p-4 rounded-xl bg-purple-500/20">
+              <h3 className="font-semibold text-[var(--t)] mb-2">Pro & Enterprise</h3>
+              <p className="text-sm text-[var(--t2)]">Unlimited connectors</p>
+            </div>
           </div>
+        </div>
 
-          {/* Features Comparison */}
-          <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-8 liquid-glass rounded-xl border border-[var(--bdr)]">
-              <Zap className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-[var(--t)] mb-2">All Plans Include</h3>
-              <ul className="space-y-3 text-left text-[var(--t2)]">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>Unlimited Projects</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>AI-Powered Development</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>Real-time Preview</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>Free Deployment</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>Community Support</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="text-center p-8 liquid-glass rounded-xl border border-[var(--bdr)]">
-              <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-[var(--t)] mb-2">Enterprise Security</h3>
-              <ul className="space-y-3 text-left text-[var(--t2)]">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>Advanced Security</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>24/7 Monitoring</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>SLA Guarantee</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="text-center p-8 liquid-glass rounded-xl border border-[var(--bdr)]">
-              <Users className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-[var(--t)] mb-2">Premium Support</h3>
-              <ul className="space-y-3 text-left text-[var(--t2)]">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>Priority Support</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>Custom Integrations</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  <span>Advanced Analytics</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Money Back Guarantee */}
-          <div className="mt-20 text-center p-8 liquid-glass rounded-2xl border border-[var(--bdr)]">
-            <div className="max-w-2xl mx-auto">
-              <h3 className="text-2xl font-bold text-[var(--t)] mb-4">30-Day Money Back Guarantee</h3>
+        {/* FAQ */}
+        <div className="bg-[var(--bg2)] rounded-2xl border border-[var(--bdr)] p-8">
+          <h2 className="text-2xl font-semibold text-[var(--t)] mb-6">
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-semibold text-[var(--t)] mb-2">
+                How does the crypto payment work?
+              </h3>
               <p className="text-[var(--t2)]">
-                Not satisfied with Aether? Get a full refund within 30 days, no questions asked.
+                We use a direct crypto payment system. You'll receive a deposit address to send USDT (Polygon network). 
+                Once your transaction is confirmed on the blockchain, your account is automatically upgraded.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--t)] mb-2">
+                What is BYOK?
+              </h3>
+              <p className="text-[var(--t2)]">
+                BYOK (Bring Your Own Key) means you provide your own API keys for connectors like Stripe, Shopify, etc. 
+                You pay the providers directly, keeping costs transparent and ensuring zero operational overhead.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--t)] mb-2">
+                Can I cancel anytime?
+              </h3>
+              <p className="text-[var(--t2)]">
+                Yes, you can cancel your subscription at any time. Your access will continue until the end of your billing period.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--t)] mb-2">
+                Do you store my payment information?
+              </h3>
+              <p className="text-[var(--t2)]">
+                No. We use direct blockchain payments and never store your payment information or wallet addresses.
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
+
+      {showPaymentModal && selectedPlan && (
+        <PaymentModal
+          plan={plans.find(p => p.id === selectedPlan)!}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedPlan(null);
+          }}
+          onComplete={handlePaymentComplete}
+        />
+      )}
     </div>
-  )
+  );
 }

@@ -7,6 +7,8 @@ import { deleteProjectFromGithubRegistry, addProjectToGithubRegistry } from '@/l
 import { storage as indexedDBStorage } from '@/lib/storage';
 import { saveProjectToGitHub, loadProjectsFromGitHub, deleteProjectFromGitHub, loadProjectFromGitHub, type GitHubProject } from '@/lib/github-project-storage';
 import { chatHistoryService } from '@/lib/chat-history';
+import { verifyTransaction } from '@/lib/blockchain-verification';
+import type { Subscription, SubscriptionTier } from '@/types';
 
 interface FirebaseContextType {
   user: FirebaseUser | null;
@@ -28,6 +30,10 @@ interface FirebaseContextType {
   // Profile picture methods
   updateProfilePicture: (photoURL: string) => Promise<void>;
   uploadProfilePicture: (file: File) => Promise<string>;
+  // Subscription methods
+  subscription: Subscription | null;
+  upgradeSubscription: (tier: string, transactionHash: string, amount: number) => Promise<void>;
+  verifyAndUpgradeSubscription: (transactionHash: string) => Promise<boolean>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -36,6 +42,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
 
   useEffect(() => {
     console.log('[FirebaseProvider] Setting up auth state listener');
@@ -76,10 +83,22 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
               email: firebaseUser.email,
               displayName: firebaseUser.displayName,
               photoURL: firebaseUser.photoURL,
-              role: 'user'
+              role: 'user',
+              subscription: {
+                tier: 'free',
+                status: 'active'
+              }
+            });
+            setSubscription({
+              tier: 'free',
+              status: 'active'
             });
           } else {
             console.log('[FirebaseProvider] User profile already exists');
+            const userData = userDoc.data();
+            if (userData?.subscription) {
+              setSubscription(userData.subscription);
+            }
           }
         } catch (error) {
           handleFirestoreError(error, OperationType.WRITE, `users/${firebaseUser.uid}`);
@@ -87,6 +106,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.log('[FirebaseProvider] User signed out - clearing projects');
         setProjects([]);
+        setSubscription(null);
       }
     });
 
@@ -349,7 +369,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
 
   const uploadProfilePicture = async (file: File): Promise<string> => {
     if (!user) throw new Error('User not authenticated');
-    
+
     // Convert file to base64 for storage in Firestore
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -365,6 +385,69 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsDataURL(file);
     });
+  };
+
+  // Subscription methods
+  const upgradeSubscription = async (tier: string, transactionHash: string, amount: number) => {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const newSubscription: Subscription = {
+        tier: tier as SubscriptionTier,
+        status: 'pending',
+        startDate: new Date().toISOString(),
+        paymentMethod: 'crypto',
+        transactionHash,
+        amount,
+        currency: 'USDT'
+      };
+
+      await updateDoc(userRef, { subscription: newSubscription });
+      setSubscription(newSubscription);
+      console.log('[FirebaseProvider] Subscription upgrade request submitted:', newSubscription);
+    } catch (error) {
+      console.error('[FirebaseProvider] Failed to upgrade subscription:', error);
+      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
+      throw error;
+    }
+  };
+
+  const verifyAndUpgradeSubscription = async (transactionHash: string): Promise<boolean> => {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      // Verify transaction on blockchain
+      const verification = await verifyTransaction(transactionHash);
+
+      if (!verification.success) {
+        console.error('[FirebaseProvider] Transaction verification failed:', verification.error);
+        return false;
+      }
+
+      // Update subscription to active
+      const userRef = doc(db, 'users', user.uid);
+      const currentSubscription = subscription;
+
+      if (!currentSubscription) {
+        throw new Error('No pending subscription found');
+      }
+
+      const updatedSubscription: Subscription = {
+        ...currentSubscription,
+        status: 'active',
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+      };
+
+      await updateDoc(userRef, { subscription: updatedSubscription });
+      setSubscription(updatedSubscription);
+      console.log('[FirebaseProvider] Subscription verified and activated:', updatedSubscription);
+
+      return true;
+    } catch (error) {
+      console.error('[FirebaseProvider] Failed to verify and upgrade subscription:', error);
+      return false;
+    }
   };
 
   return (
@@ -385,7 +468,10 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       addChatMessage,
       subscribeToChatHistory,
       updateProfilePicture,
-      uploadProfilePicture
+      uploadProfilePicture,
+      subscription,
+      upgradeSubscription,
+      verifyAndUpgradeSubscription
     }}>
       {children}
     </FirebaseContext.Provider>

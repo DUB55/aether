@@ -72,6 +72,19 @@ export interface UserSettings {
   fontFamily: string;
 }
 
+export type SubscriptionTier = 'free' | 'starter' | 'pro' | 'enterprise';
+
+export interface Subscription {
+  tier: SubscriptionTier;
+  status: 'active' | 'inactive' | 'pending' | 'cancelled';
+  startDate?: string;
+  endDate?: string;
+  paymentMethod?: 'crypto';
+  transactionHash?: string;
+  amount?: number;
+  currency?: string;
+}
+
 export interface Snapshot {
   id: string;
   projectId: string;
