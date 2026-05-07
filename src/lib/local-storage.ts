@@ -40,14 +40,10 @@ export class LocalStorageService {
     }
 
     try {
-      const { open } = await import('@tauri-apps/api/dialog')
-      const selected = await open({
-        directory: true,
-        multiple: false,
-        title
-      })
-      
-      return selected as string || null
+      // Use Tauri invoke command instead of direct dialog import
+      // This avoids the Vite build error while still working in Tauri
+      const selected = await invoke<string>('open_directory_dialog', { title })
+      return selected || null
     } catch (error) {
       console.error('[LocalStorageService] Failed to select directory:', error)
       throw error

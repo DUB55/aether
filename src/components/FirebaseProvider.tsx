@@ -5,6 +5,8 @@ import { doc, getDoc, setDoc, onSnapshot, collection, query, where, Timestamp, d
 import { type Project } from '@/types';
 import { deleteProjectFromGithubRegistry, addProjectToGithubRegistry } from '@/lib/github-registry';
 import { storage as indexedDBStorage } from '@/lib/storage';
+import { saveProjectToGitHub, loadProjectsFromGitHub, deleteProjectFromGitHub, loadProjectFromGitHub, type GitHubProject } from '@/lib/github-project-storage';
+import { chatHistoryService } from '@/lib/chat-history';
 
 interface FirebaseContextType {
   user: FirebaseUser | null;
@@ -18,6 +20,14 @@ interface FirebaseContextType {
   getSnapshots: (projectId: string) => Promise<any[]>;
   restoreSnapshot: (projectId: string, snapshotId: string) => Promise<Record<string, string>>;
   fetchProjectById: (projectId: string, callback: (project: Project) => void) => () => void;
+  // Chat history methods
+  saveChatHistory: (projectId: string, messages: any[]) => Promise<void>;
+  loadChatHistory: (projectId: string) => Promise<any[]>;
+  addChatMessage: (projectId: string, message: any) => Promise<void>;
+  subscribeToChatHistory: (projectId: string, callback: (messages: any[]) => void) => () => void;
+  // Profile picture methods
+  updateProfilePicture: (photoURL: string) => Promise<void>;
+  uploadProfilePicture: (file: File) => Promise<string>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -89,29 +99,16 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (user && isAuthReady) {
-      const q = query(collection(db, 'projects'), where('ownerId', '==', user.uid));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const projectsData = snapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id,
-          updatedAt: (doc.data().updatedAt as Timestamp).toDate().toISOString(),
-          createdAt: (doc.data().createdAt as Timestamp).toDate().toISOString(),
-        } as Project));
-        setProjects(projectsData);
-      }, async (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'projects');
-        // Fallback to IndexedDB
-        console.log('[FirebaseProvider] Firestore list failed, falling back to IndexedDB');
-        try {
-          const localProjects = await indexedDBStorage.getAllProjects();
-          setProjects(localProjects);
-        } catch (indexedDBError) {
-          console.error('[FirebaseProvider] IndexedDB list also failed:', indexedDBError);
+      // Load projects from GitHub instead of Firebase
+      loadProjectsFromGitHub()
+        .then(projectsData => {
+          console.log('[FirebaseProvider] Loaded projects from GitHub:', projectsData.length);
+          setProjects(projectsData as Project[]);
+        })
+        .catch(error => {
+          console.error('[FirebaseProvider] Error loading projects from GitHub:', error);
           setProjects([]);
-        }
-      });
-
-      return () => unsubscribe();
+        });
     }
   }, [user, isAuthReady]);
 
@@ -174,128 +171,197 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
 
   const saveProject = async (project: Project) => {
     if (!user) return;
-    const projectRef = doc(db, 'projects', project.id);
     try {
-      const updatedAt = Timestamp.now();
-      const createdAt = project.createdAt ? Timestamp.fromDate(new Date(project.createdAt)) : Timestamp.now();
-      
-      const projectToSave = {
+      const projectToSave: GitHubProject = {
         ...project,
         ownerId: user.uid,
         authorName: user.displayName || 'Anonymous',
         authorPhoto: user.photoURL || 'AETHER_LOGO_COMPONENT',
-        updatedAt,
-        createdAt,
+        updatedAt: new Date().toISOString(),
+        createdAt: project.createdAt || new Date().toISOString(),
       };
 
-      await setDoc(projectRef, projectToSave, { merge: true });
+      await saveProjectToGitHub(projectToSave);
+
+      // Reload projects after saving
+      const updatedProjects = await loadProjectsFromGitHub();
+      setProjects(updatedProjects as Project[]);
 
       // Update GitHub registry if token is available
       const githubToken = localStorage.getItem('github_token') || project.settings?.githubToken;
       if (githubToken) {
-        await addProjectToGithubRegistry({
-          ...projectToSave,
-          updatedAt: updatedAt.toDate().toISOString(),
-          createdAt: createdAt.toDate().toISOString()
-        }, githubToken);
+        await addProjectToGithubRegistry(projectToSave, githubToken);
       }
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `projects/${project.id}`);
-      // Fallback to IndexedDB
-      console.log('[FirebaseProvider] Firestore save failed, falling back to IndexedDB');
-      try {
-        await indexedDBStorage.saveProject(project);
-      } catch (indexedDBError) {
-        console.error('[FirebaseProvider] IndexedDB save also failed:', indexedDBError);
-      }
+      console.error('[FirebaseProvider] Error saving project to GitHub:', error);
+      throw error;
     }
   };
 
   const deleteProject = async (projectId: string) => {
     if (!user) return;
-    const projectRef = doc(db, 'projects', projectId);
     try {
-      // Get project settings to see if we have a GitHub token
-      const projectDoc = await getDoc(projectRef);
-      const projectData = projectDoc.data() as Project | undefined;
-      const githubToken = localStorage.getItem('github_token') || projectData?.settings?.githubToken;
+      await deleteProjectFromGitHub(projectId);
 
-      await deleteDoc(projectRef);
+      // Reload projects after deleting
+      const updatedProjects = await loadProjectsFromGitHub();
+      setProjects(updatedProjects as Project[]);
 
       // Also delete from GitHub registry if token is available
+      const githubToken = localStorage.getItem('github_token');
       if (githubToken) {
         await deleteProjectFromGithubRegistry(projectId, githubToken);
       }
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `projects/${projectId}`);
-      // Fallback to IndexedDB
-      console.log('[FirebaseProvider] Firestore delete failed, falling back to IndexedDB');
-      try {
-        await indexedDBStorage.deleteProject(projectId);
-      } catch (indexedDBError) {
-        console.error('[FirebaseProvider] IndexedDB delete also failed:', indexedDBError);
-      }
+      console.error('[FirebaseProvider] Error deleting project from GitHub:', error);
+      throw error;
     }
   };
 
   const saveSnapshot = async (projectId: string, files: Record<string, string>, note?: string) => {
     if (!user) return;
     const snapshotId = Math.random().toString(36).substring(7);
-    const snapshotRef = doc(db, 'projects', projectId, 'snapshots', snapshotId);
     try {
-      await setDoc(snapshotRef, {
+      // Load project first
+      const project = await loadProjectFromGitHub(projectId);
+      if (!project) throw new Error('Project not found');
+
+      // Save snapshot in project metadata
+      const snapshots = (project as any).snapshots || [];
+      snapshots.push({
         id: snapshotId,
-        projectId,
         files,
         note: note || '',
-        createdAt: Timestamp.now()
+        createdAt: new Date().toISOString()
       });
+
+      const updatedProject = {
+        ...project,
+        snapshots,
+        updatedAt: new Date().toISOString()
+      };
+
+      await saveProjectToGitHub(updatedProject);
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `projects/${projectId}/snapshots/${snapshotId}`);
+      console.error('[FirebaseProvider] Error saving snapshot to GitHub:', error);
+      throw error;
     }
   };
 
   const getSnapshots = async (projectId: string) => {
     if (!user) return [];
-    const q = query(
-      collection(db, 'projects', projectId, 'snapshots'),
-      orderBy('createdAt', 'desc')
-    );
     try {
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        createdAt: (doc.data().createdAt as Timestamp).toDate().toISOString(),
-      }));
+      const project = await loadProjectFromGitHub(projectId);
+      if (!project) return [];
+      return ((project as any).snapshots || []).sort((a: any, b: any) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     } catch (error) {
-      handleFirestoreError(error, OperationType.LIST, `projects/${projectId}/snapshots`);
+      console.error('[FirebaseProvider] Error getting snapshots from GitHub:', error);
       return [];
     }
   };
 
   const restoreSnapshot = async (projectId: string, snapshotId: string) => {
-    const snapshotRef = doc(db, 'projects', projectId, 'snapshots', snapshotId);
-    const snapshotDoc = await getDoc(snapshotRef);
-    if (snapshotDoc.exists()) {
-      return snapshotDoc.data().files;
-    }
-    throw new Error('Snapshot not found');
+    const project = await loadProjectFromGitHub(projectId);
+    if (!project) throw new Error('Project not found');
+    
+    const snapshot = ((project as any).snapshots || []).find((s: any) => s.id === snapshotId);
+    if (!snapshot) throw new Error('Snapshot not found');
+    
+    return snapshot.files;
   };
 
   const fetchProjectById = (projectId: string, callback: (project: Project) => void) => {
-    return onSnapshot(doc(db, 'projects', projectId), (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        callback({
-          ...data,
-          id: snapshot.id,
-          updatedAt: (data.updatedAt as Timestamp).toDate().toISOString(),
-          createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-        } as Project);
-      }
-    }, (error) => {
-      handleFirestoreError(error, OperationType.GET, `projects/${projectId}`);
+    // GitHub doesn't support real-time updates, so we fetch once
+    loadProjectFromGitHub(projectId)
+      .then(project => {
+        if (project) {
+          callback(project as Project);
+        }
+      })
+      .catch(error => {
+        console.error('[FirebaseProvider] Error fetching project from GitHub:', error);
+      });
+    // Return empty function since there's no real-time unsubscribe
+    return () => {};
+  };
+
+  // Chat history methods
+  const saveChatHistory = async (projectId: string, messages: any[]) => {
+    if (!user) return;
+    try {
+      await chatHistoryService.saveChatHistory(projectId, user.uid, messages);
+    } catch (error) {
+      console.error('[FirebaseProvider] Failed to save chat history:', error);
+      throw error;
+    }
+  };
+
+  const loadChatHistory = async (projectId: string) => {
+    if (!user) return [];
+    try {
+      const chatHistory = await chatHistoryService.loadChatHistory(projectId, user.uid);
+      return chatHistory?.messages || [];
+    } catch (error) {
+      console.error('[FirebaseProvider] Failed to load chat history:', error);
+      return [];
+    }
+  };
+
+  const addChatMessage = async (projectId: string, message: any) => {
+    if (!user) return;
+    try {
+      // Add timestamp to message if not present
+      const messageWithTimestamp = {
+        ...message,
+        timestamp: message.timestamp || new Date().toISOString()
+      };
+      await chatHistoryService.addMessage(projectId, user.uid, messageWithTimestamp);
+    } catch (error) {
+      console.error('[FirebaseProvider] Failed to add chat message:', error);
+      throw error;
+    }
+  };
+
+  const subscribeToChatHistory = (projectId: string, callback: (messages: any[]) => void) => {
+    if (!user) return () => {};
+    return chatHistoryService.subscribeToChatHistory(projectId, user.uid, (chatHistory) => {
+      callback(chatHistory?.messages || []);
+    });
+  };
+
+  // Profile picture methods
+  const updateProfilePicture = async (photoURL: string) => {
+    if (!user) throw new Error('User not authenticated');
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, { photoURL });
+      console.log('[FirebaseProvider] Profile picture updated successfully');
+    } catch (error) {
+      console.error('[FirebaseProvider] Failed to update profile picture:', error);
+      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
+      throw error;
+    }
+  };
+
+  const uploadProfilePicture = async (file: File): Promise<string> => {
+    if (!user) throw new Error('User not authenticated');
+    
+    // Convert file to base64 for storage in Firestore
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        try {
+          await updateProfilePicture(base64);
+          resolve(base64);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
     });
   };
 
@@ -311,7 +377,13 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       saveSnapshot, 
       getSnapshots, 
       restoreSnapshot,
-      fetchProjectById
+      fetchProjectById,
+      saveChatHistory,
+      loadChatHistory,
+      addChatMessage,
+      subscribeToChatHistory,
+      updateProfilePicture,
+      uploadProfilePicture
     }}>
       {children}
     </FirebaseContext.Provider>

@@ -30,63 +30,78 @@
 
 @layer base {
   :root {
-    --background: 210 100% 98%;
-    --foreground: 222.2 84% 4.9%;
-    --landing-bg: #f0f7ff;
-    --landing-gradient-opacity: 0.8;
-    --gradient-color: 30, 58, 138;
+    /* DESIGN SYSTEM - Deep Navy/Cyan */
+    --background: 220 60% 2%;
+    --foreground: 210 40% 98%;
+    --landing-bg: #02040a;
+    --landing-gradient-opacity: 0.6;
+    --gradient-color: 6, 182, 212;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 50% 4%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 50% 4%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 187 94% 43%;
+    --primary-foreground: 220 60% 2%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 30% 12%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 30% 12%;
+    --muted-foreground: 215 20% 55%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 187 94% 43%;
+    --accent-foreground: 220 60% 2%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --border: 220 30% 15%;
+    --input: 220 30% 15%;
+    --ring: 187 94% 43%;
 
     --radius: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
     
-    /* Liquid Glass Variables - Refined for Professionalism */
+    /* Liquid Glass Variables */
     --glass-blur: 20px;
-    --glass-opacity: 0.04;
+    --glass-opacity: 0.03;
     --glass-border-opacity: 0.08;
     --glass-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
+    /* Design System Colors - Navy/Cyan */
+    --color-navy-950: #02040a;
+    --color-navy-900: #0a0f1a;
+    --color-navy-800: #0f172a;
+    --color-navy-700: #1e293b;
+    --color-cyan-400: #22d3ee;
+    --color-cyan-500: #06b6d4;
+    --color-cyan-600: #0891b2;
+    
+    /* Accent highlights - tiny prism edges */
+    --color-amber-400: #fbbf24;
+    --color-emerald-400: #34d399;
+    
     /* Editor Variables */
     --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --ease: cubic-bezier(0.2, 0, 0, 1);
-    --g1: #2563eb; --g2: #3b82f6; --g3: #60a5fa;
-    --bg: #ffffff; --bg2: #f9fafb; --bg3: #f3f4f6;
-    --t: #000000; --t2: #111111; --t3: #4b5563;
-    --bdr: rgba(0, 0, 0, 0.08); --bdr2: rgba(0, 0, 0, 0.12);
-    --ed-surface: #ffffff; --ed-border: #e5e7eb;
-    --glass-bg: rgba(255, 255, 255, 0.9);
-    --glass-border: rgba(0, 0, 0, 0.15);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
-    --shadow-xl: 0 32px 80px rgba(0, 0, 0, 0.2);
-    --radius-xl: 1.25rem;
-    --radius-2xl: 1.5rem;
-    --bg-overlay: rgba(0, 0, 0, 0.8);
+    --g1: #06b6d4; --g2: #22d3ee; --g3: #67e8f9;
+    --bg: #02040a; --bg2: #0a0f1a; --bg3: #0f172a;
+    --t: #f8fafc; --t2: #e2e8f0; --t3: #94a3b8;
+    --bdr: rgba(255, 255, 255, 0.06); --bdr2: rgba(255, 255, 255, 0.12);
+    --ed-surface: #02040a; --ed-border: #1e293b;
+    --glass-bg: rgba(10, 15, 26, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 32px 80px rgba(0, 0, 0, 0.6);
+    --bg-overlay: rgba(2, 4, 10, 0.95);
   }
 
   .black {
@@ -216,6 +231,70 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: var(--bdr2);
+  }
+
+  /* Allow normal scrolling for all content */
+  /* Remove overscroll restrictions for desktop app */
+  
+  /* Prevent overscroll only on specific containers that need it (editor components) */
+  .msgs,
+  .workspace,
+  .chat,
+  .surface,
+  .pane-preview,
+  .pane-code,
+  .pane-panel,
+  .code-wrap,
+  .md-preview,
+  .file-list,
+  .editor-content {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Allow normal scrolling on mobile devices */
+  @media (pointer: coarse) {
+    html, body {
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y pinch-zoom;
+    }
+  }
+
+  html, body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font);
+    overflow-x: hidden;
+    font-size: var(--base-font-size, 16px);
+    overflow-y: auto;
+    min-height: 100vh;
+  }
+  
+  /* Desktop app scroll constraints - only apply to Tauri */
+  .tauri {
+    max-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .tauri html, .tauri #root {
+    max-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  
+  .tauri #root {
+    max-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .tauri .app-container {
+    max-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
   }
 
   body {
@@ -435,7 +514,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: 100vh;
+  background: var(--background);
+  position: relative;
 }
 
 .bento-card {
@@ -1057,6 +1138,38 @@ body.viewer-mode .prev-empty{display:none!important}
 .animate-gradient-x {
   background-size: 200% 200%;
   animation: gradient-x 5s ease infinite;
+}
+
+@keyframes white-glow-pulse {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes white-glow-rotate {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.8;
+  }
+  25% {
+    transform: rotate(90deg) scale(1.1);
+    opacity: 1;
+  }
+  50% {
+    transform: rotate(180deg) scale(1);
+    opacity: 0.8;
+  }
+  75% {
+    transform: rotate(270deg) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 0;
+  }
 }
 
 /* Liquid Design System */

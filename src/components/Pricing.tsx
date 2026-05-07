@@ -91,7 +91,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
           id: 'pro',
           name: 'Pro',
           description: 'Advanced features for power users who want more control',
-          price: 29,
+          price: 0,
           billingCycle: 'monthly',
           features: [
             'Everything in Starter',
@@ -113,7 +113,7 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
           id: 'enterprise',
           name: 'Enterprise',
           description: 'For teams and organizations that need advanced features',
-          price: 99,
+          price: 0,
           billingCycle: 'monthly',
           features: [
             'Everything in Pro',
@@ -190,35 +190,6 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
             </p>
           </div>
 
-          {/* Billing Cycle Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-[var(--bg3)] rounded-lg p-1 shadow-sm border border-[var(--bdr)]">
-              <button
-                onClick={() => handleBillingCycleChange('monthly')}
-                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                  billingCycle === 'monthly'
-                    ? 'bg-primary text-[var(--bg)]'
-                    : 'text-[var(--t2)] hover:text-[var(--t)]'
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => handleBillingCycleChange('yearly')}
-                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                  billingCycle === 'yearly'
-                    ? 'bg-primary text-[var(--bg)]'
-                    : 'text-[var(--t2)] hover:text-[var(--t)]'
-                }`}
-              >
-                Yearly
-                <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
-                  Save 20%
-                </span>
-              </button>
-            </div>
-          </div>
-
           {/* Pricing Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {config.pricing.plans.map((plan, index) => (
@@ -229,73 +200,57 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                 transition={{ delay: index * 0.1 }}
                 className="relative"
               >
-                {plan.popular && (
-                  <div className="absolute -top-4 right-4">
-                    <Badge className="bg-primary text-[var(--bg)]">
-                      Most Popular
-                    </Badge>
-                  </div>
-                )}
-                
-                <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105 liquid-glass border border-[var(--bdr)] ${
-                  selectedPlan === plan.id ? 'ring-2 ring-primary shadow-xl' : ''
+                <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] liquid-glass border border-[var(--bdr)] ${
+                  selectedPlan === plan.id ? 'ring-2 ring-primary shadow-2xl' : ''
                 }`}>
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-2xl font-bold text-[var(--t)]">
+                  <CardHeader className="pb-6 space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <CardTitle className="text-3xl font-black text-[var(--t)]">
                           {plan.name}
                         </CardTitle>
-                        <p className="text-[var(--t2)] text-sm mt-1">
+                        <p className="text-[var(--t2)] text-base leading-relaxed">
                           {plan.description}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-3xl font-bold text-[var(--t)] mb-2">
-                          ${getDiscountedPrice(plan.price)}
-                          <span className="text-lg text-[var(--t2)] font-normal">
-                            /{billingCycle === 'yearly' ? 'year' : 'month'}
-                          </span>
-                        </div>
-                        {billingCycle === 'yearly' && (
-                          <div className="text-sm text-primary mb-2">
-                            Save ${getYearlySavings(plan.price)}/year
-                          </div>
-                        )}
+                    </div>
+                    <div className="text-right pt-4 border-t border-[var(--bdr)]">
+                      <div className="text-4xl font-black text-[var(--t)] mb-1">
+                        Free
                       </div>
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="pt-0">
-                    <ul className="space-y-3">
+                  <CardContent className="pt-0 space-y-6">
+                    <ul className="space-y-4">
                       {plan.features.map((feature, featureIndex) => (
                         <li key={featureIndex} className="flex items-start gap-3">
                           <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                          <span className="text-[var(--t2)]">{feature}</span>
+                          <span className="text-[var(--t)] font-medium">{feature}</span>
                         </li>
                       ))}
                     </ul>
 
                     {plan.limits && (
                       <div className="mt-6 pt-6 border-t border-[var(--bdr)]">
-                        <h4 className="font-semibold text-[var(--t)] mb-4">Limits</h4>
-                        <div className="space-y-2 text-sm text-[var(--t2)]">
+                        <h4 className="font-bold text-[var(--t)] mb-4 text-lg">Usage Limits</h4>
+                        <div className="space-y-3 text-sm">
                           {plan.limits.aiRequests && (
-                            <div className="flex justify-between">
-                              <span>AI Requests</span>
-                              <span className="font-medium">{plan.limits.aiRequests.toLocaleString()}/month</span>
+                            <div className="flex justify-between items-center p-3 rounded-lg bg-[var(--bg2)]">
+                              <span className="text-[var(--t2)]">AI Requests</span>
+                              <span className="font-bold text-[var(--t)]">{plan.limits.aiRequests.toLocaleString()}/month</span>
                             </div>
                           )}
                           {plan.limits.projects && (
-                            <div className="flex justify-between">
-                              <span>Projects</span>
-                              <span className="font-medium">{plan.limits.projects.toLocaleString()}</span>
+                            <div className="flex justify-between items-center p-3 rounded-lg bg-[var(--bg2)]">
+                              <span className="text-[var(--t2)]">Projects</span>
+                              <span className="font-bold text-[var(--t)]">{plan.limits.projects.toLocaleString()}</span>
                             </div>
                           )}
                           {plan.limits.storage && (
-                            <div className="flex justify-between">
-                              <span>Storage</span>
-                              <span className="font-medium">{plan.limits.storage}</span>
+                            <div className="flex justify-between items-center p-3 rounded-lg bg-[var(--bg2)]">
+                              <span className="text-[var(--t2)]">Storage</span>
+                              <span className="font-bold text-[var(--t)]">{plan.limits.storage}</span>
                             </div>
                           )}
                         </div>
@@ -307,10 +262,10 @@ export function Pricing({ onPlanSelect, className }: PricingProps) {
                 <div className="mt-6">
                   <Button
                     onClick={() => handlePlanSelect(plan)}
-                    className={`w-full py-3 text-lg font-semibold transition-colors ${
+                    className={`w-full py-4 text-lg font-bold rounded-2xl transition-all duration-300 ${
                       selectedPlan === plan.id
-                        ? 'bg-primary text-[var(--bg)]'
-                        : 'bg-[var(--t)] text-[var(--bg)] hover:bg-primary/90'
+                        ? 'bg-primary text-[var(--bg)] shadow-xl shadow-primary/20'
+                        : 'bg-[var(--t)] text-[var(--bg)] hover:bg-primary hover:shadow-xl hover:shadow-primary/20'
                     }`}
                   >
                     {selectedPlan === plan.id ? 'Selected' : `Get Started`}

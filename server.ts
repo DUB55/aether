@@ -40,8 +40,35 @@ if (!anyProviderAvailable) {
 
 async function startServer() {
   const app = express();
-  const PORT = process.argv.includes('--port') ? 
-    parseInt(process.argv[process.argv.indexOf('--port') + 1]) : 3000;
+  const startPort = process.argv.includes('--port') ? 
+    parseInt(process.argv[process.argv.indexOf('--port') + 1]) : 5174;
+
+  // Function to find available port
+  async function findAvailablePort(startPort: number): Promise<number> {
+    const { Server } = await import('net');
+    
+    return new Promise((resolve) => {
+      const server = new Server();
+      
+      server.listen(startPort, () => {
+        const port = (server.address() as any)?.port;
+        server.close(() => resolve(port));
+      });
+      
+      server.on('error', () => {
+        // Port is in use, try next port
+        resolve(findAvailablePort(startPort + 1));
+      });
+    });
+  }
+
+  // Find available port
+  const PORT = await findAvailablePort(startPort);
+  
+  // Log which port is being used
+  if (PORT !== startPort) {
+    console.log(`[Server] Port ${startPort} is busy, using port ${PORT}`);
+  }
 
   // Create HTTP server
   const server = createHttpServer(app);

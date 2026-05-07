@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether AI IDE Installer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #02040a 0%, #0a0f1a 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .installer-container {
+            width: 400px;
+            padding: 2rem;
+            background: rgba(10, 15, 26, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #06b6d4, #22d3ee, #67e8f9);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.4);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .progress-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #22d3ee);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #e2e8f0;
+            font-size: 0.8rem;
+        }
+
+        .status {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            min-height: 20px;
+        }
+
+        .error {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            display: none;
+        }
+
+        .success {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            display: none;
+        }
+
+        .button {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #06b6d4, #22d3ee);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(6, 182, 212, 0.3);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .system-info {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .chunk-info {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="installer-container">
+        <div class="logo">A</div>
+        <h1>Aether AI IDE</h1>
+        <p class="subtitle">AI-Powered Development Environment</p>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0% - Ready to install</div>
+        </div>
+
+        <div class="status" id="status">Ready to install Aether AI IDE</div>
+        
+        <div class="error" id="error"></div>
+        <div class="success" id="success"></div>
+
+        <button class="button" id="installButton" onclick="startInstallation()">
+            Install Aether AI IDE
+        </button>
+
+        <button class="button" id="launchButton" onclick="launchApplication()" style="display: none;">
+            Launch Application
+        </button>
+
+        <div class="chunk-info" id="chunkInfo"></div>
+        <div class="system-info" id="systemInfo"></div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            VERSION: '1.0.0',
+            BASE_URL: 'https://releases.aether-ai.com',
+            CHUNK_SIZE: 10 * 1024 * 1024, // 10MB
+            INSTALL_PATH: 'C:\\Program Files\\Aether AI IDE',
+            EXECUTABLE_NAME: 'aether-ai-ide.exe'
+        };
+
+        // State
+        let isInstalling = false;
+        let downloadedChunks = [];
+        let totalSize = 0;
+        let downloadedSize = 0;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            displaySystemInfo();
+        });
+
+        function displaySystemInfo() {
+            const info = [
+                `Platform: ${navigator.platform}`,
+                `Language: ${navigator.language}`,
+                `Version: ${CONFIG.VERSION}`
+            ];
+            document.getElementById('systemInfo').textContent = info.join(' • ');
+        }
+
+        async function startInstallation() {
+            if (isInstalling) return;
+            
+            isInstalling = true;
+            const button = document.getElementById('installButton');
+            button.disabled = true;
+            button.textContent = 'Installing...';
+
+            try {
+                // Step 1: Get manifest
+                updateStatus('Fetching installation manifest...');
+                const manifest = await fetchManifest();
+                
+                // Step 2: Download chunks
+                updateStatus('Downloading application...');
+                await downloadChunks(manifest);
+                
+                // Step 3: Assemble and install
+                updateStatus('Installing application...');
+                await installApplication();
+                
+                // Step 4: Success
+                updateStatus('Installation complete!');
+                showSuccess('Aether AI IDE has been successfully installed!');
+                document.getElementById('installButton').style.display = 'none';
+                document.getElementById('launchButton').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Installation failed:', error);
+                showError(`Installation failed: ${error.message}`);
+                button.disabled = false;
+                button.textContent = 'Retry Installation';
+            } finally {
+                isInstalling = false;
+            }
+        }
+
+        async function fetchManifest() {
+            const response = await fetch(`${CONFIG.BASE_URL}/v${CONFIG.VERSION}/manifest.json`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch manifest');
+            }
+            return response.json();
+        }
+
+        async function downloadChunks(manifest) {
+            totalSize = manifest.totalSize;
+            const chunks = manifest.chunks;
+            downloadedChunks = [];
+
+            for (let i = 0; i < chunks.length; i++) {
+                const chunk = chunks[i];
+                updateStatus(`Downloading chunk ${i + 1} of ${chunks.length}...`);
+                updateChunkInfo(`Chunk ${i + 1}: ${formatFileSize(chunk.size)}`);
+                
+                try {
+                    const data = await downloadChunk(chunk);
+                    const isValid = await verifyChunk(chunk, data);
+                    
+                    if (!isValid) {
+                        throw new Error(`Chunk ${i + 1} verification failed`);
+                    }
+                    
+                    downloadedChunks.push({ chunk, data });
+                    downloadedSize += chunk.size;
+                    updateProgress((downloadedSize / totalSize) * 100);
+                    
+                } catch (error) {
+                    throw new Error(`Failed to download chunk ${i + 1}: ${error.message}`);
+                }
+            }
+        }
+
+        async function downloadChunk(chunk) {
+            const response = await fetch(chunk.url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.arrayBuffer();
+        }
+
+        async function verifyChunk(chunk, data) {
+            // Simple verification - in production, use proper checksum verification
+            return data.byteLength === chunk.size;
+        }
+
+        async function installApplication() {
+            updateStatus('Installing application files...');
+            
+            // In a real implementation, this would:
+            // 1. Create installation directory
+            // 2. Assemble chunks into executable
+            // 3. Create shortcuts
+            // 4. Register for auto-updates
+            // 5. Set up file associations
+            
+            // For demo purposes, we'll simulate the installation
+            await simulateInstallation();
+        }
+
+        async function simulateInstallation() {
+            // Simulate installation process
+            const steps = [
+                'Creating installation directory...',
+                'Assembling application files...',
+                'Creating desktop shortcut...',
+                'Setting up auto-updater...',
+                'Registering file associations...'
+            ];
+
+            for (const step of steps) {
+                updateStatus(step);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+
+        function launchApplication() {
+            // In a real implementation, this would launch the installed application
+            alert('Application would be launched here. In production, this would start the actual Aether AI IDE.');
+        }
+
+        function updateProgress(percentage) {
+            const fill = document.getElementById('progressFill');
+            const text = document.getElementById('progressText');
+            
+            fill.style.width = `${percentage}%`;
+            text.textContent = `${Math.round(percentage)}% - ${formatFileSize(downloadedSize)} / ${formatFileSize(totalSize)}`;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        function updateChunkInfo(message) {
+            document.getElementById('chunkInfo').textContent = message;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('success').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

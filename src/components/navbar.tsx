@@ -14,12 +14,14 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from './ui/dropdown-menu'
-import { LogOut, User, LayoutGrid, Menu, X } from 'lucide-react'
+import { LogOut, User, LayoutGrid, Menu, X, Camera } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
+import { ProfilePictureDialog } from './ProfilePictureDialog'
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isProfilePictureOpen, setIsProfilePictureOpen] = useState(false)
   const { user, signIn, logout } = useFirebase()
   const [pfpErrorCount, setPfpErrorCount] = useState(0)
 
@@ -127,6 +129,14 @@ export function Navbar() {
                 <span>My Projects</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
+                className="rounded-xl cursor-pointer gap-3 py-2.5"
+                onClick={() => setIsProfilePictureOpen(true)}
+              >
+                <Camera className="w-4 h-4" />
+                <span>Change Profile Picture</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border/50" />
+              <DropdownMenuItem 
                 className="rounded-xl cursor-pointer gap-3 py-2.5 text-destructive focus:text-destructive"
                 onClick={logout}
               >
@@ -189,6 +199,11 @@ export function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ProfilePictureDialog 
+        isOpen={isProfilePictureOpen}
+        onClose={() => setIsProfilePictureOpen(false)}
+      />
     </motion.nav>
   )
 }

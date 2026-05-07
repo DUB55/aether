@@ -43,7 +43,7 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // Fetch projects from GitHub registry with personal access token
+        // Fetch projects from GitHub registry
         const { REPO, PATH, BRANCH } = CONFIG.GITHUB_REGISTRY;
         const [owner, repo] = REPO.split('/');
         
@@ -83,17 +83,14 @@ export const CommunityGallery: React.FC<{ user: any }> = ({ user }) => {
           setProjects(sortedProjects);
         } else if (contentRes.status === 404) {
           console.log('[CommunityGallery] Registry file not found (404)');
-          // Set empty projects array - no fake mocks
           setProjects([]);
         } else {
           const errorText = await contentRes.text();
           console.error('[CommunityGallery] Failed to fetch registry:', contentRes.status, errorText);
-          // Set empty projects array on error - no fake mocks
           setProjects([]);
         }
       } catch (error) {
         console.error('[CommunityGallery] Error fetching community projects:', error);
-        // Set empty projects array on error - no fake mocks
         setProjects([]);
       }
     };

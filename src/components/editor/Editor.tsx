@@ -21,6 +21,7 @@ import {
   Globe, 
   History as HistoryIcon, 
   ImagePlus, 
+  Key,
   Layout, 
   LogOut, 
   MessageSquare, 
@@ -56,7 +57,7 @@ import { useFirebase } from '@/components/FirebaseProvider'
 import { cn } from '@/lib/utils'
 import { streamRequest } from '@/lib/ai-service'
 import { type Message, type Project } from '@/types'
-import { saveProject, getProject } from '@/lib/storage'
+import { getProject } from '@/lib/storage'
 import { toast } from 'sonner'
 import { AetherLogo } from '../aether-logo'
 import { useTheme } from 'next-themes'
@@ -72,6 +73,7 @@ import { InteractiveChatMode } from '../enterprise/InteractiveChatMode'
 import { TeamManagementDashboard } from '../enterprise/TeamManagementDashboard'
 import { getWebContainer, mountFiles } from '@/lib/webcontainer'
 import { type Terminal as XTerm } from 'xterm'
+import { BYOKDialog } from '../BYOKDialog'
 
 import { encryptPayload, decryptPayload } from '@/lib/crypto'
 import { LoginModal } from '@/components/LoginModal'
@@ -90,8 +92,21 @@ interface FileStatus {
 }
 
 export function Editor({ projectId, onBack, isSharedView = false }: EditorViewProps) {
+  console.log('[EDITOR] Component initializing:', {
+    projectId,
+    isSharedView,
+    timestamp: new Date().toISOString()
+  });
+  
   const { theme } = useTheme()
   const { user, signIn, saveProject: firebaseSaveProject, projects, saveSnapshot, getSnapshots, restoreSnapshot, fetchProjectById, deleteProject } = useFirebase()
+  
+  console.log('[EDITOR] Firebase hooks initialized:', {
+    user: user ? 'authenticated' : 'not authenticated',
+    userId: user?.uid || 'none',
+    totalProjects: projects.length
+  });
+  
   const [lastRemoteUpdate, setLastRemoteUpdate] = useState<number>(0)
   const [project, setProject] = useState<Project | null>(null)
   const [activeFile, setActiveFile] = useState('index.html')
@@ -102,7 +117,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   const [isMdPreview, setIsMdPreview] = useState(false)
   const [activeMobileTab, setActiveMobileTab] = useState<'chat' | 'code' | 'preview' | 'history' | 'terminal'>('chat')
   const [renamingFile, setRenamingFile] = useState<string | null>(null)
-  const [deletingFile, setDeletingFile] = useState<string | null>(null)
+  const [selectedImage, setSelectedImage] = useState<{ data: string; mimeType: string; size?: number } | null>(null)
   const [newName, setNewName] = useState('')
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ 'src': true })
   const [isTemplateMarketplaceOpen, setIsTemplateMarketplaceOpen] = useState(false)
@@ -255,17 +270,17 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       }
     })
   }
+
   const [projectName, setProjectName] = useState('')
   const [showAgentMode, setShowAgentMode] = useState(false)
   const [composerAnimate, setComposerAnimate] = useState(false)
-    const [isDeployDialogOpen, setIsDeployDialogOpen] = useState(false)
+  const [isDeployDialogOpen, setIsDeployDialogOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isCollaborateDialogOpen, setIsCollaborateDialogOpen] = useState(false)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
   const [isGitHubSyncOpen, setIsGitHubSyncOpen] = useState(false)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const [isAssetManagerOpen, setIsAssetManagerOpen] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<{ data: string; mimeType: string } | null>(null)
   const [githubToken, setGithubToken] = useState<string>(localStorage.getItem('github_token') || '')
   const [githubConfig, setGithubConfig] = useState({ repo: '', branch: 'main' })
   const [terminalInstance, setTerminalInstance] = useState<XTerm | null>(null)
@@ -290,6 +305,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   const [thinkingContent, setThinkingContent] = useState('')
   const [thinkingStartTime, setThinkingStartTime] = useState<number>(0)
   const [showThinking, setShowThinking] = useState(false)
+  const [isBYOKOpen, setIsBYOKOpen] = useState(false)
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -358,7 +374,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       // Only save if we are NOT in a collaborative session or if we are the owner
       // In a real app, we'd handle conflict resolution better
       if (Date.now() - lastRemoteUpdate > 2000) {
-        saveProject(project);
+        firebaseSaveProject(project);
       }
     }, 3000);
 
@@ -400,7 +416,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       if (notes !== project.notes) {
         const updated = { ...project, notes, lastModified: Date.now() }
         setProject(updated)
-        await saveProject(updated)
+        await firebaseSaveProject(updated)
       }
     }, 1000)
     return () => clearTimeout(timer)
@@ -616,28 +632,60 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   const hasAutoSent = useRef(false)
 
   useEffect(() => {
+    console.log('[EDITOR] Project loading effect triggered:', {
+      projectId,
+      isSharedView,
+      timestamp: new Date().toISOString()
+    });
+    
     let unsubscribe: (() => void) | undefined;
     
     const load = async () => {
+      console.log('[EDITOR] Starting project load...');
+      
       // Check for shared URL parameters
       const searchParams = new URLSearchParams(window.location.search)
       const src = searchParams.get('src')
       const key = window.location.hash.startsWith('#key=') ? window.location.hash.replace('#key=', '') : null
 
+      console.log('[EDITOR] URL parameters:', {
+        hasSrc: !!src,
+        hasKey: !!key,
+        srcUrl: src?.substring(0, 100) + '...'
+      });
+
       if (src && key) {
+        console.log('[EDITOR] Loading shared project from URL...');
         try {
           addTerminalLog('info', 'Loading shared project from URL...')
           const response = await fetch(src)
+          console.log('[EDITOR] Shared project fetch response:', {
+            status: response.status,
+            ok: response.ok,
+            statusText: response.statusText
+          });
+          
           if (!response.ok) throw new Error('Failed to fetch shared project')
           const encryptedData = await response.text()
+          console.log('[EDITOR] Encrypted data received, length:', encryptedData.length);
+          
           const decryptedJson = await decryptPayload(encryptedData, key)
+          console.log('[EDITOR] Project decrypted successfully');
+          
           const sharedProject = JSON.parse(decryptedJson)
+          console.log('[EDITOR] Shared project parsed:', {
+            id: sharedProject.id,
+            name: sharedProject.name,
+            fileCount: Object.keys(sharedProject.files || {}).length,
+            messageCount: sharedProject.messages?.length || 0
+          });
+          
           setProject(sharedProject)
           setProjectName(sharedProject.name)
           addTerminalLog('success', 'Shared project loaded and decrypted.')
           return
         } catch (error) {
-          console.error('Failed to load shared project:', error)
+          console.error('[EDITOR] Failed to load shared project:', error)
           addTerminalLog('error', 'Failed to load shared project.')
           toast.error('Failed to load shared project')
         }
@@ -715,7 +763,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
     }
     setProject(updated)
     setProjectName(newName)
-    await saveProject(updated)
+    await firebaseSaveProject(updated)
   }
 
   const extractAndStripFiles = (text: string) => {
@@ -773,27 +821,35 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   }, [project?.settings]);
 
   const handleSend = async (overrideInput?: string, isAutoSend = false) => {
-    console.log('[Editor] handleSend START - messageContent:', overrideInput || input)
-    console.log('[Editor] handleSend - overrideInput:', overrideInput)
-    console.log('[Editor] handleSend - isAutoSend:', isAutoSend)
-    console.log('[Editor] handleSend - input:', input)
-    console.log('[Editor] handleSend - selectedImage:', selectedImage)
-    console.log('[Editor] handleSend - project exists:', !!project)
-    console.log('[Editor] handleSend - isGenerating:', isGenerating)
-    console.log('[Editor] handleSend - user exists:', !!user)
+    console.log('[EDITOR-AI] handleSend called:', {
+      hasOverrideInput: !!overrideInput,
+      isAutoSend,
+      inputLength: input.length,
+      hasSelectedImage: !!selectedImage,
+      hasProject: !!project,
+      isGenerating,
+      hasUser: !!user,
+      timestamp: new Date().toISOString()
+    });
     
     const messageContent = overrideInput || input
     if ((!messageContent.trim() && !selectedImage) || !project || isGenerating) {
-      console.log('[Editor] handleSend - Early return due to validation failure')
+      console.log('[EDITOR-AI] Early return - validation failed:', {
+        hasMessageContent: !!messageContent.trim(),
+        hasImage: !!selectedImage,
+        hasProject: !!project,
+        isGenerating
+      });
       return
     }
 
     if (!user && !isAutoSend) {
-      console.log('[Editor] handleSend - User not authenticated, opening login modal')
+      console.log('[EDITOR-AI] User not authenticated, opening login modal');
       setIsLoginModalOpen(true)
       return
     }
 
+    console.log('[EDITOR-AI] Starting message processing...');
     let updatedProject = { ...project }
     
     if (!isAutoSend) {
@@ -801,6 +857,10 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       
       // Add image info to message if present
       if (selectedImage) {
+        console.log('[EDITOR-AI] Adding image to message:', {
+          mimeType: selectedImage.mimeType,
+          size: selectedImage.size
+        });
         userMessage.content += `\n\n[Attached Image: ${selectedImage.mimeType}]`
       }
 
@@ -816,7 +876,9 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
     // Check for image generation request
     const imageGenerationMatch = messageContent.match(/(?:generate|create|make).*?(?:an? )?(?:image|picture|photo|graphic|visual|art|drawing|illustration)/i);
     if (imageGenerationMatch) {
+      console.log('[EDITOR-AI] Image generation request detected');
       const imagePrompt = messageContent.replace(/(?:generate|create|make).*?(?:an? )?(?:image|picture|photo|graphic|visual|art|drawing|illustration)(?: of| called| showing| with| that)?/i, '').trim() || messageContent;
+      console.log('[EDITOR-AI] Extracted image prompt:', imagePrompt);
       
       const userMessage: Message = { role: 'user', content: messageContent };
       updatedProject = {
@@ -829,8 +891,10 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       
       setIsGenerating(true);
       setAiStatus('generating');
+      addTerminalLog('info', `Generating image: "${imagePrompt}"`);
       
       try {
+        console.log('[EDITOR-AI] Sending image generation request...');
         const response = await fetch('/api/generate-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -841,8 +905,18 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
           })
         });
         
+        console.log('[EDITOR-AI] Image generation response:', {
+          status: response.status,
+          ok: response.ok
+        });
+        
         if (response.ok) {
           const data = await response.json();
+          console.log('[EDITOR-AI] Image generation successful:', {
+            provider: data.provider,
+            hasImageUrl: !!data.imageUrl
+          });
+          
           const provider = data.provider || 'unknown';
           const providerName = provider === 'openai' ? 'OpenAI DALL-E' : 'Pollinations AI';
           const assistantMessage: Message = {
@@ -858,7 +932,10 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
           };
           setProject(finalProject);
           toast.success(`Image generated successfully using ${providerName}!`);
+          addTerminalLog('success', `Image generated using ${providerName}`);
         } else {
+          const errorText = await response.text();
+          console.error('[EDITOR-AI] Image generation failed:', errorText);
           throw new Error('Failed to generate image');
         }
       } catch (error) {
@@ -1106,7 +1183,6 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
             
             if (projectName) setProjectName(projectName)
             firebaseSaveProject(finalProject);
-            saveProject(finalProject);
             return finalProject;
           });
 
@@ -1300,7 +1376,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
     }
     setProject(updated)
     setActiveFile(fullPath)
-    await saveProject(updated)
+    await firebaseSaveProject(updated)
     setIsCreatingFile(false)
     setNewName('')
   }
@@ -1333,7 +1409,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       setActiveFile('index.html')
     }
     
-    await saveProject(updated)
+    await firebaseSaveProject(updated)
     toast.success(`Deleted ${deletingFile}`)
     setDeletingFile(null)
   }
@@ -1395,7 +1471,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       if (activeFile === renamingFile) setActiveFile(name)
     }
 
-    await saveProject(updated)
+    await firebaseSaveProject(updated)
     toast.success(`Renamed to ${name}`)
     setRenamingFile(null)
   }
@@ -1408,7 +1484,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       lastModified: Date.now()
     }
     setProject(updated)
-    saveProject(updated)
+    firebaseSaveProject(updated)
   }
 
   const togglePublic = async () => {
@@ -1420,9 +1496,6 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   }
 
   const copyShareLink = () => {
-    const url = `${window.location.origin}/#/shared/${projectId}`
-    navigator.clipboard.writeText(url)
-    toast.success('Share link copied to clipboard!')
   }
 
   const handlePublish = async (mode: 'viewer' | 'editor' = 'viewer') => {
@@ -1438,7 +1511,13 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       setPublishStatus('publishing')
       addTerminalLog('info', 'Publishing encrypted payload...')
       
-      const response = await fetch('https://aether-vert.vercel.app/api/publish-project', {
+      console.log('[EDITOR-PUBLISH] Starting publish process:', {
+        projectId: project.id,
+        mode,
+        timestamp: new Date().toISOString()
+      });
+
+      const response = await fetch('/api/publish-project', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1449,7 +1528,13 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
           encryptedPayload: encryptedData,
           message: `DUB5: publish ${project.id} (${mode})`
         })
-      })
+      });
+
+      console.log('[EDITOR-PUBLISH] API response received:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      });
       
       if (!response.ok) {
         throw new Error('Failed to publish project')
@@ -1460,6 +1545,92 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       const finalUrl = `${baseUrl}?src=${encodeURIComponent(rawUrl)}${mode === 'viewer' ? '&mode=viewer' : ''}#key=${keyBase64}`
       
       setPublishedUrl(finalUrl)
+      
+      // Save unencrypted metadata to community registry
+      addTerminalLog('info', 'Updating community registry...')
+      const githubToken = localStorage.getItem('github_token')
+      if (githubToken) {
+        try {
+          const { REPO, PATH, BRANCH } = CONFIG.GITHUB_REGISTRY;
+          const [owner, repo] = REPO.split('/');
+          
+          // Get current registry
+          const registryRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${PATH}?ref=${BRANCH}`, {
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+          
+          let currentRegistry: any[] = [];
+          let sha = undefined;
+          
+          if (registryRes.ok) {
+            const registryData = await registryRes.json();
+            currentRegistry = JSON.parse(atob(registryData.content));
+            sha = registryData.sha;
+          } else if (registryRes.status !== 404) {
+            console.warn('Failed to fetch registry, skipping update');
+          }
+          
+          // Generate preview HTML from project files
+          const previewHtml = project.files['index.html'] || '';
+          let processedPreview = previewHtml;
+          Object.entries(project.files).forEach(([name, content]) => {
+            if (name.endsWith('.css')) {
+              processedPreview = processedPreview.replace(new RegExp(`<link[^>]*href=["']${name}["'][^>]*>`, 'g'), `<style>${content}</style>`);
+            }
+            if (name.endsWith('.js')) {
+              processedPreview = processedPreview.replace(new RegExp(`<script[^>]*src=["']${name}["'][^>]*><\/script>`, 'g'), `<script>${content}</script>`);
+            }
+          });
+          
+          // Add/update project in registry
+          const projectMetadata = {
+            id: project.id,
+            name: project.name,
+            description: project.notes || '',
+            preview: processedPreview,
+            authorName: user?.displayName || 'Anonymous',
+            authorId: user?.uid || '',
+            createdAt: project.createdAt,
+            updatedAt: new Date().toISOString(),
+            isPublic: true,
+            shareUrl: finalUrl
+          };
+          
+          const existingIndex = currentRegistry.findIndex((p: any) => p.id === project.id);
+          if (existingIndex >= 0) {
+            currentRegistry[existingIndex] = projectMetadata;
+          } else {
+            currentRegistry.push(projectMetadata);
+          }
+          
+          // Update registry
+          const updateRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${PATH}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: `Add project ${project.id} to community registry`,
+              content: btoa(JSON.stringify(currentRegistry, null, 2)),
+              sha,
+              branch: BRANCH
+            })
+          });
+          
+          if (updateRes.ok) {
+            addTerminalLog('success', 'Community registry updated');
+          } else {
+            console.warn('Failed to update community registry');
+          }
+        } catch (error) {
+          console.warn('Error updating community registry:', error);
+        }
+      }
+      
       setPublishStatus('done')
       addTerminalLog('success', `Project ${mode === 'viewer' ? 'deployed' : 'shared'} successfully!`)
       toast.success(mode === 'viewer' ? 'Project deployed!' : 'Share link generated!')
@@ -1627,6 +1798,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Team Management" onClick={() => setIsTeamManagementOpen(true)}><Users className="w-3.5 h-3.5" /></motion.button>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Plugins" onClick={() => setIsPluginManagerOpen(true)}><Cpu className="w-3.5 h-3.5" /></motion.button>
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="Settings" onClick={() => setIsSettingsDialogOpen(true)}><Settings className="w-3.5 h-3.5" /></motion.button>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="icon-btn" title="AI Providers (BYOK)" onClick={() => setIsBYOKOpen(true)}><Key className="w-3.5 h-3.5" /></motion.button>
             </div>
           )}
           <div className="flex items-center gap-2">
@@ -2906,6 +3078,30 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
         open={isTeamManagementOpen}
         onOpenChange={setIsTeamManagementOpen}
         userId={user?.uid}
+      />
+
+      <BYOKDialog 
+        isOpen={isBYOKOpen}
+        onClose={() => setIsBYOKOpen(false)}
+        onProviderConfigured={(provider, apiKey, model) => {
+          console.log('[Editor] Provider configured:', provider.name, model)
+          // Update project settings with the configured provider
+          if (project) {
+            const updatedProject = {
+              ...project,
+              settings: {
+                ...project.settings,
+                [`${provider.name}ApiKey`]: apiKey,
+                [`${provider.name}Model`]: model,
+                lastUsedProvider: provider.name,
+                lastUsedModel: model
+              },
+              updatedAt: new Date().toISOString()
+            }
+            setProject(updatedProject)
+            toast.success(`${provider.displayName} provider configured successfully!`)
+          }
+        }}
       />
     </div>
   )
