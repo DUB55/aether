@@ -55,7 +55,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Logo */}
           <div className="col-span-2 md:col-span-1">
-            <a href="/" onClick={(e) => handleNavigation(e, '/')} className="flex items-center gap-2 mb-4">
+            <a href="/" onClick={(e) => handleNavigation(e, '/')} className="flex items-center gap-2 mb-4 cursor-pointer">
               <AetherLogo className="w-8 h-8" />
               <span className="text-xl font-bold text-gray-900 dark:text-white">Aether</span>
             </a>

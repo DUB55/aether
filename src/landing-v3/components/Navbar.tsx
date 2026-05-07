@@ -66,7 +66,7 @@ export function Navbar() {
               <button
                 key={link.label}
                 onClick={() => handleNavClick(link.href)}
-                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
               >
                 {link.label}
               </button>
@@ -78,7 +78,7 @@ export function Navbar() {
             {/* Theme toggle */}
             <button
               onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#111] transition-colors"
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#111] transition-colors cursor-pointer"
               aria-label="Toggle theme"
             >
               {resolvedTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -87,7 +87,7 @@ export function Navbar() {
             {/* CTA Button */}
             <button 
               onClick={() => handleNavClick('#cta')}
-              className="hidden sm:block px-4 py-2 rounded-lg text-sm font-medium border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
+              className="hidden sm:block px-4 py-2 rounded-lg text-sm font-medium border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all cursor-pointer"
             >
               Get started for free
             </button>
@@ -95,7 +95,7 @@ export function Navbar() {
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400"
+              className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 cursor-pointer"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -114,14 +114,14 @@ export function Navbar() {
                 <button
                   key={link.label}
                   onClick={() => handleNavClick(link.href)}
-                  className="px-4 py-2 text-left text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#111] rounded-lg transition-colors"
+                  className="px-4 py-2 text-left text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#111] rounded-lg transition-colors cursor-pointer"
                 >
                   {link.label}
                 </button>
               ))}
               <button 
                 onClick={() => handleNavClick('#cta')}
-                className="mx-4 mt-2 px-4 py-2 rounded-lg text-sm font-medium border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
+                className="mx-4 mt-2 px-4 py-2 rounded-lg text-sm font-medium border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all cursor-pointer"
               >
                 Get started for free
               </button>

@@ -69,7 +69,7 @@ export function FinalCTA({ onStartProject }: FinalCTAProps) {
               />
               <button
                 type="submit"
-                className="flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors"
+                className="flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors cursor-pointer"
               >
                 Build
                 <ArrowRight className="w-4 h-4" />

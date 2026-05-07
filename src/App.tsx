@@ -1802,6 +1802,7 @@ function AppContent() {
                     src="/bento-hero-image.png" 
                     alt="Aether AI Features" 
                     className="w-full max-w-4xl rounded-2xl shadow-2xl border border-white/[0.06]"
+                    loading="lazy"
                   />
                 </div>
               </div>
@@ -2392,6 +2393,7 @@ function AppContent() {
                     ][selectedImageIndex]}
                     alt={`Interface ${selectedImageIndex + 1}`}
                     className="max-w-full max-h-full object-contain rounded-lg"
+                    loading="lazy"
                   />
                 </div>
 
