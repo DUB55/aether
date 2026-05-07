@@ -79,7 +79,7 @@ export interface Subscription {
   status: 'active' | 'inactive' | 'pending' | 'cancelled';
   startDate?: string;
   endDate?: string;
-  paymentMethod?: 'crypto';
+  paymentMethod?: 'crypto' | 'nexapay';
   transactionHash?: string;
   amount?: number;
   currency?: string;

@@ -116,20 +116,14 @@ export function Pricing() {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentComplete = async (transactionHash: string) => {
-    const { upgradeSubscription, verifyAndUpgradeSubscription } = useFirebase();
+  const handlePaymentComplete = async () => {
+    const { upgradeSubscription } = useFirebase();
     
     try {
-      // Submit the subscription upgrade request
-      await upgradeSubscription(selectedPlan!, transactionHash, plans.find(p => p.id === selectedPlan)!.price);
+      // Submit the subscription upgrade request (webhook will confirm)
+      await upgradeSubscription(selectedPlan!, 'nexapay-mock-charge-id', plans.find(p => p.id === selectedPlan)!.price);
       
-      toast.success('Payment submitted! Your account will be upgraded once the transaction is confirmed on the blockchain.');
-      
-      // Try to verify immediately (in production, this would be done via webhook/polling)
-      const verified = await verifyAndUpgradeSubscription(transactionHash);
-      if (verified) {
-        toast.success('Payment verified! Your account has been upgraded.');
-      }
+      toast.success('Payment submitted! Your account will be upgraded once the payment is confirmed.');
       
       setShowPaymentModal(false);
       setSelectedPlan(null);

@@ -34,6 +34,7 @@ interface FirebaseContextType {
   subscription: Subscription | null;
   upgradeSubscription: (tier: string, transactionHash: string, amount: number) => Promise<void>;
   verifyAndUpgradeSubscription: (transactionHash: string) => Promise<boolean>;
+  handleWebhookSubscriptionUpgrade: (userId: string, planId: string) => Promise<void>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -450,6 +451,30 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const handleWebhookSubscriptionUpgrade = async (userId: string, planId: string): Promise<void> => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      const updatedSubscription: Subscription = {
+        tier: planId as SubscriptionTier,
+        status: 'active',
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        paymentMethod: 'nexapay',
+      };
+
+      await updateDoc(userRef, { subscription: updatedSubscription });
+      console.log('[FirebaseProvider] Subscription upgraded via webhook:', { userId, planId });
+
+      // If this is the current user, update local state
+      if (user && user.uid === userId) {
+        setSubscription(updatedSubscription);
+      }
+    } catch (error) {
+      console.error('[FirebaseProvider] Failed to handle webhook subscription upgrade:', error);
+      throw error;
+    }
+  };
+
   return (
     <FirebaseContext.Provider value={{ 
       user, 
@@ -471,7 +496,8 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       uploadProfilePicture,
       subscription,
       upgradeSubscription,
-      verifyAndUpgradeSubscription
+      verifyAndUpgradeSubscription,
+      handleWebhookSubscriptionUpgrade
     }}>
       {children}
     </FirebaseContext.Provider>
