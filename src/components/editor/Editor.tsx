@@ -117,6 +117,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
   const [isMdPreview, setIsMdPreview] = useState(false)
   const [activeMobileTab, setActiveMobileTab] = useState<'chat' | 'code' | 'preview' | 'history' | 'terminal'>('chat')
   const [renamingFile, setRenamingFile] = useState<string | null>(null)
+  const [deletingFile, setDeletingFile] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<{ data: string; mimeType: string; size?: number } | null>(null)
   const [newName, setNewName] = useState('')
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ 'src': true })
@@ -831,7 +832,7 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
       hasUser: !!user,
       timestamp: new Date().toISOString()
     });
-    
+
     const messageContent = overrideInput || input
     if ((!messageContent.trim() && !selectedImage) || !project || isGenerating) {
       console.log('[EDITOR-AI] Early return - validation failed:', {
@@ -851,10 +852,14 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
 
     console.log('[EDITOR-AI] Starting message processing...');
     let updatedProject = { ...project }
-    
+
+    // Check for attachments from localStorage (from landing page)
+    const storedAttachments = localStorage.getItem('aether_attachments');
+    const attachments = storedAttachments ? JSON.parse(storedAttachments) : [];
+
     if (!isAutoSend) {
       const userMessage: Message = { role: 'user', content: messageContent }
-      
+
       // Add image info to message if present
       if (selectedImage) {
         console.log('[EDITOR-AI] Adding image to message:', {
@@ -862,6 +867,13 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
           size: selectedImage.size
         });
         userMessage.content += `\n\n[Attached Image: ${selectedImage.mimeType}]`
+      }
+
+      // Add attachments to message if present
+      if (attachments.length > 0) {
+        userMessage.attachments = attachments;
+        console.log('[EDITOR-AI] Adding attachments to message:', attachments);
+        localStorage.removeItem('aether_attachments');
       }
 
       updatedProject = {
@@ -1869,15 +1881,29 @@ export function Editor({ projectId, onBack, isSharedView = false }: EditorViewPr
                   </motion.div>
                 )}
                 {project.messages.map((msg, i) => (
-                  <motion.div 
-                    key={i} 
+                  <motion.div
+                    key={i}
                     initial={{ opacity: 0, y: 10, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.3, ease: [0.2, 0, 0, 1] }}
                     className="msg"
                   >
                     <div className={cn(msg.role === 'user' ? "bubble user-bubble" : "ai-line md")}>
-                      {msg.role === 'user' ? msg.content : (
+                      {msg.role === 'user' ? (
+                        <>
+                          {msg.attachments && msg.attachments.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {msg.attachments.map((attachment, idx) => (
+                                <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg text-sm">
+                                  <Paperclip className="w-4 h-4" />
+                                  <span className="truncate max-w-[150px]">{attachment}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {msg.content}
+                        </>
+                      ) : (
                         <>
                           <div className="ai-intro text-sm text-[var(--t3)] mb-2">
                             Here's what I've built for you:

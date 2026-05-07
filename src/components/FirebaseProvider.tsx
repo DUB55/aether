@@ -337,6 +337,8 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     try {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, { photoURL });
+      // Update local user state
+      setUser({ ...user, photoURL });
       console.log('[FirebaseProvider] Profile picture updated successfully');
     } catch (error) {
       console.error('[FirebaseProvider] Failed to update profile picture:', error);

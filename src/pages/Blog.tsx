@@ -9,24 +9,28 @@ export default function Blog() {
       excerpt: 'The next generation of AI-powered development with enhanced features and improved performance.',
       date: 'May 5, 2026',
       category: 'Product',
+      slug: 'introducing-aether-v2',
     },
     {
       title: 'How We Built a Production-Ready AI Coder',
       excerpt: 'A deep dive into the architecture and technology behind Aether.',
       date: 'April 28, 2026',
       category: 'Engineering',
+      slug: 'production-ready-ai-coder',
     },
     {
       title: 'The Future of Software Development',
       excerpt: 'How AI is transforming the way we build applications.',
       date: 'April 15, 2026',
       category: 'Thoughts',
+      slug: 'future-of-software-development',
     },
     {
       title: 'Customer Spotlight: How Teams Use Aether',
       excerpt: 'Real stories from teams building with Aether.',
       date: 'April 8, 2026',
       category: 'Customers',
+      slug: 'customer-spotlight',
     },
   ];
 
@@ -40,6 +44,10 @@ export default function Blog() {
           <div
             key={index}
             className="bg-[#0a0f1a] rounded-xl border border-white/[0.06] p-6 hover:border-[#5063F0]/30 transition-colors cursor-pointer group"
+            onClick={() => {
+              window.history.pushState({}, '', `/blog/${post.slug}`);
+              window.dispatchEvent(new Event('routechange'));
+            }}
           >
             <div className="flex items-center gap-2 mb-3">
               <span className="px-2 py-1 rounded-full bg-[#5063F0]/10 text-[#6b7ce5] text-xs">

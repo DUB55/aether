@@ -9,24 +9,28 @@ export default function Guides() {
       icon: Rocket,
       description: 'Learn the basics of Aether and create your first project in minutes.',
       readTime: '5 min read',
+      slug: 'getting-started',
     },
     {
       title: 'Best Practices',
       icon: BookOpen,
       description: 'Tips and tricks for getting the most out of AI-powered development.',
       readTime: '10 min read',
+      slug: 'best-practices',
     },
     {
       title: 'Security Guide',
       icon: Shield,
       description: 'How to build secure applications with automatic security rule generation.',
       readTime: '8 min read',
+      slug: 'security-guide',
     },
     {
       title: 'Performance Optimization',
       icon: Zap,
       description: 'Optimize your applications for speed and efficiency.',
       readTime: '7 min read',
+      slug: 'performance-optimization',
     },
   ];
 
@@ -40,6 +44,10 @@ export default function Guides() {
           <div
             key={guide.title}
             className="bg-[#0a0f1a] rounded-xl border border-white/[0.06] p-6 hover:border-[#5063F0]/30 transition-colors cursor-pointer"
+            onClick={() => {
+              window.history.pushState({}, '', `/guides/${guide.slug}`);
+              window.dispatchEvent(new Event('routechange'));
+            }}
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-lg bg-[#5063F0]/15 flex items-center justify-center">

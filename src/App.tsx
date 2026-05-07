@@ -787,7 +787,7 @@ function AppContent() {
     }
   }
 
-  if (activeProjectId || currentRoute === 'shared') {
+  if (activeProjectId || currentRoute === 'shared' || currentRoute === 'editor') {
     return (
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "black"]}>
         <div className="relative min-h-screen bg-background text-foreground flex flex-col">
@@ -940,15 +940,23 @@ function AppContent() {
 
   if (currentRoute === 'landing-v3') {
     return (
-      <LandingVariation3 
-        onStartProject={(prompt) => {
+      <LandingVariation3
+        onStartProject={(prompt, attachments, designSystem) => {
           // Handle project start from landing v3
           const trimmed = prompt.trim();
           if (!trimmed) return;
-          
+
           // Set input and trigger project creation
           setInput(trimmed);
-          
+
+          // Store attachments and design system for later use
+          if (attachments && attachments.length > 0) {
+            localStorage.setItem('aether_attachments', JSON.stringify(attachments.map(f => f.name)));
+          }
+          if (designSystem) {
+            localStorage.setItem('aether_design_system', designSystem);
+          }
+
           if (!user) {
             localStorage.setItem('aether_pending_prompt', trimmed);
             setIsLoginModalOpen(true);
@@ -956,7 +964,6 @@ function AppContent() {
             // Navigate to home and start project
             window.history.pushState({}, '', '/');
             window.dispatchEvent(new Event('routechange'));
-            setTimeout(() => handleStartProject(), 100);
           }
         }}
       />

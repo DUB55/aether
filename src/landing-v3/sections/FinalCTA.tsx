@@ -6,7 +6,7 @@ import { ArrowRight } from 'lucide-react';
 import { TemplatePill } from '../components/TemplatePill';
 
 interface FinalCTAProps {
-  onStartProject?: (prompt: string) => void;
+  onStartProject?: (prompt: string, attachments?: File[], designSystem?: string) => void;
 }
 
 export function FinalCTA({ onStartProject }: FinalCTAProps) {

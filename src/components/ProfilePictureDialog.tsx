@@ -27,12 +27,6 @@ export function ProfilePictureDialog({ isOpen, onClose }: ProfilePictureDialogPr
         return
       }
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size must be less than 5MB')
-        return
-      }
-
       // Create preview
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -158,7 +152,7 @@ export function ProfilePictureDialog({ isOpen, onClose }: ProfilePictureDialogPr
                   Select Image
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
-                  Supports: JPG, PNG, GIF, WebP (max 5MB)
+                  Supports: JPG, PNG, GIF, WebP
                 </p>
               </div>
 

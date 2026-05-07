@@ -12,7 +12,7 @@ import { FinalCTA } from './sections/FinalCTA';
 import { Footer } from './sections/Footer';
 
 interface LandingVariation3Props {
-  onStartProject?: (prompt: string) => void;
+  onStartProject?: (prompt: string, attachments?: File[], designSystem?: string) => void;
 }
 
 export default function LandingVariation3({ onStartProject }: LandingVariation3Props) {

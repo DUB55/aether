@@ -2,6 +2,7 @@ export interface Message {
   role: "user" | "assistant" | "system";
   content: string;
   image?: string;
+  attachments?: string[]; // File names
   timestamp?: string;
 }
 
