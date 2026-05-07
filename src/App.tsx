@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ArrowUp,
   ArrowLeft,
+  ArrowRight,
   Loader2,
   Rocket,
   Heart,
