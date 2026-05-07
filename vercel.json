@@ -1,11 +1,6 @@
 {
   "version": 2,
   "outputDirectory": "dist",
-  "functions": {
-    "api/**/*.{ts,js}": {
-      "runtime": "@vercel/node"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
