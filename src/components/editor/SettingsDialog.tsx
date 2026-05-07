@@ -202,6 +202,54 @@ export function SettingsDialog({
 
                         <section className="space-y-4">
                           <h3 className="text-base md:text-lg font-bold flex items-center gap-2">
+                            <Database className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                            Storage Mode
+                          </h3>
+                          <div className="p-4 md:p-6 rounded-2xl md:rounded-3xl bg-white/5 border border-white/10 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-bold text-sm md:text-base">Cloud + Local Sync</div>
+                                <div className="text-[10px] md:text-xs text-white/30">Store files both in cloud and locally on your computer</div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const newMode = project.storageMode === 'hybrid' ? 'cloud' : 'hybrid';
+                                  setProject(prev => prev ? { ...prev, storageMode: newMode } : null);
+                                  onRename(project.name, project.settings);
+                                }}
+                                className={cn(
+                                  "w-12 h-6 rounded-full p-1 transition-all flex items-center",
+                                  project.storageMode === 'hybrid' ? "bg-primary" : "bg-white/10"
+                                )}
+                              >
+                                <motion.div 
+                                  animate={{ x: project.storageMode === 'hybrid' ? 24 : 0 }}
+                                  className={cn(
+                                    "w-4 h-4 rounded-full shadow-lg",
+                                    project.storageMode === 'hybrid' ? "bg-black" : "bg-white/40"
+                                  )}
+                                />
+                              </button>
+                            </div>
+                            {project.storageMode === 'hybrid' && (
+                              <div className="pt-4 border-t border-white/10 space-y-2">
+                                <label className="text-[9px] md:text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Local Path</label>
+                                <input 
+                                  type="text"
+                                  value={project.localPath || ''}
+                                  onChange={(e) => {
+                                    setProject(prev => prev ? { ...prev, localPath: e.target.value } : null);
+                                  }}
+                                  className="glass-input h-10 md:h-12 text-xs md:text-sm"
+                                  placeholder="/path/to/local/folder"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </section>
+
+                        <section className="space-y-4">
+                          <h3 className="text-base md:text-lg font-bold flex items-center gap-2">
                             <Github className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                             Source Control
                           </h3>

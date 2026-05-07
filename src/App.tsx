@@ -675,9 +675,10 @@ function AppContent() {
       }
     }
 
-    // Store pending project data and show project type dialog
+    // Store pending project data and create project directly with cloud-only mode
     setPendingProjectData({ prompt: promptToUse, messages })
-    setShowProjectTypeDialog(true)
+    // Immediately create project with cloud mode (no dialog)
+    handleProjectTypeSelect('cloud')
     setInput("")
   }
 
@@ -698,7 +699,23 @@ function AppContent() {
       isPublic: false,
       ownerId: user.uid,
       files: {
-        'index.html': ''
+        'index.html': `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold mb-4">Welcome to Aether</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-400">Your AI-generated project will appear here</p>
+        </div>
+    </div>
+</body>
+</html>`
       },
       messages,
       storageMode,
@@ -731,7 +748,7 @@ function AppContent() {
         }
       }).catch(saveError => {
         console.warn('[App] handleProjectTypeSelect - Project save failed:', saveError)
-        toast.warning("Project saved locally (sync may be limited)")
+        // Silent failure - no toast message
       })
       
     } catch (error) {
@@ -2415,19 +2432,6 @@ function AppContent() {
 
         <Toaster position="bottom-center" richColors />
       <AppUpdater />
-      
-      {/* Project Type Dialog */}
-      {pendingProjectData && (
-        <ProjectTypeDialog
-          isOpen={showProjectTypeDialog}
-          onClose={() => {
-            setShowProjectTypeDialog(false)
-            setPendingProjectData(null)
-          }}
-          onSelect={handleProjectTypeSelect}
-          projectName={pendingProjectData.prompt}
-        />
-      )}
       </div>
     </ThemeProvider>
   )
