@@ -16,12 +16,8 @@ async function resizeFavicon() {
     const canvas = createCanvas(512, 512);
     const ctx = canvas.getContext('2d');
     
-    // Add solid background color (white)
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 512, 512);
-    
-    // Draw the logo scaled to fill most of the space (with padding)
-    const padding = 20;
+    // Draw the logo scaled to fill almost the entire space (minimal padding)
+    const padding = 5; // Minimal padding
     const size = 512 - (padding * 2);
     ctx.drawImage(logo, padding, padding, size, size);
     
@@ -29,7 +25,7 @@ async function resizeFavicon() {
     const buffer = canvas.toBuffer('image/png');
     writeFileSync(join(__dirname, 'public', 'favicon-large.png'), buffer);
     
-    console.log('Created favicon-large.png (512x512) with solid background');
+    console.log('Created favicon-large.png (512x512) with minimal padding');
   } catch (error) {
     console.error('Error resizing favicon:', error);
   }
